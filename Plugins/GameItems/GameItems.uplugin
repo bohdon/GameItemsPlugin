@@ -1,0 +1,23 @@
+﻿{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0",
+  "FriendlyName": "GameItems",
+  "Description": "Classes and tools for creating gameplay items, inventories and equipment.",
+  "Category": "Other",
+  "CreatedBy": "Bohdon Sayre",
+  "CreatedByURL": "",
+  "DocsURL": "",
+  "MarketplaceURL": "",
+  "CanContainContent": true,
+  "IsBetaVersion": false,
+  "IsExperimentalVersion": false,
+  "Installed": false,
+  "Modules": [
+    {
+      "Name": "GameItems",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ]
+}
