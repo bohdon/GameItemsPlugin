@@ -16,6 +16,29 @@ struct FGameItemTagStackContainer;
 
 
 /**
+ * Represents a game item definition and quantity, e.g. for use
+ * when creating new items or defining default container inventories.
+ */
+USTRUCT(BlueprintType)
+struct GAMEITEMS_API FGameItemDefStack
+{
+	GENERATED_BODY()
+
+	FGameItemDefStack()
+	{
+	}
+
+	/** The item definition */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UGameItemDef> ItemDef = nullptr;
+
+	/** The quantity of the item */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Count = 1;
+};
+
+
+/**
  * Represents a single gameplay tag and a count.
  */
 USTRUCT(BlueprintType)
@@ -134,7 +157,7 @@ struct TStructOpsTypeTraits<FGameItemTagStackContainer> : public TStructOpsTypeT
  * A single item or item stack in a list of items.
  */
 USTRUCT(BlueprintType)
-struct FGameItemListEntry : public FFastArraySerializerItem
+struct GAMEITEMS_API FGameItemListEntry : public FFastArraySerializerItem
 {
 	GENERATED_BODY()
 
@@ -158,7 +181,7 @@ private:
  * List of game items for use in a container.
  */
 USTRUCT(BlueprintType)
-struct FGameItemList : public FFastArraySerializer
+struct GAMEITEMS_API FGameItemList : public FFastArraySerializer
 {
 	GENERATED_BODY()
 
@@ -179,8 +202,17 @@ struct FGameItemList : public FFastArraySerializer
 	/** Add an item/stack to the list. */
 	void AddEntry(UGameItem* Item);
 
+	/** Add an item/stack to the list at a specific index, expanding the list size as needed. */
+	void AddEntryAt(UGameItem* Item, int32 Index);
+
 	/** Remove an item/stack from the list. */
 	void RemoveEntry(UGameItem* Item);
+
+	/**
+	 * Remove an item/stack from a specific index in the list.
+	 * @param bPreserveIndices Simply null out the item instead of removing it from the list, which would affect all item indices following it.
+	 */
+	UGameItem* RemoveEntryAt(int32 Index, bool bPreserveIndices = false);
 
 	void GetAllItems(TArray<UGameItem*>& OutItems) const;
 

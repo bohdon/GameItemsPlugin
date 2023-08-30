@@ -11,7 +11,7 @@
 
 /**
  * Defines the maximum quantity of an item, and how it should handle stacking within a container.
- * For complex rules, see UGameItemContainerStockRules.
+ * For complex rules, see UGameItemContainerStockRule.
  */
 USTRUCT(BlueprintType)
 struct FGameItemSimpleStockRules
@@ -54,7 +54,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameItem")
 	FText DisplayName;
 
-	/** The maximum quantity and stacking rules for this item. Additional rules can be defined using UGameItemContainerStockRules. */
+	/** The maximum quantity and stacking rules for this item. Additional rules can be defined using UGameItemContainerStockRule. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameItem")
 	FGameItemSimpleStockRules StockRules;
 

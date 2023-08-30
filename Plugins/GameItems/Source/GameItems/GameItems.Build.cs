@@ -11,8 +11,8 @@ public class GameItems : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"Core",
-			"NetCore",
 			"GameplayTags",
+			"NetCore",
 		});
 
 
@@ -20,6 +20,7 @@ public class GameItems : ModuleRules
 		{
 			"CoreUObject",
 			"Engine",
+			"EngineSettings",
 			"Slate",
 			"SlateCore",
 		});

@@ -37,6 +37,9 @@ private:
 public:
 	TSubclassOf<UGameItemDef> GetItemDef() const { return ItemDef; }
 
+	/** Return the class default object for this item's definition. */
+	const UGameItemDef* GetItemDefCDO() const;
+
 	void SetItemDef(TSubclassOf<UGameItemDef> NewItemDef);
 
 	int32 GetCount() const { return Count; }
@@ -55,6 +58,19 @@ public:
 	/** Return the value of a stat. */
 	UFUNCTION(BlueprintPure, Category = "GameItem")
 	int32 GetTagStat(FGameplayTag Tag) const;
+
+	/**
+	 * Return true if another item matches this item. Matching items must always have the same definition,
+	 * but additional requirements can be defined to prevent items from stacking where undesired.
+	 * For example when leveling up items using tag stats, this can prevent lv1 items from stacking with lv2 items of the same definition.
+	 */
+	bool IsMatching(const UGameItem* Item) const;
+
+	/**
+	 * Copy all properties from another item, such as count and tag stats.
+	 * Does not broadcast any events.
+	 */
+	void CopyItemProperties(const UGameItem* Item);
 
 	/** Return a debug string representation of this item instance. */
 	UFUNCTION(BlueprintPure, Category = "GameItem")

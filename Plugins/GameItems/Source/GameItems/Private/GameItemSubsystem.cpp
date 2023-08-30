@@ -44,6 +44,24 @@ UGameItem* UGameItemSubsystem::CreateGameItem(UObject* Outer, TSubclassOf<UGameI
 	return NewItem;
 }
 
+UGameItem* UGameItemSubsystem::DuplicateGameItem(UObject* Outer, UGameItem* Item)
+{
+	if (!Item)
+	{
+		return nullptr;
+	}
+
+	UGameItem* NewItem = CreateGameItem(Outer, Item->GetItemDef(), Item->GetCount());
+	if (!NewItem)
+	{
+		return nullptr;
+	}
+
+	NewItem->CopyItemProperties(Item);
+
+	return NewItem;
+}
+
 const UGameItemFragment* UGameItemSubsystem::FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass) const
 {
 	if (!ItemDef || !FragmentClass)
@@ -51,8 +69,8 @@ const UGameItemFragment* UGameItemSubsystem::FindFragment(TSubclassOf<UGameItemD
 		return nullptr;
 	}
 
-	const UGameItemDef* ItemDefDefault = GetDefault<UGameItemDef>(ItemDef);
-	return ItemDefDefault->FindFragment(FragmentClass);
+	const UGameItemDef* ItemDefCDO = GetDefault<UGameItemDef>(ItemDef);
+	return ItemDefCDO->FindFragment(FragmentClass);
 }
 
 TArray<UGameItemContainerComponent*> UGameItemSubsystem::GetAllContainers(AActor* Actor) const

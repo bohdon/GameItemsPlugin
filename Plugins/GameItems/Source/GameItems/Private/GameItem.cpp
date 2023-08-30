@@ -16,6 +16,11 @@ UGameItem::UGameItem(const FObjectInitializer& ObjectInitializer)
 {
 }
 
+const UGameItemDef* UGameItem::GetItemDefCDO() const
+{
+	return ItemDef ? GetDefault<UGameItemDef>(ItemDef) : nullptr;
+}
+
 void UGameItem::SetItemDef(TSubclassOf<UGameItemDef> NewItemDef)
 {
 	ItemDef = NewItemDef;
@@ -69,6 +74,18 @@ void UGameItem::RemoveTagStat(FGameplayTag Tag, int32 DeltaValue)
 int32 UGameItem::GetTagStat(FGameplayTag Tag) const
 {
 	return TagStats.GetStackCount(Tag);
+}
+
+bool UGameItem::IsMatching(const UGameItem* Item) const
+{
+	// TODO: add item fragment or item def properties for requiring matching tag stats
+	return Item && Item->ItemDef == ItemDef;
+}
+
+void UGameItem::CopyItemProperties(const UGameItem* Item)
+{
+	Count = Item->Count;
+	TagStats = Item->TagStats;
 }
 
 FString UGameItem::ToDebugString() const

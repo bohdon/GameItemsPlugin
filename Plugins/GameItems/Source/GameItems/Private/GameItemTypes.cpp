@@ -4,6 +4,7 @@
 
 #include "GameItem.h"
 #include "GameItemDef.h"
+#include "GameItemsModule.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemTypes)
 
@@ -182,7 +183,39 @@ void FGameItemList::PostReplicatedChange(const TArrayView<int32> ChangedIndices,
 
 void FGameItemList::AddEntry(UGameItem* Item)
 {
+	check(Item != nullptr);
+
 	FGameItemListEntry& NewEntry = Entries.AddDefaulted_GetRef();
+	NewEntry.Item = Item;
+
+	MarkItemDirty(NewEntry);
+}
+
+void FGameItemList::AddEntryAt(UGameItem* Item, int32 Index)
+{
+	check(Item != nullptr);
+	check(Index >= 0);
+
+	if (Index == Entries.Num())
+	{
+		// adding to the next available index, use the AddDefaulted implementation
+		AddEntry(Item);
+		return;
+	}
+
+	if (Entries.IsValidIndex(Index) && Entries[Index].Item != nullptr)
+	{
+		UE_LOG(LogGameItems, Error, TEXT("Cannot add item %s at index %d, an item already exists there."), *Item->ToDebugString(), Index);
+		return;
+	}
+
+	if (Index > Entries.Num())
+	{
+		// expand the list to fit the target index, this may create null entries which is acceptable
+		Entries.SetNum(Index + 1);
+	}
+
+	FGameItemListEntry& NewEntry = Entries[Index];
 	NewEntry.Item = Item;
 
 	MarkItemDirty(NewEntry);
@@ -190,6 +223,8 @@ void FGameItemList::AddEntry(UGameItem* Item)
 
 void FGameItemList::RemoveEntry(UGameItem* Item)
 {
+	check(Item != nullptr);
+
 	for (auto EntryIt = Entries.CreateIterator(); EntryIt; ++EntryIt)
 	{
 		FGameItemListEntry& Entry = *EntryIt;
@@ -199,6 +234,28 @@ void FGameItemList::RemoveEntry(UGameItem* Item)
 			MarkArrayDirty();
 		}
 	}
+}
+
+UGameItem* FGameItemList::RemoveEntryAt(int32 Index, bool bPreserveIndices)
+{
+	UGameItem* RemovedItem = nullptr;
+	if (Entries.IsValidIndex(Index))
+	{
+		RemovedItem = Entries[Index].Item;
+
+		if (bPreserveIndices)
+		{
+			Entries[Index].Item = nullptr;
+		}
+		else
+		{
+			Entries.RemoveAt(Index);
+		}
+
+		MarkArrayDirty();
+	}
+
+	return RemovedItem;
 }
 
 void FGameItemList::GetAllItems(TArray<UGameItem*>& OutItems) const

@@ -31,6 +31,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
 	UGameItem* CreateGameItem(UObject* Outer, TSubclassOf<UGameItemDef> ItemDef, int32 Count);
 
+	/** Duplicate and return a new game item. */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UGameItem* DuplicateGameItem(UObject* Outer, UGameItem* Item);
+
 	/**
 	 * Find a return an item fragment by class.
 	 * Convenience function that uses the GameItemSubsystem.
