@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameItem.h"
+#include "GameItemTypes.h"
 #include "UObject/Object.h"
 #include "GameItemContainerStockRule.generated.h"
 
@@ -42,17 +44,30 @@ class GAMEITEMS_API UGameItemContainerStockRule_Simple : public UGameItemContain
 public:
 	UGameItemContainerStockRule_Simple();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Meta = (InlineEditConditionToggle), Category = "StockRule")
-	bool bLimitMaxCount;
+	/** The stock rules for all items. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Meta = (ShowOnlyInnerProperties), Category = "GameItem")
+	FGameItemStockRules StockRules;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Meta = (EditCondition = "bLimitMaxCount"), Category = "StockRule")
-	int32 MaxCount;
+	virtual int32 GetItemMaxCount_Implementation(const UGameItemContainerComponent* Container, const UGameItem* Item) const override;
+	virtual int32 GetItemStackMaxCount_Implementation(const UGameItemContainerComponent* Container, const UGameItem* Item) const override;
+};
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Meta = (InlineEditConditionToggle), Category = "StockRule")
-	bool bLimitStackMaxCount;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Meta = (EditCondition = "bLimitStackMaxCount"), Category = "StockRule")
-	int32 StackMaxCount;
+/**
+ * Specifies stock rules by item tags, where rules apply to the first tag that matches an item.
+ */
+UCLASS()
+class GAMEITEMS_API UGameItemContainerStockRule_Tags : public UGameItemContainerStockRule
+{
+	GENERATED_BODY()
+
+public:
+	UGameItemContainerStockRule_Tags();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameItem")
+	TMap<FGameplayTag, FGameItemStockRules> StockRules;
+
+	FGameItemStockRules GetStockRulesForItem(const UGameItem* Item) const;
 
 	virtual int32 GetItemMaxCount_Implementation(const UGameItemContainerComponent* Container, const UGameItem* Item) const override;
 	virtual int32 GetItemStackMaxCount_Implementation(const UGameItemContainerComponent* Container, const UGameItem* Item) const override;

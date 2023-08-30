@@ -16,6 +16,36 @@ struct FGameItemTagStackContainer;
 
 
 /**
+ * Defines limitations for the quantity and stacking of an item.
+ */
+USTRUCT(BlueprintType)
+struct FGameItemStockRules
+{
+	GENERATED_BODY()
+
+	FGameItemStockRules()
+	{
+	}
+
+	/** Limit the maximum count of this item that can be in a container. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItem")
+	bool bLimitCount = false;
+
+	/** The total maximum quantity allowed for the item in a container. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (EditCondition="bLimitCount", ClampMin = 0), Category = "GameItem")
+	int32 MaxCount = 1;
+
+	/** Limit the maximum count for a single stack of the item. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItem")
+	bool bLimitStackCount = false;
+
+	/** The maximum count for a single stack of the item. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (EditCondition="bLimitStackCount", ClampMin = 1), Category = "GameItem")
+	int32 StackMaxCount = 1;
+};
+
+
+/**
  * Represents a game item definition and quantity, e.g. for use
  * when creating new items or defining default container inventories.
  */

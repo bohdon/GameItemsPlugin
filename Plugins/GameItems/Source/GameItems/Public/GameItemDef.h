@@ -4,36 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameItemFragment.h"
+#include "GameItemTypes.h"
 #include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
 #include "GameItemDef.generated.h"
-
-
-/**
- * Defines the maximum quantity of an item, and how it should handle stacking within a container.
- * For complex rules, see UGameItemContainerStockRule.
- */
-USTRUCT(BlueprintType)
-struct FGameItemSimpleStockRules
-{
-	GENERATED_BODY()
-
-	FGameItemSimpleStockRules()
-	{
-	}
-
-	/** Limit the maximum count of this item that can be in a container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItem")
-	bool bLimitCount = true;
-
-	/** The maximum quantity allowed of this item in a container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (EditCondition="bLimitCount", ClampMin = 1), Category = "GameItem")
-	int32 MaxCount = 1;
-
-	/** Can this item ever be stacked? Item containers should define the maximum count per stack if so. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItem")
-	bool bCanStack = false;
-};
 
 
 /**
@@ -56,7 +30,7 @@ public:
 
 	/** The maximum quantity and stacking rules for this item. Additional rules can be defined using UGameItemContainerStockRule. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameItem")
-	FGameItemSimpleStockRules StockRules;
+	FGameItemStockRules StockRules;
 
 	/** The fragments that make up this item. Can be anything from UI data to gameplay functionality. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Instanced, Category = "GameItem")

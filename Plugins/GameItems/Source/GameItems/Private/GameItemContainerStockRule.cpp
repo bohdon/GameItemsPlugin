@@ -3,6 +3,8 @@
 
 #include "GameItemContainerStockRule.h"
 
+#include "GameItemDef.h"
+
 
 // UGameItemContainerStockRule
 // ---------------------------
@@ -26,19 +28,53 @@ int32 UGameItemContainerStockRule::GetItemStackMaxCount_Implementation(const UGa
 // ----------------------------------
 
 UGameItemContainerStockRule_Simple::UGameItemContainerStockRule_Simple()
-	: bLimitMaxCount(false),
-	  MaxCount(100),
-	  bLimitStackMaxCount(false),
-	  StackMaxCount(100)
 {
 }
 
 int32 UGameItemContainerStockRule_Simple::GetItemMaxCount_Implementation(const UGameItemContainerComponent* Container, const UGameItem* Item) const
 {
-	return bLimitMaxCount ? MaxCount : -1;
+	return StockRules.bLimitCount ? StockRules.MaxCount : -1;
 }
 
 int32 UGameItemContainerStockRule_Simple::GetItemStackMaxCount_Implementation(const UGameItemContainerComponent* Container, const UGameItem* Item) const
 {
-	return bLimitStackMaxCount ? StackMaxCount : -1;
+	return StockRules.bLimitStackCount ? StockRules.StackMaxCount : -1;
+}
+
+
+// UGameItemContainerStockRule_Tags
+// --------------------------------
+
+UGameItemContainerStockRule_Tags::UGameItemContainerStockRule_Tags()
+{
+}
+
+FGameItemStockRules UGameItemContainerStockRule_Tags::GetStockRulesForItem(const UGameItem* Item) const
+{
+	const UGameItemDef* ItemDefCDO = Item ? Item->GetItemDefCDO() : nullptr;
+	if (!ItemDefCDO)
+	{
+		return FGameItemStockRules();
+	}
+
+	for (FGameplayTag ItemTag : ItemDefCDO->OwnedTags)
+	{
+		if (StockRules.Contains(ItemTag))
+		{
+			return StockRules[ItemTag];
+		}
+	}
+	return FGameItemStockRules();
+}
+
+int32 UGameItemContainerStockRule_Tags::GetItemMaxCount_Implementation(const UGameItemContainerComponent* Container, const UGameItem* Item) const
+{
+	const FGameItemStockRules ItemStockRules = GetStockRulesForItem(Item);
+	return ItemStockRules.bLimitCount ? ItemStockRules.MaxCount : -1;
+}
+
+int32 UGameItemContainerStockRule_Tags::GetItemStackMaxCount_Implementation(const UGameItemContainerComponent* Container, const UGameItem* Item) const
+{
+	const FGameItemStockRules ItemStockRules = GetStockRulesForItem(Item);
+	return ItemStockRules.bLimitStackCount ? ItemStockRules.StackMaxCount : -1;
 }

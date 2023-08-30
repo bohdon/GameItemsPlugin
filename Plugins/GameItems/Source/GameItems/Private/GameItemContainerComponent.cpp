@@ -429,13 +429,14 @@ int32 UGameItemContainerComponent::GetItemStackMaxCount(const UGameItem* Item) c
 		return 0;
 	}
 
-	if (!ItemDefCDO->StockRules.bCanStack)
-	{
-		return 1;
-	}
-
 	// find the smallest stack limit as defined by stock rules
 	int32 Result = MAX_int32;
+
+	if (ItemDefCDO->StockRules.bLimitStackCount)
+	{
+		Result = ItemDefCDO->StockRules.StackMaxCount;
+	}
+
 	for (const UGameItemContainerStockRule* StockRule : StockRules)
 	{
 		const int32 RuleMaxCount = StockRule->GetItemStackMaxCount(this, Item);
