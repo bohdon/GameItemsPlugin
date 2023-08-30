@@ -8,6 +8,10 @@
 #include "GameItemTypes.generated.h"
 
 
+class UGameItem;
+class UGameItemContainerComponent;
+class UGameItemDef;
+struct FGameItemList;
 struct FGameItemTagStackContainer;
 
 
@@ -20,7 +24,6 @@ struct GAMEITEMS_API FGameItemTagStack : public FFastArraySerializerItem
 	GENERATED_BODY()
 
 	FGameItemTagStack()
-		: Count(0)
 	{
 	}
 
@@ -43,13 +46,13 @@ struct GAMEITEMS_API FGameItemTagStack : public FFastArraySerializerItem
 	}
 
 private:
-	friend FGameItemTagStackContainer;
-
 	UPROPERTY()
 	FGameplayTag Tag;
 
 	UPROPERTY()
-	int32 Count;
+	int32 Count = 0;
+
+	friend FGameItemTagStackContainer;
 };
 
 
@@ -83,11 +86,10 @@ struct GAMEITEMS_API FGameItemTagStackContainer : public FFastArraySerializer
 		return StackCountMap.Contains(Tag);
 	}
 
-	// FFastArraySerializer contract
+	// FFastArraySerializer
 	void PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize);
 	void PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize);
 	void PostReplicatedChange(const TArrayView<int32> ChangedIndices, int32 FinalSize);
-	// End of FFastArraySerializer contract
 
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
 	{
@@ -124,5 +126,85 @@ struct TStructOpsTypeTraits<FGameItemTagStackContainer> : public TStructOpsTypeT
 	{
 		WithNetDeltaSerializer = true,
 		WithPostSerialize = true,
+	};
+};
+
+
+/**
+ * A single item or item stack in a list of items.
+ */
+USTRUCT(BlueprintType)
+struct FGameItemListEntry : public FFastArraySerializerItem
+{
+	GENERATED_BODY()
+
+	FGameItemListEntry()
+	{
+	}
+
+	FString ToDebugString() const;
+
+private:
+	/** The item in this entry. */
+	UPROPERTY()
+	TObjectPtr<UGameItem> Item = nullptr;
+
+	friend FGameItemList;
+	friend UGameItemContainerComponent;
+};
+
+
+/**
+ * List of game items for use in a container.
+ */
+USTRUCT(BlueprintType)
+struct FGameItemList : public FFastArraySerializer
+{
+	GENERATED_BODY()
+
+	FGameItemList()
+	{
+	}
+
+	// FFastArraySerializer
+	void PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize);
+	void PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize);
+	void PostReplicatedChange(const TArrayView<int32> ChangedIndices, int32 FinalSize);
+
+	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
+	{
+		return FFastArraySerializer::FastArrayDeltaSerialize<FGameItemListEntry, FGameItemList>(Entries, DeltaParms, *this);
+	}
+
+	/** Add an item/stack to the list. */
+	void AddEntry(UGameItem* Item);
+
+	/** Remove an item/stack from the list. */
+	void RemoveEntry(UGameItem* Item);
+
+	void GetAllItems(TArray<UGameItem*>& OutItems) const;
+
+	DECLARE_MULTICAST_DELEGATE_ThreeParams(FGameItemListChangedDelegate,
+	                                       FGameItemListEntry& /*Entry*/,
+	                                       int32 /*NewCount*/,
+	                                       int32 /*OldCount*/);
+
+	/** Called when any item is added or removed. */
+	FGameItemListChangedDelegate OnListChangedEvent;
+
+private:
+	/** Replicated list of items and their stack counts. */
+	UPROPERTY()
+	TArray<FGameItemListEntry> Entries;
+
+	friend UGameItemContainerComponent;
+};
+
+template <>
+struct TStructOpsTypeTraits<FGameItemList> : public TStructOpsTypeTraitsBase2<FGameItemList>
+{
+	enum
+	{
+		WithNetDeltaSerializer = true,
 	};
 };
