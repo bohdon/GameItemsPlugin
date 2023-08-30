@@ -44,13 +44,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItem")
 	void SetCount(int32 NewCount);
 
-	/** Increase the value of a stat tag by delta count. */
+	/** Increase the value of a stat tag. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItem")
-	void AddTagStat(FGameplayTag Tag, int32 DeltaCount);
+	void AddTagStat(FGameplayTag Tag, int32 DeltaValue);
 
-	/** Decrease the value of a stat tag by delta count. */
+	/** Decrease the value of a stat tag. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItem")
-	void RemoveTagStat(FGameplayTag Tag, int32 DeltaCount);
+	void RemoveTagStat(FGameplayTag Tag, int32 DeltaValue);
 
 	/** Return the value of a stat. */
 	UFUNCTION(BlueprintPure, Category = "GameItem")
@@ -60,10 +60,17 @@ public:
 	UFUNCTION(BlueprintPure, Category = "GameItem")
 	FString ToDebugString() const;
 
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FCountChangedDelegate,
+	                                     int32 /*NewCount*/,
+	                                     int32 /*OldCount*/);
+
+	/** Called when the quantity of this item stack has changed. */
+	FCountChangedDelegate OnCountChangedEvent;
+
 	DECLARE_MULTICAST_DELEGATE_ThreeParams(FTagStatChangedDelegate,
-	                                       const FGameplayTag& /* Tag */,
-	                                       int32 /* NewValue */,
-	                                       int32 /* OldValue */);
+	                                       const FGameplayTag& /*Tag*/,
+	                                       int32 /*NewValue*/,
+	                                       int32 /*OldValue*/);
 
 	/** Called when a tag stat of this item has changed. */
 	FTagStatChangedDelegate OnTagStatChangedEvent;

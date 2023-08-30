@@ -25,42 +25,44 @@ void UGameItem::SetCount(int32 NewCount)
 {
 	if (Count != NewCount)
 	{
+		const int32 OldCount = Count;
 		Count = NewCount;
-		// TODO: broadcast event
+
+		OnCountChangedEvent.Broadcast(NewCount, OldCount);
 	}
 }
 
-void UGameItem::AddTagStat(FGameplayTag Tag, int32 DeltaCount)
+void UGameItem::AddTagStat(FGameplayTag Tag, int32 DeltaValue)
 {
-	if (DeltaCount <= 0)
+	if (DeltaValue <= 0)
 	{
 		return;
 	}
 
-	const int32 OldCount = TagStats.GetStackCount(Tag);
-	TagStats.AddStack(Tag, DeltaCount);
-	const int32 NewCount = TagStats.GetStackCount(Tag);
+	const int32 OldValue = TagStats.GetStackCount(Tag);
+	TagStats.AddStack(Tag, DeltaValue);
+	const int32 NewValue = TagStats.GetStackCount(Tag);
 
-	if (OldCount != NewCount)
+	if (OldValue != NewValue)
 	{
-		OnTagStatChangedEvent.Broadcast(Tag, NewCount, OldCount);
+		OnTagStatChangedEvent.Broadcast(Tag, NewValue, OldValue);
 	}
 }
 
-void UGameItem::RemoveTagStat(FGameplayTag Tag, int32 DeltaCount)
+void UGameItem::RemoveTagStat(FGameplayTag Tag, int32 DeltaValue)
 {
-	if (DeltaCount <= 0)
+	if (DeltaValue <= 0)
 	{
 		return;
 	}
 
-	const int32 OldCount = TagStats.GetStackCount(Tag);
-	TagStats.RemoveStack(Tag, DeltaCount);
-	const int32 NewCount = TagStats.GetStackCount(Tag);
+	const int32 OldValue = TagStats.GetStackCount(Tag);
+	TagStats.RemoveStack(Tag, DeltaValue);
+	const int32 NewValue = TagStats.GetStackCount(Tag);
 
-	if (OldCount != NewCount)
+	if (OldValue != NewValue)
 	{
-		OnTagStatChangedEvent.Broadcast(Tag, NewCount, OldCount);
+		OnTagStatChangedEvent.Broadcast(Tag, NewValue, OldValue);
 	}
 }
 

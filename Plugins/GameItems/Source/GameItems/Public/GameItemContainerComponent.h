@@ -23,6 +23,10 @@ class GAMEITEMS_API UGameItemContainerComponent : public UActorComponent
 public:
 	UGameItemContainerComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+	/** The unique tag identifying this container amongst others. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
+	FGameplayTag IdTag;
+
 	/** Return true if a new item can be added to this container. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
 	bool CanAddNewItem(TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
@@ -72,4 +76,8 @@ private:
 	/** The replicated item list struct. */
 	UPROPERTY(Replicated)
 	FGameItemList ItemList;
+
+public:
+	/** Display debug info about this component. */
+	virtual void DisplayDebug(class UCanvas* Canvas, const class FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) const;
 };

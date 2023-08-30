@@ -7,6 +7,7 @@
 #include "GameItemDef.h"
 #include "GameItemSubsystem.h"
 #include "Engine/ActorChannel.h"
+#include "Engine/Canvas.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -174,4 +175,19 @@ bool UGameItemContainerComponent::ReplicateSubobjects(UActorChannel* Channel, FO
 	}
 
 	return bDidWrite;
+}
+
+
+void UGameItemContainerComponent::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) const
+{
+	FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
+
+	DisplayDebugManager.SetDrawColor(FColor::White);
+	DisplayDebugManager.DrawString(FString::Printf(TEXT("%s.%s (%d items)"), *GetOwner()->GetName(), *GetName(), ItemList.Entries.Num()));
+
+	for (int32 Idx = 0; Idx < ItemList.Entries.Num(); ++Idx)
+	{
+		const FGameItemListEntry& Entry = ItemList.Entries[Idx];
+		DisplayDebugManager.DrawString(FString::Printf(TEXT("    [%d] %s"), Idx, *Entry.ToDebugString()));
+	}
 }
