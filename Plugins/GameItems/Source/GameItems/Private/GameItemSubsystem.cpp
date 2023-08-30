@@ -10,6 +10,8 @@
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemSubsystem)
+
 
 void UGameItemSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {

@@ -13,6 +13,8 @@
 #include "Engine/Canvas.h"
 #include "Net/UnrealNetwork.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemContainerComponent)
+
 
 UGameItemContainerComponent::UGameItemContainerComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer),
@@ -253,16 +255,17 @@ TArray<UGameItem*> UGameItemContainerComponent::GetAllItems() const
 
 UGameItem* UGameItemContainerComponent::GetItemAt(int32 Slot) const
 {
-	return ItemList.Entries.IsValidIndex(Slot) ? ItemList.Entries[Slot].Item : nullptr;
+	return ItemList.Entries.IsValidIndex(Slot) ? ItemList.Entries[Slot].GetItem() : nullptr;
 }
 
 UGameItem* UGameItemContainerComponent::FindFirstItemByDef(TSubclassOf<UGameItemDef> ItemDef) const
 {
 	for (const FGameItemListEntry& Entry : ItemList.Entries)
 	{
-		if (IsValid(Entry.Item) && Entry.Item->GetItemDef() == ItemDef)
+		UGameItem* EntryItem = Entry.GetItem();
+		if (IsValid(EntryItem) && EntryItem->GetItemDef() == ItemDef)
 		{
-			return Entry.Item;
+			return EntryItem;
 		}
 	}
 	return nullptr;
@@ -272,9 +275,10 @@ UGameItem* UGameItemContainerComponent::FindFirstMatchingItem(const UGameItem* I
 {
 	for (const FGameItemListEntry& Entry : ItemList.Entries)
 	{
-		if (IsValid(Entry.Item) && Entry.Item->IsMatching(Item))
+		UGameItem* EntryItem = Entry.GetItem();
+		if (IsValid(EntryItem) && EntryItem->IsMatching(Item))
 		{
-			return Entry.Item;
+			return EntryItem;
 		}
 	}
 	return nullptr;
@@ -285,9 +289,10 @@ TArray<UGameItem*> UGameItemContainerComponent::GetAllMatchingItems(const UGameI
 	TArray<UGameItem*> Result;
 	for (const FGameItemListEntry& Entry : ItemList.Entries)
 	{
-		if (IsValid(Entry.Item) && Entry.Item->IsMatching(Item))
+		UGameItem* EntryItem = Entry.GetItem();
+		if (IsValid(EntryItem) && EntryItem->IsMatching(Item))
 		{
-			Result.Add(Entry.Item);
+			Result.Add(EntryItem);
 		}
 	}
 	return Result;
@@ -297,7 +302,7 @@ int32 UGameItemContainerComponent::GetItemSlot(UGameItem* Item) const
 {
 	return ItemList.Entries.IndexOfByPredicate([Item](const FGameItemListEntry& Entry)
 	{
-		return Entry.Item == Item;
+		return Entry.GetItem() == Item;
 	});
 }
 
@@ -306,9 +311,10 @@ int32 UGameItemContainerComponent::GetTotalItemCountByDef(TSubclassOf<UGameItemD
 	int32 Total = 0;
 	for (const FGameItemListEntry& Entry : ItemList.Entries)
 	{
-		if (IsValid(Entry.Item) && Entry.Item->GetItemDef() == ItemDef)
+		const UGameItem* EntryItem = Entry.GetItem();
+		if (IsValid(EntryItem) && EntryItem->GetItemDef() == ItemDef)
 		{
-			Total += Entry.Item->GetCount();
+			Total += EntryItem->GetCount();
 		}
 	}
 	return Total;
@@ -319,9 +325,10 @@ int32 UGameItemContainerComponent::GetTotalMatchingItemCount(const UGameItem* It
 	int32 Total = 0;
 	for (const FGameItemListEntry& Entry : ItemList.Entries)
 	{
-		if (IsValid(Entry.Item) && Entry.Item->IsMatching(Item))
+		const UGameItem* EntryItem = Entry.GetItem();
+		if (IsValid(EntryItem) && EntryItem->IsMatching(Item))
 		{
-			Total += Entry.Item->GetCount();
+			Total += EntryItem->GetCount();
 		}
 	}
 	return Total;
@@ -332,9 +339,10 @@ int32 UGameItemContainerComponent::GetTotalItemCount() const
 	int32 Total = 0;
 	for (const FGameItemListEntry& Entry : ItemList.Entries)
 	{
-		if (IsValid(Entry.Item))
+		const UGameItem* EntryItem = Entry.GetItem();
+		if (IsValid(EntryItem))
 		{
-			Total += Entry.Item->GetCount();
+			Total += EntryItem->GetCount();
 		}
 	}
 	return Total;
@@ -380,7 +388,7 @@ int32 UGameItemContainerComponent::GetNextEmptySlot() const
 
 bool UGameItemContainerComponent::IsSlotEmpty(int32 Slot) const
 {
-	return !ItemList.Entries.IsValidIndex(Slot) || ItemList.Entries[Slot].Item == nullptr;
+	return !ItemList.Entries.IsValidIndex(Slot) || ItemList.Entries[Slot].GetItem() == nullptr;
 }
 
 int32 UGameItemContainerComponent::GetItemMaxCount(const UGameItem* Item) const
@@ -508,9 +516,9 @@ void UGameItemContainerComponent::ReadyForReplication()
 	{
 		for (const FGameItemListEntry& Entry : ItemList.Entries)
 		{
-			if (IsValid(Entry.Item))
+			if (IsValid(Entry.GetItem()))
 			{
-				AddReplicatedSubObject(Entry.Item);
+				AddReplicatedSubObject(Entry.GetItem());
 			}
 		}
 	}
@@ -523,9 +531,9 @@ bool UGameItemContainerComponent::ReplicateSubobjects(UActorChannel* Channel, FO
 	// replicate all item instances in this container
 	for (const FGameItemListEntry& Entry : ItemList.Entries)
 	{
-		if (IsValid(Entry.Item))
+		if (IsValid(Entry.GetItem()))
 		{
-			bDidWrite |= Channel->ReplicateSubobject(Entry.Item, *Bunch, *RepFlags);
+			bDidWrite |= Channel->ReplicateSubobject(Entry.GetItem(), *Bunch, *RepFlags);
 		}
 	}
 

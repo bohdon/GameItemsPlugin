@@ -11,10 +11,10 @@
 
 
 /**
- * Base class for a gameplay item definition. Designed to be subclassed in Blueprint,
- * then filled out using GameItemFragments.
+ * Base class for a gameplay item definition.
+ * Designed to be subclassed in Blueprint for each item type and filled out using GameItemFragments.
  */
-UCLASS(Blueprintable, Abstract)
+UCLASS(BlueprintType, Blueprintable, Abstract, Const)
 class GAMEITEMS_API UGameItemDef : public UObject
 {
 	GENERATED_BODY()

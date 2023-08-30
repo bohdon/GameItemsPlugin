@@ -197,13 +197,14 @@ struct GAMEITEMS_API FGameItemListEntry : public FFastArraySerializerItem
 
 	FString ToDebugString() const;
 
+	UGameItem* GetItem() const { return Item; }
+
 private:
 	/** The item in this entry. */
 	UPROPERTY()
 	TObjectPtr<UGameItem> Item = nullptr;
 
 	friend FGameItemList;
-	friend UGameItemContainerComponent;
 };
 
 
