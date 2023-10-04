@@ -1,0 +1,23 @@
+﻿{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "GameplayAbilityItems",
+	"Description": "Extends the GameItems plugin with support for Gameplay Abilities",
+	"Category": "Other",
+	"CreatedBy": "Bohdon Sayre",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "GameplayAbilityItems",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
