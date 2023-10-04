@@ -487,6 +487,8 @@ void UGameItemContainerComponent::AddDefaultItems(bool bForce)
 
 void UGameItemContainerComponent::OnItemAdded(UGameItem* Item)
 {
+	OnItemAddedEvent.Broadcast(Item);
+
 	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && Item)
 	{
 		AddReplicatedSubObject(Item);
@@ -495,6 +497,8 @@ void UGameItemContainerComponent::OnItemAdded(UGameItem* Item)
 
 void UGameItemContainerComponent::OnItemRemoved(UGameItem* Item)
 {
+	OnItemRemovedEvent.Broadcast(Item);
+
 	if (IsUsingRegisteredSubObjectList() && Item)
 	{
 		RemoveReplicatedSubObject(Item);

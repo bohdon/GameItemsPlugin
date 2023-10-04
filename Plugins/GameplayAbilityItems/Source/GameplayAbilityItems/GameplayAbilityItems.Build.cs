@@ -12,6 +12,10 @@ public class GameplayAbilityItems : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"Core",
+			"ExtendedGameplayAbilities",
+			"GameItems",
+			"GameplayAbilities",
+			"GameplayTags",
 		});
 
 

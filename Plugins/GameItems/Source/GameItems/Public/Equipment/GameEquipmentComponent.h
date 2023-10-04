@@ -46,11 +46,19 @@ public:
 	UFUNCTION(BlueprintPure, Meta = (DeterminesOutputType = EquipmentClass), Category = "Equipment")
 	TArray<UGameEquipment*> FindAllEquipment(TSubclassOf<UGameEquipment> EquipmentClass) const;
 
+	/** Return all instances of applied equipment by instigator. */
+	UFUNCTION(BlueprintPure, Category = "Equipment")
+	TArray<UGameEquipment*> FindAllEquipmentByInstigator(UObject* Instigator) const;
+
 	template <class T>
 	T* FindEquipment()
 	{
 		return (T*)FindEquipment(T::StaticClass());
 	}
+
+	/** Return all equipment instances. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Equipment")
+	TArray<UGameEquipment*> GetAllEquipment() const;
 
 protected:
 	UPROPERTY(Replicated)

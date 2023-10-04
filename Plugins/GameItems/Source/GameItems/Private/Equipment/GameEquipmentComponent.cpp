@@ -140,3 +140,31 @@ TArray<UGameEquipment*> UGameEquipmentComponent::FindAllEquipment(TSubclassOf<UG
 	}
 	return Result;
 }
+
+TArray<UGameEquipment*> UGameEquipmentComponent::FindAllEquipmentByInstigator(UObject* Instigator) const
+{
+	TArray<UGameEquipment*> Result;
+	for (const auto Entry : EquipmentList.Entries)
+	{
+		UGameEquipment* Equipment = Entry.GetEquipment();
+		if (IsValid(Equipment) && Equipment->GetInstigator() == Instigator)
+		{
+			Result.Add(Equipment);
+		}
+	}
+	return Result;
+}
+
+TArray<UGameEquipment*> UGameEquipmentComponent::GetAllEquipment() const
+{
+	TArray<UGameEquipment*> Result;
+	for (const auto Entry : EquipmentList.Entries)
+	{
+		UGameEquipment* Equipment = Entry.GetEquipment();
+		if (IsValid(Equipment))
+		{
+			Result.Add(Equipment);
+		}
+	}
+	return Result;
+}

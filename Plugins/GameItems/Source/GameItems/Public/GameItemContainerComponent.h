@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameItem.h"
 #include "GameItemTypes.h"
 #include "Components/ActorComponent.h"
 #include "GameItemContainerComponent.generated.h"
@@ -162,6 +163,14 @@ public:
 	// UObject interface
 	virtual void ReadyForReplication() override;
 	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
+
+	DECLARE_MULTICAST_DELEGATE_OneParam(FItemAddOrRemoveDelegate, UGameItem* /*Item*/);
+
+	/** Called when a new item is added. */
+	FItemAddOrRemoveDelegate OnItemAddedEvent;
+
+	/** Called when an item is removed. */
+	FItemAddOrRemoveDelegate OnItemRemovedEvent;
 
 protected:
 	/** Have the default items already been added to this container? */

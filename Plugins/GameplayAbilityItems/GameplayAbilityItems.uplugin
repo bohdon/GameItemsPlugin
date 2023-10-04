@@ -3,7 +3,7 @@
 	"Version": 1,
 	"VersionName": "1.0",
 	"FriendlyName": "GameplayAbilityItems",
-	"Description": "Extends the GameItems plugin with support for Gameplay Abilities",
+	"Description": "Extends the GameItems plugin with support for Gameplay Abilities. Requires the ExtendedGameplayAbilities plugin.",
 	"Category": "Other",
 	"CreatedBy": "Bohdon Sayre",
 	"CreatedByURL": "",
@@ -18,6 +18,16 @@
 			"Name": "GameplayAbilityItems",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "GameItems",
+			"Enabled": true
+		},
+		{
+			"Name": "ExtendedGameplayAbilities",
+			"Enabled": true
 		}
 	]
 }

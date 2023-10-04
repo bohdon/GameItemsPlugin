@@ -32,11 +32,11 @@ public:
 	/** Return the class default object for the definition of this equipment. */
 	const UGameEquipmentDef* GetEquipmentDefCDO() const;
 
-	/** Return the equipment definition cast to a type. */
+	/** Return the equipment definition class default object cast to a type. */
 	template <class T>
-	const T* GetEquipmentDef() const
+	const T* GetEquipmentDefCDO() const
 	{
-		return Cast<T>(GetEquipmentDef());
+		return Cast<T>(GetEquipmentDefCDO());
 	}
 
 	/** Return the owning Actor of this equipment. */
