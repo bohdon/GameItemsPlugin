@@ -21,10 +21,10 @@ public:
 
 	/** If true, use the level of the item that granted this equipment as the level for granted abilities and effects. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bUseItemStatLevel;
+	bool bUseItemLevel;
 
-	/** The item stat tag to use as the ability level. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (EditCondition = "bUseItemStatLevel"))
+	/** The stat tag that represents the item level to use. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (EditCondition = "bUseItemLevel"))
 	FGameplayTag ItemLevelTag;
 
 	virtual void OnEquipped() override;

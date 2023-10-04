@@ -11,7 +11,7 @@
 
 UAbilityEquipment::UAbilityEquipment(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer),
-	  bUseItemStatLevel(false)
+	  bUseItemLevel(false)
 {
 }
 
@@ -60,7 +60,7 @@ void UAbilityEquipment::GiveAbilitySets()
 				continue;
 			}
 
-			AbilitySetHandles = AbilitySet->GiveToAbilitySystem(AbilitySystem, Instigator, bUseItemStatLevel ? GetItemLevel() : -1);
+			AbilitySetHandles = AbilitySet->GiveToAbilitySystem(AbilitySystem, Instigator, bUseItemLevel ? GetItemLevel() : -1);
 		}
 	}
 }
