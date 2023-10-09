@@ -476,10 +476,7 @@ void UGameItemContainerComponent::AddDefaultItems(bool bForce)
 			continue;
 		}
 
-		for (const FGameItemDefStack& DefaultItem : ItemSet->Items)
-		{
-			AddNewItem(DefaultItem.ItemDef, DefaultItem.Count);
-		}
+		ItemSet->AddItemsToContainer(this);
 	}
 
 	bHasDefaultItems = true;
