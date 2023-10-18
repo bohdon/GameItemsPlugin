@@ -7,6 +7,7 @@
 #include "GameItem.h"
 #include "GameItemContainerComponent.h"
 #include "GameItemDef.h"
+#include "GameItemStatics.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
 
@@ -106,7 +107,7 @@ void UGameItemSubsystem::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebu
 		DisplayDebugManager.DrawString(TEXT("GAME ITEMS"));
 
 		// display debug info for all containers of the target actor
-		TInlineComponentArray<UGameItemContainerComponent*> Containers(HUD->GetCurrentDebugTargetActor());
+		TArray<UGameItemContainerComponent*> Containers = UGameItemStatics::GetAllGameItemContainersFromActor(HUD->GetCurrentDebugTargetActor());
 		for (const UGameItemContainerComponent* Container : Containers)
 		{
 			if (!IsValid(Container))

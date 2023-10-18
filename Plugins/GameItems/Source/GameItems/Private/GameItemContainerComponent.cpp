@@ -476,7 +476,7 @@ void UGameItemContainerComponent::AddDefaultItems(bool bForce)
 			continue;
 		}
 
-		ItemSet->AddItemsToContainer(this);
+		ItemSet->AddToContainer(this);
 	}
 
 	bHasDefaultItems = true;

@@ -6,7 +6,7 @@
 #include "GameItemContainerComponent.h"
 
 
-void UGameItemSet::AddItemsToContainer(UGameItemContainerComponent* ItemContainer) const
+void UGameItemSet::AddToContainer(UGameItemContainerComponent* ItemContainer) const
 {
 	if (!ItemContainer)
 	{
