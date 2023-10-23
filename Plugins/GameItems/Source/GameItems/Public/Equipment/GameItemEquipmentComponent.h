@@ -33,6 +33,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RemoveItemContainer(UGameItemContainerComponent* ItemContainer);
 
+	UFUNCTION(BlueprintCallable)
 	void ReapplyAllItemEquipment();
 
 	virtual bool ShouldApplyEquipmentForItem(UGameItem* Item) const;

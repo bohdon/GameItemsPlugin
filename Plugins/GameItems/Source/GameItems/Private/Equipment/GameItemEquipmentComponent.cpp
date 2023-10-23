@@ -32,6 +32,8 @@ void UGameItemEquipmentComponent::AddItemContainer(UGameItemContainerComponent* 
 
 	ItemContainer->OnItemAddedEvent.AddUObject(this, &UGameItemEquipmentComponent::OnItemAdded);
 	ItemContainer->OnItemRemovedEvent.AddUObject(this, &UGameItemEquipmentComponent::OnItemRemoved);
+
+	// TODO: apply equipment for items in this new container
 }
 
 void UGameItemEquipmentComponent::RemoveItemContainer(UGameItemContainerComponent* ItemContainer)
