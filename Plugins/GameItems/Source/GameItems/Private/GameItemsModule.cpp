@@ -8,6 +8,8 @@
 
 DEFINE_LOG_CATEGORY(LogGameItems);
 
+const FName ShowDebugNames::GameItems(TEXT("GameItems"));
+
 
 void FGameItemsModule::StartupModule()
 {
@@ -27,7 +29,7 @@ void FGameItemsModule::PopulateAutoCompleteEntries(TArray<FAutoCompleteCommand>&
 	AutoCompleteList.AddDefaulted();
 
 	FAutoCompleteCommand& AutoCompleteCommand = AutoCompleteList.Last();
-	AutoCompleteCommand.Command = TEXT("ShowDebug GAMEITEMS");
+	AutoCompleteCommand.Command = FString::Printf(TEXT("ShowDebug %s"), *ShowDebugNames::GameItems.ToString());
 	AutoCompleteCommand.Desc = TEXT("Toggles display of game item debug info");
 	AutoCompleteCommand.Color = ConsoleSettings->AutoCompleteCommandColor;
 }

@@ -7,6 +7,7 @@
 #include "GameItem.h"
 #include "GameItemContainerComponent.h"
 #include "GameItemDef.h"
+#include "GameItemsModule.h"
 #include "GameItemStatics.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
@@ -99,8 +100,7 @@ UGameItemContainerComponent* UGameItemSubsystem::FindContainerByTag(AActor* Acto
 void UGameItemSubsystem::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& YL, float& YPos)
 {
 	// showdebug GameItems
-	static const FName NAME_GameItems(TEXT("GameItems"));
-	if (DisplayInfo.IsDisplayOn(NAME_GameItems))
+	if (DisplayInfo.IsDisplayOn(ShowDebugNames::GameItems))
 	{
 		FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
 		DisplayDebugManager.SetDrawColor(FColor::Yellow);

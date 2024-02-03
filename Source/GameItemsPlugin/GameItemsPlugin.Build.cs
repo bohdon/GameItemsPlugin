@@ -13,6 +13,7 @@ public class GameItemsPlugin : ModuleRules
 			"Core",
 			"CoreUObject",
 			"Engine",
+			"GameItems",
 			"InputCore",
 		});
 

@@ -9,6 +9,12 @@ struct FAutoCompleteCommand;
 
 GAMEITEMS_API DECLARE_LOG_CATEGORY_EXTERN(LogGameItems, Log, All);
 
+namespace ShowDebugNames
+{
+	/** ShowDebug name for displaying game item debug info. */
+	extern GAMEITEMS_API const FName GameItems;
+};
+
 
 class FGameItemsModule : public IModuleInterface
 {

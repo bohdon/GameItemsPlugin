@@ -1,0 +1,8 @@
+# Editor config file for Unreal.
+# Should be placed at the project level (next to MyProject.uproject).
+# A root-level .editorconfig is provided by Epic in the engine.
+
+[*.{h,cpp}]
+# unreal can be verbose and long-winded, this extra buffer (default is 120)
+# prevents a lot of unnecessary line wraps and improves readability
+max_line_length=160
