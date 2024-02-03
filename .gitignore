@@ -1,6 +1,7 @@
 # Visual Studio user specific files
 .vs/
 .vscode/
+.vsconfig
 
 # Visual Studio database file
 *.VC.db
