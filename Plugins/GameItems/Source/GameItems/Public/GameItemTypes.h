@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Net/Serialization/FastArraySerializer.h"
 #include "GameplayTagContainer.h"
+#include "Net/Serialization/FastArraySerializer.h"
+#include "Templates/SubclassOf.h"
 #include "GameItemTypes.generated.h"
 
 
 class UGameItem;
-class UGameItemContainerComponent;
+class UGameItemContainer;
 class UGameItemDef;
 struct FGameItemList;
 struct FGameItemTagStackContainer;
@@ -247,10 +248,7 @@ struct GAMEITEMS_API FGameItemList : public FFastArraySerializer
 
 	void GetAllItems(TArray<UGameItem*>& OutItems) const;
 
-	DECLARE_MULTICAST_DELEGATE_ThreeParams(FGameItemListChangedDelegate,
-	                                       FGameItemListEntry& /*Entry*/,
-	                                       int32 /*NewCount*/,
-	                                       int32 /*OldCount*/);
+	DECLARE_MULTICAST_DELEGATE_ThreeParams(FGameItemListChangedDelegate, FGameItemListEntry& /*Entry*/, int32 /*NewCount*/, int32 /*OldCount*/);
 
 	/** Called when any item is added or removed. */
 	FGameItemListChangedDelegate OnListChangedEvent;
@@ -260,7 +258,7 @@ private:
 	UPROPERTY()
 	TArray<FGameItemListEntry> Entries;
 
-	friend UGameItemContainerComponent;
+	friend UGameItemContainer;
 };
 
 template <>

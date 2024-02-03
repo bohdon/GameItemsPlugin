@@ -7,7 +7,7 @@
 #include "GameItemEquipmentComponent.generated.h"
 
 class UGameItem;
-class UGameItemContainerComponent;
+class UGameItemContainer;
 
 
 /**
@@ -27,11 +27,11 @@ public:
 
 	/** Add an item container as a source of items for providing equipment. */
 	UFUNCTION(BlueprintCallable)
-	void AddItemContainer(UGameItemContainerComponent* ItemContainer);
+	void AddItemContainer(UGameItemContainer* ItemContainer);
 
 	/** Remove an item container as a source of items for providing equipment. */
 	UFUNCTION(BlueprintCallable)
-	void RemoveItemContainer(UGameItemContainerComponent* ItemContainer);
+	void RemoveItemContainer(UGameItemContainer* ItemContainer);
 
 	UFUNCTION(BlueprintCallable)
 	void ReapplyAllItemEquipment();
@@ -41,7 +41,7 @@ public:
 protected:
 	/** The item containers to monitor for items with equipment. */
 	UPROPERTY()
-	TArray<TWeakObjectPtr<UGameItemContainerComponent>> ItemContainers;
+	TArray<TWeakObjectPtr<UGameItemContainer>> ItemContainers;
 
 	/** Map of equipment that was applied, indexed by the source item. */
 	UPROPERTY()

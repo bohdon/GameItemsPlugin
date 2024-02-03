@@ -7,7 +7,7 @@
 #include "UObject/Interface.h"
 #include "GameItemContainerInterface.generated.h"
 
-class UGameItemContainerComponent;
+class UGameItemContainer;
 
 
 UINTERFACE(Meta = (CannotImplementInterfaceInBlueprint))
@@ -25,9 +25,12 @@ class GAMEITEMS_API IGameItemContainerInterface
 	GENERATED_BODY()
 
 public:
-	/** Return all item containers for this actor. */
-	virtual TArray<UGameItemContainerComponent*> GetAllItemContainerComponent() const = 0;
+	/** Return all available item containers. */
+	virtual TArray<UGameItemContainer*> GetAllItemContainers() const = 0;
 
-	/** Return the item container to use for this actor, by id tag. */
-	virtual UGameItemContainerComponent* GetItemContainerComponent(FGameplayTag IdTag) const;
+	/** Return an item container by tag id. */
+	virtual UGameItemContainer* GetItemContainer(FGameplayTag IdTag) const;
+
+	/** Return all available item container ids. */
+	virtual TArray<FGameplayTag> GetAllItemContainerIds() const;
 };

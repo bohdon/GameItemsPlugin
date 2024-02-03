@@ -7,10 +7,10 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "GameItemSubsystem.generated.h"
 
-class UGameItemContainerComponent;
 class AHUD;
 class UCanvas;
 class UGameItem;
+class UGameItemContainer;
 class UGameItemDef;
 class UGameItemFragment;
 
@@ -42,13 +42,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Meta = (DeterminesOutputType = "FragmentClass"), Category = "GameItems")
 	const UGameItemFragment* FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass) const;
 
-	/** Return all game item containers from an actor. */
+	/** Return all game item containers from an actor, using the IGameItemContainerInterface if possible. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
-	TArray<UGameItemContainerComponent*> GetAllContainers(AActor* Actor) const;
+	TArray<UGameItemContainer*> GetAllContainers(AActor* Actor) const;
 
-	/** Find a return a game item container from an actor by tag.*/
+	/** Return a game item container from an actor, using the IGameItemContainerInterface if possible. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
-	UGameItemContainerComponent* FindContainerByTag(AActor* Actor, FGameplayTag IdTag) const;
+	UGameItemContainer* GetContainerByTag(AActor* Actor, FGameplayTag IdTag) const;
 
 protected:
 	void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& YL, float& YPos);

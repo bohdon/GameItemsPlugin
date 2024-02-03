@@ -5,7 +5,9 @@
 
 #include "DisplayDebugHelpers.h"
 #include "GameItem.h"
+#include "GameItemContainer.h"
 #include "GameItemContainerComponent.h"
+#include "GameItemContainerInterface.h"
 #include "GameItemDef.h"
 #include "GameItemsModule.h"
 #include "GameItemStatics.h"
@@ -77,45 +79,70 @@ const UGameItemFragment* UGameItemSubsystem::FindFragment(TSubclassOf<UGameItemD
 	return ItemDefCDO->FindFragment(FragmentClass);
 }
 
-TArray<UGameItemContainerComponent*> UGameItemSubsystem::GetAllContainers(AActor* Actor) const
+TArray<UGameItemContainer*> UGameItemSubsystem::GetAllContainers(AActor* Actor) const
 {
-	TArray<UGameItemContainerComponent*> Result;
-	Actor->GetComponents<UGameItemContainerComponent>(Result);
-	return Result;
+	if (!Actor)
+	{
+		return TArray<UGameItemContainer*>();
+	}
+
+	// try using interface
+	if (const IGameItemContainerInterface* ContainerInterface = Cast<IGameItemContainerInterface>(Actor))
+	{
+		return ContainerInterface->GetAllItemContainers();
+	}
+
+	// fallback to searching for container component
+	if (const UGameItemContainerComponent* ContainerComponent = Actor->FindComponentByClass<UGameItemContainerComponent>())
+	{
+		return ContainerComponent->GetAllItemContainers();
+	}
+	return TArray<UGameItemContainer*>();
 }
 
-UGameItemContainerComponent* UGameItemSubsystem::FindContainerByTag(AActor* Actor, FGameplayTag IdTag) const
+UGameItemContainer* UGameItemSubsystem::GetContainerByTag(AActor* Actor, FGameplayTag IdTag) const
 {
-	TArray<UGameItemContainerComponent*> AllContainers = GetAllContainers(Actor);
-	for (UGameItemContainerComponent* Container : AllContainers)
+	if (!Actor)
 	{
-		if (Container->IdTag == IdTag)
-		{
-			return Container;
-		}
+		return nullptr;
 	}
+
+	// try using interface
+	if (const IGameItemContainerInterface* ContainerInterface = Cast<IGameItemContainerInterface>(Actor))
+	{
+		return ContainerInterface->GetItemContainer(IdTag);
+	}
+
+	// fallback to getting components directly
+	if (const UGameItemContainerComponent* ContainerComponent = Actor->FindComponentByClass<UGameItemContainerComponent>())
+	{
+		return ContainerComponent->GetItemContainer(IdTag);
+	}
+
 	return nullptr;
 }
 
 void UGameItemSubsystem::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& YL, float& YPos)
 {
 	// showdebug GameItems
-	if (DisplayInfo.IsDisplayOn(ShowDebugNames::GameItems))
+	if (!DisplayInfo.IsDisplayOn(ShowDebugNames::GameItems))
 	{
-		FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
-		DisplayDebugManager.SetDrawColor(FColor::Yellow);
-		DisplayDebugManager.DrawString(TEXT("GAME ITEMS"));
+		return;
+	}
 
-		// display debug info for all containers of the target actor
-		TArray<UGameItemContainerComponent*> Containers = UGameItemStatics::GetAllGameItemContainersFromActor(HUD->GetCurrentDebugTargetActor());
-		for (const UGameItemContainerComponent* Container : Containers)
+	FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
+	DisplayDebugManager.SetDrawColor(FColor::Yellow);
+	DisplayDebugManager.DrawString(TEXT("GAME ITEMS"));
+
+	// display debug info for all containers of the target actor
+	TArray<UGameItemContainer*> Containers = GetAllContainers(HUD->GetCurrentDebugTargetActor());
+	for (const UGameItemContainer* Container : Containers)
+	{
+		if (!IsValid(Container))
 		{
-			if (!IsValid(Container))
-			{
-				continue;
-			}
-
-			Container->DisplayDebug(Canvas, DisplayInfo, YL, YPos);
+			continue;
 		}
+
+		Container->DisplayDebug(Canvas, DisplayInfo, YL, YPos);
 	}
 }

@@ -4,7 +4,7 @@
 #include "Equipment/GameItemEquipmentComponent.h"
 
 #include "GameItem.h"
-#include "GameItemContainerComponent.h"
+#include "GameItemContainer.h"
 #include "GameItemDef.h"
 #include "Equipment/GameEquipment.h"
 #include "Equipment/GameEquipmentDef.h"
@@ -21,7 +21,7 @@ TArray<UGameEquipment*> UGameItemEquipmentComponent::FindAllEquipmentFromItem(UG
 	return FindAllEquipmentByInstigator(Item);
 }
 
-void UGameItemEquipmentComponent::AddItemContainer(UGameItemContainerComponent* ItemContainer)
+void UGameItemEquipmentComponent::AddItemContainer(UGameItemContainer* ItemContainer)
 {
 	if (!ItemContainer || ItemContainers.Contains(ItemContainer))
 	{
@@ -36,7 +36,7 @@ void UGameItemEquipmentComponent::AddItemContainer(UGameItemContainerComponent* 
 	// TODO: apply equipment for items in this new container
 }
 
-void UGameItemEquipmentComponent::RemoveItemContainer(UGameItemContainerComponent* ItemContainer)
+void UGameItemEquipmentComponent::RemoveItemContainer(UGameItemContainer* ItemContainer)
 {
 	if (!ItemContainer || !ItemContainers.Contains(ItemContainer))
 	{
@@ -53,7 +53,7 @@ void UGameItemEquipmentComponent::ReapplyAllItemEquipment()
 {
 	RemoveAllEquipment();
 
-	for (TWeakObjectPtr<UGameItemContainerComponent> Container : ItemContainers)
+	for (TWeakObjectPtr<UGameItemContainer> Container : ItemContainers)
 	{
 		if (Container.IsValid())
 		{

@@ -3,13 +3,13 @@
 
 #include "GameItemContainerInterface.h"
 
-#include "GameItemContainerComponent.h"
+#include "GameItemContainer.h"
 
 
-UGameItemContainerComponent* IGameItemContainerInterface::GetItemContainerComponent(FGameplayTag IdTag) const
+UGameItemContainer* IGameItemContainerInterface::GetItemContainer(FGameplayTag IdTag) const
 {
-	const TArray<UGameItemContainerComponent*> AllItemContainers = GetAllItemContainerComponent();
-	for (UGameItemContainerComponent* ItemContainer : AllItemContainers)
+	const TArray<UGameItemContainer*> AllItemContainers = GetAllItemContainers();
+	for (UGameItemContainer* ItemContainer : AllItemContainers)
 	{
 		if (ItemContainer->IdTag == IdTag)
 		{
@@ -18,4 +18,16 @@ UGameItemContainerComponent* IGameItemContainerInterface::GetItemContainerCompon
 	}
 
 	return nullptr;
+}
+
+TArray<FGameplayTag> IGameItemContainerInterface::GetAllItemContainerIds() const
+{
+	const TArray<UGameItemContainer*> AllContainers = GetAllItemContainers();
+
+	TArray<FGameplayTag> Result;
+	Algo::Transform(AllContainers, Result, [](const UGameItemContainer* Container)
+	{
+		return Container->IdTag;
+	});
+	return Result;
 }

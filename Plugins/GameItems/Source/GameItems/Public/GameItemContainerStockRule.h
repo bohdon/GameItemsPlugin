@@ -3,13 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameItem.h"
 #include "GameItemTypes.h"
 #include "UObject/Object.h"
 #include "GameItemContainerStockRule.generated.h"
 
 class UGameItem;
-class UGameItemContainerComponent;
+class UGameItemContainer;
 
 
 /**
@@ -25,11 +24,11 @@ public:
 
 	/** Return the maximum allowed count for an item, or -1 if unlimited. */
 	UFUNCTION(BlueprintNativeEvent)
-	int32 GetItemMaxCount(const UGameItemContainerComponent* Container, const UGameItem* Item) const;
+	int32 GetItemMaxCount(const UGameItemContainer* Container, const UGameItem* Item) const;
 
 	/** Return the maximum allowed count for a single stack of an item, or -1 if unlimited. */
 	UFUNCTION(BlueprintNativeEvent)
-	int32 GetItemStackMaxCount(const UGameItemContainerComponent* Container, const UGameItem* Item) const;
+	int32 GetItemStackMaxCount(const UGameItemContainer* Container, const UGameItem* Item) const;
 };
 
 
@@ -48,8 +47,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Meta = (ShowOnlyInnerProperties), Category = "GameItem")
 	FGameItemStockRules StockRules;
 
-	virtual int32 GetItemMaxCount_Implementation(const UGameItemContainerComponent* Container, const UGameItem* Item) const override;
-	virtual int32 GetItemStackMaxCount_Implementation(const UGameItemContainerComponent* Container, const UGameItem* Item) const override;
+	virtual int32 GetItemMaxCount_Implementation(const UGameItemContainer* Container, const UGameItem* Item) const override;
+	virtual int32 GetItemStackMaxCount_Implementation(const UGameItemContainer* Container, const UGameItem* Item) const override;
 };
 
 
@@ -69,6 +68,6 @@ public:
 
 	FGameItemStockRules GetStockRulesForItem(const UGameItem* Item) const;
 
-	virtual int32 GetItemMaxCount_Implementation(const UGameItemContainerComponent* Container, const UGameItem* Item) const override;
-	virtual int32 GetItemStackMaxCount_Implementation(const UGameItemContainerComponent* Container, const UGameItem* Item) const override;
+	virtual int32 GetItemMaxCount_Implementation(const UGameItemContainer* Container, const UGameItem* Item) const override;
+	virtual int32 GetItemStackMaxCount_Implementation(const UGameItemContainer* Container, const UGameItem* Item) const override;
 };

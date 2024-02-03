@@ -24,5 +24,5 @@ public:
 
 	/** Add all items in this set to a container. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
-	virtual void AddToContainer(UGameItemContainerComponent* ItemContainer) const;
+	virtual void AddToContainer(UGameItemContainer* Container) const;
 };

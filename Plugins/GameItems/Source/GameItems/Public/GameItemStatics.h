@@ -7,7 +7,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GameItemStatics.generated.h"
 
-class UGameItemContainerComponent;
+class UGameItemContainer;
 class UGameItemDef;
 class UGameItemFragment;
 class UGameItemSubsystem;
@@ -24,17 +24,13 @@ class GAMEITEMS_API UGameItemStatics : public UBlueprintFunctionLibrary
 public:
 	static UGameItemSubsystem* GetItemSubsystemFromContextObject(const UObject* Object);
 
-	/** Return all game item container components from an actor. */
+	/** Return all game item containers component from an actor, using the UGameItemSubsystem. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
-	static TArray<UGameItemContainerComponent*> GetAllGameItemContainersFromActor(AActor* Actor);
+	static TArray<UGameItemContainer*> GetAllGameItemContainersFromActor(AActor* Actor);
 
-	/**
-	 * Return a game item container component from an actor, using the IGameItemContainerInterface where possible.
-	 * @param Actor The actor to retrieve an item container from.
-	 * @param IdTag The id tag of the item container to retrieve.
-	 */
+	/** Return a game item container component from an actor, using the UGameItemSubsystem. */
 	UFUNCTION(BlueprintPure, Category = "GameItems")
-	static UGameItemContainerComponent* GetGameItemContainerFromActor(AActor* Actor, FGameplayTag IdTag);
+	static UGameItemContainer* GetGameItemContainerFromActor(AActor* Actor, FGameplayTag IdTag);
 
 	/** Find and return an item fragment by class. */
 	UFUNCTION(BlueprintCallable, Meta = (WorldContext = "WorldContextObject", DeterminesOutputType = "FragmentClass"), Category = "GameItems")

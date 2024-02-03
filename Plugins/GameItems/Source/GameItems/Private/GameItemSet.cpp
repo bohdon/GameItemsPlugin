@@ -3,18 +3,18 @@
 
 #include "GameItemSet.h"
 
-#include "GameItemContainerComponent.h"
+#include "GameItemContainer.h"
 
 
-void UGameItemSet::AddToContainer(UGameItemContainerComponent* ItemContainer) const
+void UGameItemSet::AddToContainer(UGameItemContainer* Container) const
 {
-	if (!ItemContainer)
+	if (!Container)
 	{
 		return;
 	}
 
 	for (const FGameItemDefStack& DefaultItem : Items)
 	{
-		ItemContainer->AddNewItem(DefaultItem.ItemDef, DefaultItem.Count);
+		Container->AddNewItem(DefaultItem.ItemDef, DefaultItem.Count);
 	}
 }
