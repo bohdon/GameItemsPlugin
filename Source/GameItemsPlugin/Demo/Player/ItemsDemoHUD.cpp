@@ -5,6 +5,7 @@
 
 #include "GameItemContainerComponent.h"
 #include "GameItemsModule.h"
+#include "Demo/UI/UIMainLayout.h"
 #include "UObject/UObjectIterator.h"
 
 
@@ -22,4 +23,27 @@ void AItemsDemoHUD::GetDebugActorList(TArray<AActor*>& InOutList)
 			AddComponentOwnerToDebugList(*It, InOutList, World);
 		}
 	}
+}
+
+UCommonActivatableWidgetStack* AItemsDemoHUD::GetUILayer(FGameplayTag LayerTag) const
+{
+	return MainLayout->GetUILayer(LayerTag);
+}
+
+void AItemsDemoHUD::BeginPlay()
+{
+	CreateMainLayout();
+
+	Super::BeginPlay();
+}
+
+void AItemsDemoHUD::CreateMainLayout()
+{
+	if (!MainLayoutClass)
+	{
+		return;
+	}
+
+	MainLayout = CreateWidget<UUIMainLayout>(PlayerOwner, MainLayoutClass);
+	MainLayout->AddToPlayerScreen();
 }

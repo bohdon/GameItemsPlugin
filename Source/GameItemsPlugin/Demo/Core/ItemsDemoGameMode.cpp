@@ -3,11 +3,13 @@
 
 #include "ItemsDemoGameMode.h"
 
-#include "ItemsDemoHUD.h"
+#include "Demo/Player/ItemsDemoHUD.h"
+#include "Demo/Player/ItemsDemoPlayerController.h"
 
 
 AItemsDemoGameMode::AItemsDemoGameMode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	PlayerControllerClass = AItemsDemoPlayerController::StaticClass();
 	HUDClass = AItemsDemoHUD::StaticClass();
 }
