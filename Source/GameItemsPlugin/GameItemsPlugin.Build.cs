@@ -21,6 +21,7 @@ public class GameItemsPlugin : ModuleRules
 			"Core",
 			"CoreUObject",
 			"Engine",
+			"EnhancedInput",
 			"GameItems",
 			"GameplayTags",
 			"InputCore",

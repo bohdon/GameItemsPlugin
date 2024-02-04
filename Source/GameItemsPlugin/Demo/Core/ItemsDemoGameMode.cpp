@@ -3,6 +3,7 @@
 
 #include "ItemsDemoGameMode.h"
 
+#include "Demo/Player/ItemsDemoCharacter.h"
 #include "Demo/Player/ItemsDemoHUD.h"
 #include "Demo/Player/ItemsDemoPlayerController.h"
 
@@ -12,4 +13,5 @@ AItemsDemoGameMode::AItemsDemoGameMode(const FObjectInitializer& ObjectInitializ
 {
 	PlayerControllerClass = AItemsDemoPlayerController::StaticClass();
 	HUDClass = AItemsDemoHUD::StaticClass();
+	DefaultPawnClass = AItemsDemoCharacter::StaticClass();
 }
