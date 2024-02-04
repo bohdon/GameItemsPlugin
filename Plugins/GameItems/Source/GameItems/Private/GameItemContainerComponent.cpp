@@ -4,6 +4,7 @@
 #include "GameItemContainerComponent.h"
 
 #include "GameItemContainer.h"
+#include "GameItemContainerDef.h"
 #include "Engine/ActorChannel.h"
 #include "Engine/World.h"
 
@@ -29,11 +30,7 @@ void UGameItemContainerComponent::InitializeComponent()
 
 	if (GetOwner()->HasAuthority())
 	{
-		RegisterDefaultContainers();
-
-		// TODO: do this for containers when created
-		// add default items for all containers
-		// AddDefaultItems();
+		CreateDefaultContainers();
 	}
 }
 
@@ -84,38 +81,45 @@ UGameItemContainer* UGameItemContainerComponent::GetItemContainer(FGameplayTag I
 	return Containers.FindRef(IdTag);
 }
 
-void UGameItemContainerComponent::RegisterDefaultContainers()
+void UGameItemContainerComponent::CreateDefaultContainers()
 {
-	if (!GetOwner()->HasAuthority())
-	{
-		return;
-	}
+	check(GetOwner()->HasAuthority());
 
-	for (TObjectPtr<UGameItemContainer> Container : DefaultContainers)
+	for (const auto& DefaultContainer : DefaultContainers)
 	{
-		if (!Containers.Contains(Container->IdTag))
-		{
-			AddContainer(Container);
-		}
+		CreateContainer(DefaultContainer.Key, DefaultContainer.Value);
 	}
 }
 
-UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag IdTag, TSubclassOf<UGameItemContainer> ContainerClass)
+UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag IdTag, TSubclassOf<UGameItemContainerDef> ContainerDef)
 {
-	if (Containers.Contains(IdTag))
+	if (!IdTag.IsValid() || Containers.Contains(IdTag))
 	{
-		// already exists
+		// already exists, or invalid id
 		return nullptr;
 	}
 
+	if (!ContainerDef)
+	{
+		// must provide a container def
+		return nullptr;
+	}
+
+	// retrieve container class to spawn from the definition
+	const UGameItemContainerDef* DefCDO = GetDefault<UGameItemContainerDef>(ContainerDef);
+	TSubclassOf<UGameItemContainer> ContainerClass = DefCDO->ContainerClass;
 	if (!ContainerClass)
 	{
 		ContainerClass = UGameItemContainer::StaticClass();
 	}
 
+	// create and initialize the new container
 	UGameItemContainer* NewContainer = NewObject<UGameItemContainer>(this, ContainerClass);
 	check(NewContainer);
 	NewContainer->IdTag = IdTag;
+	NewContainer->ContainerDef = ContainerDef;
+
+	AddContainer(NewContainer);
 
 	return NewContainer;
 }
@@ -126,4 +130,8 @@ void UGameItemContainerComponent::AddContainer(UGameItemContainer* Container)
 	check(!Containers.Contains(Container->IdTag));
 
 	Containers.Add(Container->IdTag, Container);
+
+	AddReplicatedSubObject(Container);
+
+	Container->AddDefaultItems();
 }

@@ -26,11 +26,14 @@ class GAMEITEMS_API IGameItemContainerInterface
 
 public:
 	/** Return all available item containers. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false)
 	virtual TArray<UGameItemContainer*> GetAllItemContainers() const = 0;
 
 	/** Return an item container by tag id. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false)
 	virtual UGameItemContainer* GetItemContainer(FGameplayTag IdTag) const;
 
 	/** Return all available item container ids. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false)
 	virtual TArray<FGameplayTag> GetAllItemContainerIds() const;
 };

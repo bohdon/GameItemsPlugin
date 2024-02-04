@@ -4,6 +4,7 @@
 #include "GameItemContainer.h"
 
 #include "GameItem.h"
+#include "GameItemContainerDef.h"
 #include "GameItemContainerStockRule.h"
 #include "GameItemDef.h"
 #include "GameItemSet.h"
@@ -20,10 +21,7 @@
 
 
 UGameItemContainer::UGameItemContainer(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer),
-	  bLimitSlots(false),
-	  SlotCount(10),
-	  bAutoStack(true)
+	: Super(ObjectInitializer)
 {
 	ItemList.OnListChangedEvent.AddUObject(this, &UGameItemContainer::OnListChanged);
 }
@@ -68,6 +66,11 @@ UGameItem* UGameItemContainer::DuplicateItem(UGameItem* Item) const
 	UGameItemSubsystem* ItemSubsystem = World->GetGameInstance()->GetSubsystem<UGameItemSubsystem>();
 
 	return ItemSubsystem->DuplicateGameItem(OwningActor, Item);
+}
+
+const UGameItemContainerDef* UGameItemContainer::GetContainerDefCDO() const
+{
+	return GetDefault<UGameItemContainerDef>(ContainerDef);
 }
 
 bool UGameItemContainer::CanAddNewItem(TSubclassOf<UGameItemDef> ItemDef, int32 Count)
@@ -137,7 +140,7 @@ TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot
 
 	// if auto-stacking or dealing with limited slots, gather a list of matching items with space available
 	TArray<UGameItem*> MatchingItemsWithSpace;
-	if (bAutoStack || bLimitSlots)
+	if (GetContainerDefCDO()->bAutoStack || GetContainerDefCDO()->bLimitSlots)
 	{
 		MatchingItemsWithSpace = GetAllMatchingItems(Item);
 		MatchingItemsWithSpace.RemoveAll([StackMaxCount](const UGameItem* MatchingItem)
@@ -164,7 +167,7 @@ TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot
 		}
 
 		// stack with existing items when auto stacking is enabled, or when there are no empty slots left
-		const bool bCanStackWithExisting = bAutoStack || NumEmptySlots == 0;
+		const bool bCanStackWithExisting = GetContainerDefCDO()->bAutoStack || NumEmptySlots == 0;
 
 		// attempt to add to next target slot
 		UGameItem* ExistingItem = GetItemAt(NextTargetSlot);
@@ -340,15 +343,15 @@ int32 UGameItemContainer::GetNumItems() const
 int32 UGameItemContainer::GetNumEmptySlots() const
 {
 	// always return zero when no space is left, even if container was overfilled somehow
-	return bLimitSlots ? FMath::Max(SlotCount - GetNumItems(), 0) : INDEX_NONE;
+	return GetContainerDefCDO()->bLimitSlots ? FMath::Max(GetContainerDefCDO()->SlotCount - GetNumItems(), 0) : INDEX_NONE;
 }
 
 int32 UGameItemContainer::GetNextEmptySlot() const
 {
-	if (bLimitSlots)
+	if (GetContainerDefCDO()->bLimitSlots)
 	{
 		// iterate over limited slot count
-		for (int32 Idx = 0; Idx < SlotCount; ++Idx)
+		for (int32 Idx = 0; Idx < GetContainerDefCDO()->SlotCount; ++Idx)
 		{
 			if (IsSlotEmpty(Idx))
 			{
@@ -396,7 +399,7 @@ int32 UGameItemContainer::GetItemMaxCount(const UGameItem* Item) const
 		Result = ItemDefCDO->StockRules.MaxCount;
 	}
 
-	for (const UGameItemContainerStockRule* StockRule : StockRules)
+	for (const UGameItemContainerStockRule* StockRule : GetContainerDefCDO()->StockRules)
 	{
 		const int32 RuleMaxCount = StockRule->GetItemMaxCount(this, Item);
 		if (RuleMaxCount >= 0)
@@ -429,7 +432,7 @@ int32 UGameItemContainer::GetItemStackMaxCount(const UGameItem* Item) const
 		Result = ItemDefCDO->StockRules.StackMaxCount;
 	}
 
-	for (const UGameItemContainerStockRule* StockRule : StockRules)
+	for (const UGameItemContainerStockRule* StockRule : GetContainerDefCDO()->StockRules)
 	{
 		const int32 RuleMaxCount = StockRule->GetItemStackMaxCount(this, Item);
 		if (RuleMaxCount >= 0)
@@ -448,12 +451,12 @@ void UGameItemContainer::AddDefaultItems(bool bForce)
 		return;
 	}
 
-	for (const FGameItemDefStack& DefaultItem : DefaultItems)
+	for (const FGameItemDefStack& DefaultItem : GetContainerDefCDO()->DefaultItems)
 	{
 		AddNewItem(DefaultItem.ItemDef, DefaultItem.Count);
 	}
 
-	for (const UGameItemSet* ItemSet : DefaultItemSets)
+	for (const UGameItemSet* ItemSet : GetContainerDefCDO()->DefaultItemSets)
 	{
 		if (!ItemSet)
 		{
@@ -511,7 +514,9 @@ void UGameItemContainer::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& 
 	FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
 
 	DisplayDebugManager.SetDrawColor(FColor::White);
-	const FString CountStr = bLimitSlots ? FString::Printf(TEXT("%d/%d"), GetNumItems(), SlotCount) : FString::FromInt(GetNumItems());
+	const FString CountStr = GetContainerDefCDO()->bLimitSlots
+		                         ? FString::Printf(TEXT("%d/%d"), GetNumItems(), GetContainerDefCDO()->SlotCount)
+		                         : FString::FromInt(GetNumItems());
 	DisplayDebugManager.DrawString(FString::Printf(TEXT("%s (%s items)"), *IdTag.ToString(), *CountStr));
 
 	for (int32 Idx = 0; Idx < ItemList.Entries.Num(); ++Idx)

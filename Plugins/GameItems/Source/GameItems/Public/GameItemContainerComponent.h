@@ -7,6 +7,8 @@
 #include "Components/ActorComponent.h"
 #include "GameItemContainerComponent.generated.h"
 
+class UGameItemContainerDef;
+
 
 /**
  * Component that provides any number of game item containers.
@@ -20,16 +22,16 @@ class GAMEITEMS_API UGameItemContainerComponent : public UActorComponent,
 public:
 	UGameItemContainerComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-	/** The default container definitions. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
-	TArray<TObjectPtr<UGameItemContainer>> DefaultContainers;
+	/** The default containers to create. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TMap<FGameplayTag, TSubclassOf<UGameItemContainerDef>> DefaultContainers;
 
 	/**
 	 * Create a new item container.
 	 * @return The new container, or null if a container already exists with the same id.
 	 */
 	UFUNCTION(BlueprintCallable, Meta = (DeterminesOutputType = "ContainerClass"))
-	UGameItemContainer* CreateContainer(FGameplayTag IdTag, TSubclassOf<UGameItemContainer> ContainerClass = nullptr);
+	UGameItemContainer* CreateContainer(FGameplayTag IdTag, TSubclassOf<UGameItemContainerDef> ContainerDef = nullptr);
 
 	virtual void InitializeComponent() override;
 
@@ -45,7 +47,7 @@ protected:
 	UPROPERTY(Transient)
 	TMap<FGameplayTag, UGameItemContainer*> Containers;
 
-	void RegisterDefaultContainers();
+	void CreateDefaultContainers();
 
 	void AddContainer(UGameItemContainer* Container);
 };

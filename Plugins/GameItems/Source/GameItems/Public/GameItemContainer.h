@@ -8,10 +8,11 @@
 #include "UObject/Object.h"
 #include "GameItemContainer.generated.h"
 
-class UGameItemContainerStockRule;
-class UGameItemSet;
 class UGameItem;
+class UGameItemContainerDef;
+class UGameItemContainerStockRule;
 class UGameItemDef;
+class UGameItemSet;
 
 
 /**
@@ -30,29 +31,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
 	FGameplayTag IdTag;
 
-	/** Limit the number of items/stacks that can be in this container. */
+	/** The settings and rules for this container. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
-	bool bLimitSlots;
+	TSubclassOf<UGameItemContainerDef> ContainerDef;
 
-	/** The limited number of slots available in this container, when bLimitSlots is true. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (EditCondition = "bLimitSlots"), Category = "GameItemContainer")
-	int32 SlotCount;
-
-	/** Automatically combine and stack items that are added to the container (unless explicitly added to an empty slot). */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
-	bool bAutoStack;
-
-	/** The items that should be in this container by default. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
-	TArray<FGameItemDefStack> DefaultItems;
-
-	/** The item sets that should be in this container by default. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
-	TArray<TObjectPtr<UGameItemSet>> DefaultItemSets;
-
-	/** Custom stock rules specific to this container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
-	TArray<TObjectPtr<UGameItemContainerStockRule>> StockRules;
+	/** Return the CDO of the container definition. */
+	FORCEINLINE const UGameItemContainerDef* GetContainerDefCDO() const;
 
 	/** Return true if a new item could be added to this container. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Meta = (DeprecatedFunction), Category = "GameItemContainer")
