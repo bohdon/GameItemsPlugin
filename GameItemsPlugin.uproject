@@ -21,6 +21,10 @@
 		{
 			"Name": "GameplayAbilityItems",
 			"Enabled": false
+		},
+		{
+			"Name": "CommonUI",
+			"Enabled": true
 		}
 	]
 }
