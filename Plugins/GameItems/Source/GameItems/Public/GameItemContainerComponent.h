@@ -22,9 +22,13 @@ class GAMEITEMS_API UGameItemContainerComponent : public UActorComponent,
 public:
 	UGameItemContainerComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-	/** The default containers to create. */
+	/** The definition to use for the default container. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<FGameplayTag, TSubclassOf<UGameItemContainerDef>> DefaultContainers;
+	TSubclassOf<UGameItemContainerDef> DefaultContainerClass;
+
+	/** The definitions for all additional containers to create at startup. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TMap<FGameplayTag, TSubclassOf<UGameItemContainerDef>> StartupContainers;
 
 	/**
 	 * Create a new item container.
@@ -47,7 +51,8 @@ protected:
 	UPROPERTY(Transient)
 	TMap<FGameplayTag, UGameItemContainer*> Containers;
 
-	void CreateDefaultContainers();
+	/** Create all startup containers. */
+	void CreateStartupContainers();
 
 	void AddContainer(UGameItemContainer* Container);
 };

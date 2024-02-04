@@ -11,6 +11,7 @@ public class GameItems : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"Core",
+			"DeveloperSettings",
 			"GameplayTags",
 			"NetCore",
 		});

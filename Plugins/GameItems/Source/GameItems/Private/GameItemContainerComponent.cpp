@@ -5,6 +5,8 @@
 
 #include "GameItemContainer.h"
 #include "GameItemContainerDef.h"
+#include "GameItemSettings.h"
+#include "GameItemSubsystem.h"
 #include "Engine/ActorChannel.h"
 #include "Engine/World.h"
 
@@ -30,7 +32,7 @@ void UGameItemContainerComponent::InitializeComponent()
 
 	if (GetOwner()->HasAuthority())
 	{
-		CreateDefaultContainers();
+		CreateStartupContainers();
 	}
 }
 
@@ -81,19 +83,24 @@ UGameItemContainer* UGameItemContainerComponent::GetItemContainer(FGameplayTag C
 	return Containers.FindRef(ContainerId);
 }
 
-void UGameItemContainerComponent::CreateDefaultContainers()
+void UGameItemContainerComponent::CreateStartupContainers()
 {
 	check(GetOwner()->HasAuthority());
 
-	for (const auto& DefaultContainer : DefaultContainers)
+	if (DefaultContainerClass)
 	{
-		CreateContainer(DefaultContainer.Key, DefaultContainer.Value);
+		CreateContainer(UGameItemSettings::GetDefaultContainerId(), DefaultContainerClass);
+	}
+
+	for (const auto& ContainerIdAndDef : StartupContainers)
+	{
+		CreateContainer(ContainerIdAndDef.Key, ContainerIdAndDef.Value);
 	}
 }
 
 UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag ContainerId, TSubclassOf<UGameItemContainerDef> ContainerDef)
 {
-	if (!ContainerId.IsValid() || Containers.Contains(ContainerId))
+	if (Containers.Contains(ContainerId))
 	{
 		// already exists, or invalid id
 		return nullptr;

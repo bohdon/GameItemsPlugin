@@ -29,11 +29,15 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false)
 	virtual TArray<UGameItemContainer*> GetAllItemContainers() const = 0;
 
+	/** Return all available item container ids. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	virtual TArray<FGameplayTag> GetAllItemContainerIds() const;
+
 	/** Return an item container by tag id. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false)
 	virtual UGameItemContainer* GetItemContainer(FGameplayTag ContainerId) const;
 
-	/** Return all available item container ids. */
+	/** Return the default item container. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false)
-	virtual TArray<FGameplayTag> GetAllItemContainerIds() const;
+	virtual UGameItemContainer* GetDefaultItemContainer() const;
 };

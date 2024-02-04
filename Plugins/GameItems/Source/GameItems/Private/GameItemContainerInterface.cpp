@@ -4,7 +4,20 @@
 #include "GameItemContainerInterface.h"
 
 #include "GameItemContainer.h"
+#include "GameItemSettings.h"
 
+
+TArray<FGameplayTag> IGameItemContainerInterface::GetAllItemContainerIds() const
+{
+	const TArray<UGameItemContainer*> AllContainers = GetAllItemContainers();
+
+	TArray<FGameplayTag> Result;
+	Algo::Transform(AllContainers, Result, [](const UGameItemContainer* Container)
+	{
+		return Container->ContainerId;
+	});
+	return Result;
+}
 
 UGameItemContainer* IGameItemContainerInterface::GetItemContainer(FGameplayTag ContainerId) const
 {
@@ -20,14 +33,7 @@ UGameItemContainer* IGameItemContainerInterface::GetItemContainer(FGameplayTag C
 	return nullptr;
 }
 
-TArray<FGameplayTag> IGameItemContainerInterface::GetAllItemContainerIds() const
+UGameItemContainer* IGameItemContainerInterface::GetDefaultItemContainer() const
 {
-	const TArray<UGameItemContainer*> AllContainers = GetAllItemContainers();
-
-	TArray<FGameplayTag> Result;
-	Algo::Transform(AllContainers, Result, [](const UGameItemContainer* Container)
-	{
-		return Container->ContainerId;
-	});
-	return Result;
+	return GetItemContainer(UGameItemSettings::GetDefaultContainerId());
 }

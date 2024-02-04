@@ -50,6 +50,23 @@ UGameItem* UGameItemSubsystem::CreateGameItem(UObject* Outer, TSubclassOf<UGameI
 	return NewItem;
 }
 
+TArray<UGameItem*> UGameItemSubsystem::CreateGameItemInContainer(UGameItemContainer* Container, TSubclassOf<UGameItemDef> ItemDef, int32 Count)
+{
+	if (!Container || !Container->GetOwner())
+	{
+		return TArray<UGameItem*>();
+	}
+
+	UGameItem* NewItem = CreateGameItem(Container->GetOwner(), ItemDef, Count);
+	if (!NewItem)
+	{
+		return TArray<UGameItem*>();
+	}
+
+	TArray<UGameItem*> AddedItems = Container->AddItem(NewItem);
+	return AddedItems;
+}
+
 UGameItem* UGameItemSubsystem::DuplicateGameItem(UObject* Outer, UGameItem* Item)
 {
 	if (!Item)
@@ -79,46 +96,47 @@ const UGameItemFragment* UGameItemSubsystem::FindFragment(TSubclassOf<UGameItemD
 	return ItemDefCDO->FindFragment(FragmentClass);
 }
 
-TArray<UGameItemContainer*> UGameItemSubsystem::GetAllContainers(AActor* Actor) const
+TArray<UGameItemContainer*> UGameItemSubsystem::GetAllContainersForActor(AActor* Actor) const
 {
-	if (!Actor)
-	{
-		return TArray<UGameItemContainer*>();
-	}
-
-	// try using interface
-	if (const IGameItemContainerInterface* ContainerInterface = Cast<IGameItemContainerInterface>(Actor))
+	if (const IGameItemContainerInterface* ContainerInterface = GetContainerInterfaceForActor(Actor))
 	{
 		return ContainerInterface->GetAllItemContainers();
-	}
-
-	// fallback to searching for container component
-	if (const UGameItemContainerComponent* ContainerComponent = Actor->FindComponentByClass<UGameItemContainerComponent>())
-	{
-		return ContainerComponent->GetAllItemContainers();
 	}
 	return TArray<UGameItemContainer*>();
 }
 
-UGameItemContainer* UGameItemSubsystem::GetContainerByTag(AActor* Actor, FGameplayTag ContainerId) const
+UGameItemContainer* UGameItemSubsystem::GetContainerForActor(AActor* Actor, FGameplayTag ContainerId) const
 {
-	if (!Actor)
-	{
-		return nullptr;
-	}
-
-	// try using interface
-	if (const IGameItemContainerInterface* ContainerInterface = Cast<IGameItemContainerInterface>(Actor))
+	if (const IGameItemContainerInterface* ContainerInterface = GetContainerInterfaceForActor(Actor))
 	{
 		return ContainerInterface->GetItemContainer(ContainerId);
 	}
 
-	// fallback to getting components directly
-	if (const UGameItemContainerComponent* ContainerComponent = Actor->FindComponentByClass<UGameItemContainerComponent>())
-	{
-		return ContainerComponent->GetItemContainer(ContainerId);
-	}
+	return nullptr;
+}
 
+UGameItemContainer* UGameItemSubsystem::GetDefaultContainerForActor(AActor* Actor) const
+{
+	if (const IGameItemContainerInterface* ContainerInterface = GetContainerInterfaceForActor(Actor))
+	{
+		return ContainerInterface->GetDefaultItemContainer();
+	}
+	return nullptr;
+}
+
+IGameItemContainerInterface* UGameItemSubsystem::GetContainerInterfaceForActor(AActor* Actor) const
+{
+	if (Actor)
+	{
+		if (IGameItemContainerInterface* ContainerInterface = Cast<IGameItemContainerInterface>(Actor))
+		{
+			return ContainerInterface;
+		}
+		if (UGameItemContainerComponent* ContainerComponent = Actor->FindComponentByClass<UGameItemContainerComponent>())
+		{
+			return ContainerComponent;
+		}
+	}
 	return nullptr;
 }
 
@@ -135,7 +153,7 @@ void UGameItemSubsystem::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebu
 	DisplayDebugManager.DrawString(TEXT("GAME ITEMS"));
 
 	// display debug info for all containers of the target actor
-	TArray<UGameItemContainer*> Containers = GetAllContainers(HUD->GetCurrentDebugTargetActor());
+	TArray<UGameItemContainer*> Containers = GetAllContainersForActor(HUD->GetCurrentDebugTargetActor());
 	for (const UGameItemContainer* Container : Containers)
 	{
 		if (!IsValid(Container))

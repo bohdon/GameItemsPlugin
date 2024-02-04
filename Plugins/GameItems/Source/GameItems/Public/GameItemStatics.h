@@ -26,11 +26,11 @@ public:
 
 	/** Return all game item containers component from an actor, using the UGameItemSubsystem. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
-	static TArray<UGameItemContainer*> GetAllGameItemContainersFromActor(AActor* Actor);
+	static TArray<UGameItemContainer*> GetAllGameItemContainersForActor(AActor* Actor);
 
 	/** Return a game item container component from an actor, using the UGameItemSubsystem. */
 	UFUNCTION(BlueprintPure, Category = "GameItems")
-	static UGameItemContainer* GetGameItemContainerFromActor(AActor* Actor, FGameplayTag ContainerId);
+	static UGameItemContainer* GetGameItemContainerForActor(AActor* Actor, FGameplayTag ContainerId);
 
 	/** Find and return an item fragment by class. */
 	UFUNCTION(BlueprintCallable, Meta = (WorldContext = "WorldContextObject", DeterminesOutputType = "FragmentClass"), Category = "GameItems")
