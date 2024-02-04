@@ -4,11 +4,10 @@
 #include "ItemsDemoCharacter.h"
 
 #include "EnhancedInputComponent.h"
+#include "ItemsDemoPlayerState.h"
 #include "Demo/Interaction/DemoInteractorComponent.h"
-#include "Engine/GameViewportClient.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "Slate/SceneViewport.h"
 
 
 AItemsDemoCharacter::AItemsDemoCharacter(const FObjectInitializer& ObjectInitializer)
@@ -32,13 +31,6 @@ void AItemsDemoCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 void AItemsDemoCharacter::InputMove(const FInputActionValue& InputActionValue)
 {
-	UGameViewportClient* ViewportClient = GetWorld() ? GetWorld()->GetGameViewport() : nullptr;
-	if (!ViewportClient->GetGameViewport()->HasMouseCapture())
-	{
-		// ignore input when not capturing mouse
-		return;
-	}
-
 	const FVector2D Input = InputActionValue.Get<FVector2D>();
 	const FVector WorldInput = GetActorRotation().RotateVector(FVector(Input, 0.f));
 	GetCharacterMovement()->AddInputVector(WorldInput);
@@ -49,4 +41,24 @@ void AItemsDemoCharacter::InputLook(const FInputActionValue& InputActionValue)
 	const FVector2D Input = InputActionValue.Get<FVector2D>();
 	AddControllerYawInput(Input.X);
 	AddControllerPitchInput(Input.Y);
+}
+
+TArray<UGameItemContainer*> AItemsDemoCharacter::GetAllItemContainers() const
+{
+	// use the item containers from the player state
+	if (const AItemsDemoPlayerState* DemoPlayerState = GetPlayerState<AItemsDemoPlayerState>())
+	{
+		return DemoPlayerState->GetAllItemContainers();
+	}
+	return TArray<UGameItemContainer*>();
+}
+
+UGameItemContainer* AItemsDemoCharacter::GetItemContainer(FGameplayTag ContainerId) const
+{
+	// use the item containers from the player state
+	if (const AItemsDemoPlayerState* DemoPlayerState = GetPlayerState<AItemsDemoPlayerState>())
+	{
+		return DemoPlayerState->GetItemContainer(ContainerId);
+	}
+	return nullptr;
 }

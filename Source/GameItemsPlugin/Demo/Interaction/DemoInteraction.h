@@ -6,7 +6,29 @@
 #include "UObject/Object.h"
 #include "DemoInteraction.generated.h"
 
+class UDemoInteractionComponent;
 class UInputAction;
+
+
+USTRUCT(BlueprintType)
+struct FDemoInteractionContext
+{
+	GENERATED_BODY()
+
+	FDemoInteractionContext()
+	{
+	}
+
+	FDemoInteractionContext(APawn* InInteractor, UDemoInteractionComponent* InInteractionComponent);
+
+	/** The pawn that triggered the interaction. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TWeakObjectPtr<APawn> Interactor;
+
+	/** The interaction component which owns the interaction. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TWeakObjectPtr<UDemoInteractionComponent> InteractionComponent;
+};
 
 
 /**
@@ -30,5 +52,10 @@ public:
 
 	/** Trigger the interaction and return true if successful. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	bool Trigger(APawn* Interactor);
+	bool Trigger(const FDemoInteractionContext& Context);
+
+public:
+	/** Set the interaction context for an object, which must implement the UDemoInteractionContextInterface. */
+	UFUNCTION(BlueprintCallable)
+	static void SetInteractionContext(UObject* Object, const FDemoInteractionContext& Context);
 };

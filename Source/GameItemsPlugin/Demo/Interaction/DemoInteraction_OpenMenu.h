@@ -31,5 +31,5 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag MenuLayerTag;
 
-	virtual bool Trigger_Implementation(APawn* Interactor) override;
+	virtual bool Trigger_Implementation(const FDemoInteractionContext& Context) override;
 };

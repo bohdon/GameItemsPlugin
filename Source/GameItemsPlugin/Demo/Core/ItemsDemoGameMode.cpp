@@ -6,12 +6,14 @@
 #include "Demo/Player/ItemsDemoCharacter.h"
 #include "Demo/Player/ItemsDemoHUD.h"
 #include "Demo/Player/ItemsDemoPlayerController.h"
+#include "Demo/Player/ItemsDemoPlayerState.h"
 
 
 AItemsDemoGameMode::AItemsDemoGameMode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	PlayerControllerClass = AItemsDemoPlayerController::StaticClass();
+	PlayerStateClass = AItemsDemoPlayerState::StaticClass();
 	HUDClass = AItemsDemoHUD::StaticClass();
 	DefaultPawnClass = AItemsDemoCharacter::StaticClass();
 }

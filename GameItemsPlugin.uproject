@@ -19,6 +19,10 @@
 			"Enabled": true
 		},
 		{
+			"Name": "GameItemsUI",
+			"Enabled": true
+		},
+		{
 			"Name": "GameplayAbilityItems",
 			"Enabled": false
 		},

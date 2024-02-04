@@ -107,7 +107,7 @@ void UDemoInteractionComponent::TriggerInteraction_Implementation(APawn* Interac
 		return;
 	}
 
-	Interaction->Trigger(Interactor);
+	Interaction->Trigger(FDemoInteractionContext(Interactor, this));
 }
 
 void UDemoInteractionComponent::CreateInteractUI()
