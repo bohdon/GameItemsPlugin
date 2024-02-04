@@ -48,7 +48,7 @@ public:
 
 	/** Return a game item container from an actor, using the IGameItemContainerInterface if possible. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
-	UGameItemContainer* GetContainerByTag(AActor* Actor, FGameplayTag IdTag) const;
+	UGameItemContainer* GetContainerByTag(AActor* Actor, FGameplayTag ContainerId) const;
 
 protected:
 	void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& YL, float& YPos);

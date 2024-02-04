@@ -100,7 +100,7 @@ TArray<UGameItemContainer*> UGameItemSubsystem::GetAllContainers(AActor* Actor) 
 	return TArray<UGameItemContainer*>();
 }
 
-UGameItemContainer* UGameItemSubsystem::GetContainerByTag(AActor* Actor, FGameplayTag IdTag) const
+UGameItemContainer* UGameItemSubsystem::GetContainerByTag(AActor* Actor, FGameplayTag ContainerId) const
 {
 	if (!Actor)
 	{
@@ -110,13 +110,13 @@ UGameItemContainer* UGameItemSubsystem::GetContainerByTag(AActor* Actor, FGamepl
 	// try using interface
 	if (const IGameItemContainerInterface* ContainerInterface = Cast<IGameItemContainerInterface>(Actor))
 	{
-		return ContainerInterface->GetItemContainer(IdTag);
+		return ContainerInterface->GetItemContainer(ContainerId);
 	}
 
 	// fallback to getting components directly
 	if (const UGameItemContainerComponent* ContainerComponent = Actor->FindComponentByClass<UGameItemContainerComponent>())
 	{
-		return ContainerComponent->GetItemContainer(IdTag);
+		return ContainerComponent->GetItemContainer(ContainerId);
 	}
 
 	return nullptr;

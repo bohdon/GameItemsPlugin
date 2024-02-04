@@ -29,7 +29,7 @@ public:
 
 	/** The unique tag identifying this container amongst others. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
-	FGameplayTag IdTag;
+	FGameplayTag ContainerId;
 
 	/** The settings and rules for this container. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")

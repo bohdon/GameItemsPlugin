@@ -76,9 +76,9 @@ TArray<UGameItemContainer*> UGameItemContainerComponent::GetAllItemContainers() 
 	return AllContainers;
 }
 
-UGameItemContainer* UGameItemContainerComponent::GetItemContainer(FGameplayTag IdTag) const
+UGameItemContainer* UGameItemContainerComponent::GetItemContainer(FGameplayTag ContainerId) const
 {
-	return Containers.FindRef(IdTag);
+	return Containers.FindRef(ContainerId);
 }
 
 void UGameItemContainerComponent::CreateDefaultContainers()
@@ -91,9 +91,9 @@ void UGameItemContainerComponent::CreateDefaultContainers()
 	}
 }
 
-UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag IdTag, TSubclassOf<UGameItemContainerDef> ContainerDef)
+UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag ContainerId, TSubclassOf<UGameItemContainerDef> ContainerDef)
 {
-	if (!IdTag.IsValid() || Containers.Contains(IdTag))
+	if (!ContainerId.IsValid() || Containers.Contains(ContainerId))
 	{
 		// already exists, or invalid id
 		return nullptr;
@@ -116,7 +116,7 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag Id
 	// create and initialize the new container
 	UGameItemContainer* NewContainer = NewObject<UGameItemContainer>(this, ContainerClass);
 	check(NewContainer);
-	NewContainer->IdTag = IdTag;
+	NewContainer->ContainerId = ContainerId;
 	NewContainer->ContainerDef = ContainerDef;
 
 	AddContainer(NewContainer);
@@ -127,9 +127,9 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag Id
 void UGameItemContainerComponent::AddContainer(UGameItemContainer* Container)
 {
 	check(Container);
-	check(!Containers.Contains(Container->IdTag));
+	check(!Containers.Contains(Container->ContainerId));
 
-	Containers.Add(Container->IdTag, Container);
+	Containers.Add(Container->ContainerId, Container);
 
 	AddReplicatedSubObject(Container);
 

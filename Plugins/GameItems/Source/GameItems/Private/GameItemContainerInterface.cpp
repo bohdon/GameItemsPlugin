@@ -6,12 +6,12 @@
 #include "GameItemContainer.h"
 
 
-UGameItemContainer* IGameItemContainerInterface::GetItemContainer(FGameplayTag IdTag) const
+UGameItemContainer* IGameItemContainerInterface::GetItemContainer(FGameplayTag ContainerId) const
 {
 	const TArray<UGameItemContainer*> AllItemContainers = GetAllItemContainers();
 	for (UGameItemContainer* ItemContainer : AllItemContainers)
 	{
-		if (ItemContainer->IdTag == IdTag)
+		if (ItemContainer->ContainerId == ContainerId)
 		{
 			return ItemContainer;
 		}
@@ -27,7 +27,7 @@ TArray<FGameplayTag> IGameItemContainerInterface::GetAllItemContainerIds() const
 	TArray<FGameplayTag> Result;
 	Algo::Transform(AllContainers, Result, [](const UGameItemContainer* Container)
 	{
-		return Container->IdTag;
+		return Container->ContainerId;
 	});
 	return Result;
 }

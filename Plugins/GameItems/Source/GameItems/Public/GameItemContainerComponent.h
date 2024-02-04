@@ -31,7 +31,7 @@ public:
 	 * @return The new container, or null if a container already exists with the same id.
 	 */
 	UFUNCTION(BlueprintCallable, Meta = (DeterminesOutputType = "ContainerClass"))
-	UGameItemContainer* CreateContainer(FGameplayTag IdTag, TSubclassOf<UGameItemContainerDef> ContainerDef = nullptr);
+	UGameItemContainer* CreateContainer(FGameplayTag ContainerId, TSubclassOf<UGameItemContainerDef> ContainerDef = nullptr);
 
 	virtual void InitializeComponent() override;
 
@@ -41,7 +41,7 @@ public:
 
 	// IGameItemContainerInterface
 	virtual TArray<UGameItemContainer*> GetAllItemContainers() const override;
-	virtual UGameItemContainer* GetItemContainer(FGameplayTag IdTag) const override;
+	virtual UGameItemContainer* GetItemContainer(FGameplayTag ContainerId) const override;
 
 protected:
 	UPROPERTY(Transient)

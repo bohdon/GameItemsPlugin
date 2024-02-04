@@ -31,7 +31,7 @@ public:
 
 	/** Return an item container by tag id. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false)
-	virtual UGameItemContainer* GetItemContainer(FGameplayTag IdTag) const;
+	virtual UGameItemContainer* GetItemContainer(FGameplayTag ContainerId) const;
 
 	/** Return all available item container ids. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false)

@@ -23,10 +23,10 @@ TArray<UGameItemContainer*> UGameItemStatics::GetAllGameItemContainersFromActor(
 	return ItemSubsystem ? ItemSubsystem->GetAllContainers(Actor) : TArray<UGameItemContainer*>();
 }
 
-UGameItemContainer* UGameItemStatics::GetGameItemContainerFromActor(AActor* Actor, FGameplayTag IdTag)
+UGameItemContainer* UGameItemStatics::GetGameItemContainerFromActor(AActor* Actor, FGameplayTag ContainerId)
 {
 	const UGameItemSubsystem* ItemSubsystem = GetItemSubsystemFromContextObject(Actor);
-	return ItemSubsystem ? ItemSubsystem->GetContainerByTag(Actor, IdTag) : nullptr;
+	return ItemSubsystem ? ItemSubsystem->GetContainerByTag(Actor, ContainerId) : nullptr;
 }
 
 const UGameItemFragment* UGameItemStatics::FindGameItemFragment(const UObject* WorldContextObject, TSubclassOf<UGameItemDef> ItemDef,

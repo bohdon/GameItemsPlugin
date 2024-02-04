@@ -517,7 +517,7 @@ void UGameItemContainer::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& 
 	const FString CountStr = GetContainerDefCDO()->bLimitSlots
 		                         ? FString::Printf(TEXT("%d/%d"), GetNumItems(), GetContainerDefCDO()->SlotCount)
 		                         : FString::FromInt(GetNumItems());
-	DisplayDebugManager.DrawString(FString::Printf(TEXT("%s (%s items)"), *IdTag.ToString(), *CountStr));
+	DisplayDebugManager.DrawString(FString::Printf(TEXT("%s (%s items)"), *ContainerId.ToString(), *CountStr));
 
 	for (int32 Idx = 0; Idx < ItemList.Entries.Num(); ++Idx)
 	{

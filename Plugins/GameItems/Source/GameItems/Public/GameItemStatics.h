@@ -30,7 +30,7 @@ public:
 
 	/** Return a game item container component from an actor, using the UGameItemSubsystem. */
 	UFUNCTION(BlueprintPure, Category = "GameItems")
-	static UGameItemContainer* GetGameItemContainerFromActor(AActor* Actor, FGameplayTag IdTag);
+	static UGameItemContainer* GetGameItemContainerFromActor(AActor* Actor, FGameplayTag ContainerId);
 
 	/** Find and return an item fragment by class. */
 	UFUNCTION(BlueprintCallable, Meta = (WorldContext = "WorldContextObject", DeterminesOutputType = "FragmentClass"), Category = "GameItems")
