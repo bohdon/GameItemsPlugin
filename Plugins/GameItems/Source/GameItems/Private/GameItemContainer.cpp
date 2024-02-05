@@ -340,6 +340,11 @@ int32 UGameItemContainer::GetNumItems() const
 	return ItemList.Entries.Num();
 }
 
+int32 UGameItemContainer::GetNumSlots() const
+{
+	return GetContainerDefCDO()->bLimitSlots ? GetContainerDefCDO()->SlotCount : GetNumItems();
+}
+
 int32 UGameItemContainer::GetNumEmptySlots() const
 {
 	// always return zero when no space is left, even if container was overfilled somehow

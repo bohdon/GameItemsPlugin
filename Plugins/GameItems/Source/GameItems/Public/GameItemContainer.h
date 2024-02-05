@@ -115,6 +115,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	int32 GetNumItems() const;
 
+	/**
+	 * Return the number of slots in the container.
+	 * If slot count is unlimited, return the number of items.
+	 */
+	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
+	int32 GetNumSlots() const;
+
 	/** Return the number of empty slots available in this container, or -1 if unlimited. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	int32 GetNumEmptySlots() const;
