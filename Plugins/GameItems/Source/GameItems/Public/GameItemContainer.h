@@ -32,10 +32,11 @@ public:
 	FGameplayTag ContainerId;
 
 	/** The settings and rules for this container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, DisplayName = "ContainerDefClass", Category = "GameItemContainer")
 	TSubclassOf<UGameItemContainerDef> ContainerDef;
 
 	/** Return the CDO of the container definition. */
+	UFUNCTION(BlueprintPure, DisplayName = "GetContainerDef")
 	FORCEINLINE const UGameItemContainerDef* GetContainerDefCDO() const;
 
 	/** Return true if a new item could be added to this container. */
