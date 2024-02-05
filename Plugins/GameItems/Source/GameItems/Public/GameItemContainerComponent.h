@@ -9,6 +9,21 @@
 
 class UGameItemContainerDef;
 
+USTRUCT(BlueprintType)
+struct FGameItemContainerSpec
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTag ContainerId;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UGameItemContainerDef> ContainerDef;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText DisplayName;
+};
+
 
 /**
  * Component that provides any number of game item containers.
@@ -22,13 +37,9 @@ class GAMEITEMS_API UGameItemContainerComponent : public UActorComponent,
 public:
 	UGameItemContainerComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-	/** The definition to use for the default container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UGameItemContainerDef> DefaultContainerClass;
-
 	/** The definitions for all additional containers to create at startup. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<FGameplayTag, TSubclassOf<UGameItemContainerDef>> StartupContainers;
+	TArray<FGameItemContainerSpec> StartupContainers;
 
 	/**
 	 * Create a new item container.

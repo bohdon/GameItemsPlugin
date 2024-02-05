@@ -6,7 +6,6 @@
 #include "GameItemContainer.h"
 #include "GameItemContainerDef.h"
 #include "GameItemSettings.h"
-#include "GameItemSubsystem.h"
 #include "Engine/ActorChannel.h"
 #include "Engine/World.h"
 
@@ -18,6 +17,9 @@ UGameItemContainerComponent::UGameItemContainerComponent(const FObjectInitialize
 {
 	bWantsInitializeComponent = true;
 	SetIsReplicatedByDefault(true);
+
+	FGameItemContainerSpec& DefaultContainerSpec = StartupContainers.AddDefaulted_GetRef();
+	DefaultContainerSpec.ContainerId = UGameItemSettings::GetDefaultContainerId();
 }
 
 void UGameItemContainerComponent::InitializeComponent()
@@ -87,14 +89,13 @@ void UGameItemContainerComponent::CreateStartupContainers()
 {
 	check(GetOwner()->HasAuthority());
 
-	if (DefaultContainerClass)
+	for (const FGameItemContainerSpec& ContainerSpec : StartupContainers)
 	{
-		CreateContainer(UGameItemSettings::GetDefaultContainerId(), DefaultContainerClass);
-	}
-
-	for (const auto& ContainerIdAndDef : StartupContainers)
-	{
-		CreateContainer(ContainerIdAndDef.Key, ContainerIdAndDef.Value);
+		UGameItemContainer* Container = CreateContainer(ContainerSpec.ContainerId, ContainerSpec.ContainerDef);
+		if (Container)
+		{
+			Container->DisplayName = ContainerSpec.DisplayName;
+		}
 	}
 }
 

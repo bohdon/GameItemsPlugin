@@ -138,6 +138,18 @@ TArray<UGameItem*> UGameItemSubsystem::MoveItem(UGameItemContainer* FromContaine
 	return Result;
 }
 
+TArray<UGameItem*> UGameItemSubsystem::MoveItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer,
+                                                 TArray<UGameItem*> Items, bool bAllowPartial)
+{
+	TArray<UGameItem*> Result;
+	for (UGameItem* Item : Items)
+	{
+		TArray<UGameItem*> ItemResult = MoveItem(FromContainer, ToContainer, Item, bAllowPartial);
+		Result.Append(ItemResult);
+	}
+	return Result;
+}
+
 const UGameItemFragment* UGameItemSubsystem::FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass) const
 {
 	if (!ItemDef || !FragmentClass)

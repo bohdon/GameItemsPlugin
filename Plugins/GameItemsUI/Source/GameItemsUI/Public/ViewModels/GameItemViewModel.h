@@ -27,6 +27,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetItem(UGameItem* NewItem);
 
+	/** Return the quantity of the item. */
+	UFUNCTION(BlueprintPure, FieldNotify)
+	int32 GetCount() const;
+
+	/** Return true if count is above 1. */
+	UFUNCTION(BlueprintPure, FieldNotify)
+	bool HasMultiple() const;
+
 	/** Return the display name of the item. */
 	UFUNCTION(BlueprintPure, FieldNotify)
 	FText GetDisplayName() const;
@@ -35,4 +43,6 @@ protected:
 	/** The game item. */
 	UPROPERTY(Transient, BlueprintReadOnly, FieldNotify, Meta = (AllowPrivateAccess = true))
 	TObjectPtr<UGameItem> Item;
+
+	void OnCountChanged(int32 NewCount, int32 OldCount);
 };

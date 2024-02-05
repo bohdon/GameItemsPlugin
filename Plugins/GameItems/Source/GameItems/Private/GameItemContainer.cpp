@@ -199,10 +199,8 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 
 		// attempt to add to next target slot
 		UGameItem* ExistingItem = GetItemAt(NextTargetSlot);
-		if (ExistingItem && bCanStackWithExisting && ExistingItem->GetCount() < StackMaxCount)
+		if (ExistingItem && bCanStackWithExisting && Item->IsMatching(ExistingItem) && ExistingItem->GetCount() < StackMaxCount)
 		{
-			check(Item->IsMatching(ExistingItem));
-
 			// found matching item with space, add to it
 			const int32 SlotDeltaCount = FMath::Min(RemainingCountToAdd, StackMaxCount - ExistingItem->GetCount());
 
@@ -261,8 +259,8 @@ TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot
 			}
 			NewItem->SetCount(SlotDeltaCount);
 
-			ItemList.AddEntryAt(Item, Slot);
-			OnItemAdded(Item, Slot);
+			ItemList.AddEntryAt(NewItem, Slot);
+			OnItemAdded(NewItem, Slot);
 
 			Result.Add(NewItem);
 		}
@@ -404,7 +402,15 @@ int32 UGameItemContainer::GetTotalItemCount() const
 
 int32 UGameItemContainer::GetNumItems() const
 {
-	return ItemList.Entries.Num();
+	int32 Total = 0;
+	for (const FGameItemListEntry& Entry : ItemList.Entries)
+	{
+		if (Entry.GetItem())
+		{
+			++Total;
+		}
+	}
+	return Total;
 }
 
 int32 UGameItemContainer::GetNumSlots() const

@@ -60,6 +60,14 @@ public:
 	TArray<UGameItem*> MoveItem(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, UGameItem* Item, bool bAllowPartial = true);
 
 	/**
+	 * Move multiple items from one container to another. If bAllowPartial is true, allow moving only some
+	 * of each item if the target container can't receive the full amount.
+	 * @return The item or items that were moved into the target container.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	TArray<UGameItem*> MoveItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, TArray<UGameItem*> Items, bool bAllowPartial = true);
+
+	/**
 	 * Find a return an item fragment by class.
 	 * Convenience function that uses the GameItemSubsystem.
 	 */

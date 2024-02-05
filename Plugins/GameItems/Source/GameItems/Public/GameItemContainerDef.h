@@ -52,6 +52,6 @@ public:
 	TArray<TObjectPtr<UGameItemSet>> DefaultItemSets;
 
 	/** Custom stock rules specific to this container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "GameItemContainer")
 	TArray<TObjectPtr<UGameItemContainerStockRule>> StockRules;
 };

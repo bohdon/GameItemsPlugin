@@ -71,6 +71,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
 	FGameplayTag ContainerId;
 
+	/** The user-facing display name of this container. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
+	FText DisplayName;
+
 	/** The settings and rules for this container. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, DisplayName = "ContainerDefClass", Category = "GameItemContainer")
 	TSubclassOf<UGameItemContainerDef> ContainerDef;
