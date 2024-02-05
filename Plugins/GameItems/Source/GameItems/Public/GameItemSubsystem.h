@@ -31,18 +31,33 @@ public:
 
 	/** Create and return a new game item from definition. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
-	UGameItem* CreateGameItem(UObject* Outer, TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
+	UGameItem* CreateItem(UObject* Outer, TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
 
 	/**
 	 * Create a new game item and add it to a container.
 	 * @return The newly created items, which may have been split depending on the container rules.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
-	TArray<UGameItem*> CreateGameItemInContainer(UGameItemContainer* Container, TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
+	TArray<UGameItem*> CreateItemInContainer(UGameItemContainer* Container, TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
 
-	/** Duplicate and return a new game item. */
+	/** Duplicate and return a new game item. If count is > 0, set a new count for the item, otherwise use the original item count. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
-	UGameItem* DuplicateGameItem(UObject* Outer, UGameItem* Item);
+	UGameItem* DuplicateItem(UObject* Outer, UGameItem* Item, int32 Count = -1);
+
+	/**
+	 * Split a game item and return a new item with part of the original quantity.
+	 * The split item will not be added to any container. Will return null if the item cannot be split.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UGameItem* SplitItem(UObject* Outer, UGameItem* Item, int32 Count = 1);
+
+	/**
+	 * Move an item from one container to another. If bAllowPartial is true, allow moving only some
+	 * of the item if the target container can't receive the full amount.
+	 * @return The item or items that were moved into the target container.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	TArray<UGameItem*> MoveItem(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, UGameItem* Item, bool bAllowPartial = true);
 
 	/**
 	 * Find a return an item fragment by class.

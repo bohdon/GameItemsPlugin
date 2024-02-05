@@ -16,6 +16,46 @@ class UGameItemSet;
 
 
 /**
+ * Represents a plan for adding an item to a container.
+ * Can be used to verify the results before adding the item.
+ */
+USTRUCT(BlueprintType)
+struct FGameItemContainerAddPlan
+{
+	GENERATED_BODY()
+
+	/** The slots where the item will be added. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<int32> TargetSlots;
+
+	/** The amounts to add for each slot. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<int32> SlotDeltaCounts;
+
+	/** The total quantity that will be added across all slots. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 DeltaCount = 0;
+
+	/** The remainder quantity that cannot be added, if unable to add the full amount. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 RemainderCount = 0;
+
+	/** Will the full quantity of the item be added? */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bWillAddFullAmount = false;
+
+	/** Will the item be split when added? */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bWillSplit = false;
+
+	void AddCountToSlot(int32 Slot, int32 Count);
+
+	/** Update total counts and statuses for the plan. */
+	void UpdateDerivedValues(int32 ItemCount);
+};
+
+
+/**
  * Component that contains one or more game item instances,
  * like an inventory, treasure chest, or just a simple item pickup.
  */
@@ -50,8 +90,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Meta = (DeprecatedFunction), Category = "GameItemContainer")
 	UGameItem* AddNewItem(TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
 
+	/** Check if an item can be fully added to a container and whether it will be split when added. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
+	FGameItemContainerAddPlan CheckAddItem(UGameItem* Item, int32 TargetSlot = -1) const;
+
 	/**
-	 * Add an item to this container.
+	 * Add an item to this container. This does not remove the item from any existing containers.
 	 * @param Item The item to add.
 	 * @param TargetSlot The slot where the item should be added, or the first available if -1.
 	 * @return The item or items (if split into multiple stacks) that were added.
@@ -96,6 +140,10 @@ public:
 	/** Return the slot of an item in this container, or -1 if not in the container. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	int32 GetItemSlot(UGameItem* Item) const;
+
+	/** Return true if an item exists in the container. */
+	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
+	bool Contains(UGameItem* Item) const;
 
 	/** Return the total number of an item in this container by definition. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
@@ -172,6 +220,13 @@ protected:
 
 	/** Duplicate and return a new item instance using the GameItemSubsystem. */
 	UGameItem* DuplicateItem(UGameItem* Item) const;
+
+	/**
+	 * Return a plan representing how an item will be added to this container,
+	 * including exactly which slots and quantities should be added.
+	 * Can be used to check for item loss or split before adding.
+	 */
+	FGameItemContainerAddPlan GetAddItemPlan(UGameItem* Item, int32 TargetSlot = -1, bool bWarn = true) const;
 
 	virtual void OnItemAdded(UGameItem* Item);
 	virtual void OnItemRemoved(UGameItem* Item);

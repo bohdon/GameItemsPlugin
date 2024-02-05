@@ -20,6 +20,29 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemContainer)
 
 
+// FGameItemContainerAddPlan
+// -------------------------
+
+void FGameItemContainerAddPlan::AddCountToSlot(int32 Slot, int32 Count)
+{
+	check(!TargetSlots.Contains(Slot));
+	TargetSlots.Add(Slot);
+	SlotDeltaCounts.Add(Count);
+	DeltaCount += Count;
+}
+
+void FGameItemContainerAddPlan::UpdateDerivedValues(int32 ItemCount)
+{
+	check(TargetSlots.Num() == SlotDeltaCounts.Num());
+	RemainderCount = ItemCount - DeltaCount;
+	bWillAddFullAmount = DeltaCount > 0 && RemainderCount == 0;
+	bWillSplit = TargetSlots.Num() > 1;
+}
+
+
+// UGameItemContainer
+// ------------------
+
 UGameItemContainer::UGameItemContainer(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
@@ -47,7 +70,7 @@ UGameItem* UGameItemContainer::CreateItem(TSubclassOf<UGameItemDef> ItemDef, int
 	}
 
 	UGameItemSubsystem* ItemSubsystem = UGameInstance::GetSubsystem<UGameItemSubsystem>(GetWorld()->GetGameInstance());
-	return ItemSubsystem->CreateGameItem(OwningActor, ItemDef, Count);
+	return ItemSubsystem->CreateItem(OwningActor, ItemDef, Count);
 }
 
 UGameItem* UGameItemContainer::DuplicateItem(UGameItem* Item) const
@@ -65,7 +88,7 @@ UGameItem* UGameItemContainer::DuplicateItem(UGameItem* Item) const
 
 	UGameItemSubsystem* ItemSubsystem = World->GetGameInstance()->GetSubsystem<UGameItemSubsystem>();
 
-	return ItemSubsystem->DuplicateGameItem(OwningActor, Item);
+	return ItemSubsystem->DuplicateItem(OwningActor, Item);
 }
 
 const UGameItemContainerDef* UGameItemContainer::GetContainerDefCDO() const
@@ -98,41 +121,44 @@ UGameItem* UGameItemContainer::AddNewItem(TSubclassOf<UGameItemDef> ItemDef, int
 	return NewItem;
 }
 
-TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot)
+FGameItemContainerAddPlan UGameItemContainer::CheckAddItem(UGameItem* Item, int32 TargetSlot) const
 {
-	if (!Item)
+	return GetAddItemPlan(Item, TargetSlot, false);
+}
+
+FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, int32 TargetSlot, bool bWarn) const
+{
+	FGameItemContainerAddPlan Plan;
+
+	if (!Item || Contains(Item))
 	{
-		return TArray<UGameItem*>();
+		return Plan;
 	}
 
-	// the quantity of the item to add
-	int32 DeltaCount = Item->GetCount();
-
-	// calculate and clamp the total quantity of the item that can be added across multiple stacks.
-	// if loss of the item's count is not desired, those checks should have been performed before this point
 	const int32 OldTotalCount = GetTotalMatchingItemCount(Item);
 	const int32 MaxCount = GetItemMaxCount(Item);
-	// TODO: perform more accurate calculation, check available slots, remaining space in existing stacks, etc
 	const int32 MaxDeltaCount = FMath::Max(MaxCount - OldTotalCount, 0);
-	DeltaCount = FMath::Min(DeltaCount, MaxDeltaCount);
+
+	// the total desired amount to add based on stock rules.
+	// this doesn't include loss that may happen due from limited slots.
+	const int32 DeltaCount = FMath::Min(Item->GetCount(), MaxDeltaCount);
 
 	if (DeltaCount == 0)
 	{
-		UE_LOG(LogGameItems, Verbose, TEXT("%s: Cant add item, max count reached: %s"),
-		       *GetNameSafe(GetOwner()), *Item->ToDebugString());
-		return TArray<UGameItem*>();
+		UE_CLOG(bWarn, LogGameItems, Warning, TEXT("%s: Cant add item, max count reached: %s"),
+		        *GetNameSafe(GetOwner()), *Item->ToDebugString());
+		Plan.UpdateDerivedValues(Item->GetCount());
+		return Plan;
 	}
 
 	if (DeltaCount < Item->GetCount())
 	{
-		UE_LOG(LogGameItems, Warning, TEXT("%s: Adding %s, but %d will be lost due to capacity, check GetItemMaxCount before adding to prevent this."),
-		       *GetNameSafe(GetOwner()), *Item->ToDebugString(), Item->GetCount() - DeltaCount);
+		UE_CLOG(bWarn, LogGameItems, Warning,
+		        TEXT("%s: Adding %s, but %d will be lost due to capacity. Use CheckAddItem before adding to avoid this."),
+		        *GetNameSafe(GetOwner()), *Item->ToDebugString(), Item->GetCount() - DeltaCount);
 	}
 
-	// TODO: ensure item is removed from any existing container
-
 	// repeatedly add the item, splitting and stacking as necessary
-	TArray<UGameItem*> Result;
 	int32 RemainingCountToAdd = DeltaCount;
 	int32 NextTargetSlot = TargetSlot;
 
@@ -149,14 +175,16 @@ TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot
 		});
 	}
 
+	// track future number of empty slots as they are filled
+	int32 NumEmptySlots = GetNumEmptySlots();
 	while (RemainingCountToAdd > 0)
 	{
-		const int32 NumEmptySlots = GetNumEmptySlots();
 		if (NumEmptySlots == 0 && MatchingItemsWithSpace.IsEmpty())
 		{
 			// out of space
-			UE_LOG(LogGameItems, Warning, TEXT("%s: Adding %s, but %d was lost due to limited slot capacity."),
-			       *GetNameSafe(GetOwner()), *Item->ToDebugString(), RemainingCountToAdd);
+			UE_CLOG(bWarn, LogGameItems, Warning,
+			        TEXT("%s: Adding %s, but %d will be lost due to limited slot capacity. Use CheckAddItem before adding to avoid this."),
+			        *GetNameSafe(GetOwner()), *Item->ToDebugString(), RemainingCountToAdd);
 			break;
 		}
 
@@ -171,44 +199,73 @@ TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot
 
 		// attempt to add to next target slot
 		UGameItem* ExistingItem = GetItemAt(NextTargetSlot);
-		if (ExistingItem && bCanStackWithExisting && Item->IsMatching(ExistingItem) && ExistingItem->GetCount() < StackMaxCount)
+		if (ExistingItem && bCanStackWithExisting && ExistingItem->GetCount() < StackMaxCount)
 		{
-			// found matching item with space, add to it
-			const int32 DeltaToAdd = FMath::Min(RemainingCountToAdd, StackMaxCount - ExistingItem->GetCount());
+			check(Item->IsMatching(ExistingItem));
 
-			ExistingItem->SetCount(ExistingItem->GetCount() + DeltaToAdd);
-			RemainingCountToAdd -= DeltaToAdd;
+			// found matching item with space, add to it
+			const int32 SlotDeltaCount = FMath::Min(RemainingCountToAdd, StackMaxCount - ExistingItem->GetCount());
+
+			Plan.AddCountToSlot(NextTargetSlot, SlotDeltaCount);
+			RemainingCountToAdd -= SlotDeltaCount;
 
 			if (MatchingItemsWithSpace.Contains(ExistingItem))
 			{
 				MatchingItemsWithSpace.Remove(ExistingItem);
 			}
-
-			Result.Add(ExistingItem);
 		}
 		else if (!ExistingItem)
 		{
-			// found empty slot, add to it
-			const int32 DeltaToAdd = FMath::Min(RemainingCountToAdd, StackMaxCount);
+			// add to empty slot
+			const int32 SlotDeltaCount = FMath::Min(RemainingCountToAdd, StackMaxCount);
+			Plan.AddCountToSlot(NextTargetSlot, SlotDeltaCount);
+			RemainingCountToAdd -= SlotDeltaCount;
 
-			// use the given item first, but if its already been added, duplicate and add a new item.
-			// don't worry about the given items original count, RemainingCountToAdd is all that matters.
+			--NumEmptySlots;
+		}
+
+		// increment target slot and continue
+		++NextTargetSlot;
+	}
+
+	Plan.UpdateDerivedValues(Item->GetCount());
+	return Plan;
+}
+
+TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot)
+{
+	FGameItemContainerAddPlan Plan = GetAddItemPlan(Item, TargetSlot);
+	check(Plan.TargetSlots.Num() == Plan.SlotDeltaCounts.Num());
+
+	TArray<UGameItem*> Result;
+
+	for (int32 Idx = 0; Idx < Plan.TargetSlots.Num(); ++Idx)
+	{
+		const int32 Slot = Plan.TargetSlots[Idx];
+		const int32 SlotDeltaCount = Plan.SlotDeltaCounts[Idx];
+
+		if (UGameItem* ExistingItem = GetItemAt(Slot))
+		{
+			// increase count of existing item
+			const int32 NewCount = ExistingItem->GetCount() + SlotDeltaCount;
+			ExistingItem->SetCount(NewCount);
+			Result.Add(ExistingItem);
+		}
+		else
+		{
+			// add the given item first, but if its already been added, duplicate and add a new item.
 			UGameItem* NewItem = Item;
 			if (Result.Contains(Item))
 			{
 				NewItem = DuplicateItem(Item);
 			}
-			NewItem->SetCount(DeltaToAdd);
-			RemainingCountToAdd -= DeltaToAdd;
+			NewItem->SetCount(SlotDeltaCount);
 
-			ItemList.AddEntryAt(Item, NextTargetSlot);
+			ItemList.AddEntryAt(Item, Slot);
 			OnItemAdded(Item);
 
 			Result.Add(NewItem);
 		}
-
-		// increment target slot and continue
-		++NextTargetSlot;
 	}
 
 	return Result;
@@ -291,6 +348,11 @@ int32 UGameItemContainer::GetItemSlot(UGameItem* Item) const
 	{
 		return Entry.GetItem() == Item;
 	});
+}
+
+bool UGameItemContainer::Contains(UGameItem* Item) const
+{
+	return GetItemSlot(Item) != INDEX_NONE;
 }
 
 int32 UGameItemContainer::GetTotalItemCountByDef(TSubclassOf<UGameItemDef> ItemDef) const

@@ -27,7 +27,7 @@ void UGameItemSubsystem::Deinitialize()
 	AHUD::OnShowDebugInfo.RemoveAll(this);
 }
 
-UGameItem* UGameItemSubsystem::CreateGameItem(UObject* Outer, TSubclassOf<UGameItemDef> ItemDef, int32 Count)
+UGameItem* UGameItemSubsystem::CreateItem(UObject* Outer, TSubclassOf<UGameItemDef> ItemDef, int32 Count)
 {
 	if (!ItemDef)
 	{
@@ -50,14 +50,14 @@ UGameItem* UGameItemSubsystem::CreateGameItem(UObject* Outer, TSubclassOf<UGameI
 	return NewItem;
 }
 
-TArray<UGameItem*> UGameItemSubsystem::CreateGameItemInContainer(UGameItemContainer* Container, TSubclassOf<UGameItemDef> ItemDef, int32 Count)
+TArray<UGameItem*> UGameItemSubsystem::CreateItemInContainer(UGameItemContainer* Container, TSubclassOf<UGameItemDef> ItemDef, int32 Count)
 {
 	if (!Container || !Container->GetOwner())
 	{
 		return TArray<UGameItem*>();
 	}
 
-	UGameItem* NewItem = CreateGameItem(Container->GetOwner(), ItemDef, Count);
+	UGameItem* NewItem = CreateItem(Container->GetOwner(), ItemDef, Count);
 	if (!NewItem)
 	{
 		return TArray<UGameItem*>();
@@ -67,14 +67,15 @@ TArray<UGameItem*> UGameItemSubsystem::CreateGameItemInContainer(UGameItemContai
 	return AddedItems;
 }
 
-UGameItem* UGameItemSubsystem::DuplicateGameItem(UObject* Outer, UGameItem* Item)
+UGameItem* UGameItemSubsystem::DuplicateItem(UObject* Outer, UGameItem* Item, int32 Count)
 {
 	if (!Item)
 	{
 		return nullptr;
 	}
 
-	UGameItem* NewItem = CreateGameItem(Outer, Item->GetItemDef(), Item->GetCount());
+	const int32 NewCount = Count > 0 ? Count : Item->GetCount();
+	UGameItem* NewItem = CreateItem(Outer, Item->GetItemDef(), NewCount);
 	if (!NewItem)
 	{
 		return nullptr;
@@ -83,6 +84,58 @@ UGameItem* UGameItemSubsystem::DuplicateGameItem(UObject* Outer, UGameItem* Item
 	NewItem->CopyItemProperties(Item);
 
 	return NewItem;
+}
+
+UGameItem* UGameItemSubsystem::SplitItem(UObject* Outer, UGameItem* Item, int32 Count)
+{
+	if (!Item || Item->GetCount() <= Count)
+	{
+		return nullptr;
+	}
+
+	Item->SetCount(Item->GetCount() - Count);
+	UGameItem* NewItem = DuplicateItem(Outer, Item, Count);
+	return NewItem;
+}
+
+TArray<UGameItem*> UGameItemSubsystem::MoveItem(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, UGameItem* Item, bool bAllowPartial)
+{
+	if (!FromContainer || !ToContainer || !FromContainer->Contains(Item))
+	{
+		return TArray<UGameItem*>();
+	}
+
+	const FGameItemContainerAddPlan Plan = ToContainer->CheckAddItem(Item);
+	if (Plan.DeltaCount == 0)
+	{
+		// nothing to move
+		return TArray<UGameItem*>();
+	}
+
+	// don't allow partial move
+	if (!bAllowPartial && !Plan.bWillAddFullAmount)
+	{
+		return TArray<UGameItem*>();
+	}
+
+	// split the item if needed
+	UGameItem* ItemToAdd = Item;
+	if (Plan.RemainderCount > 0)
+	{
+		check(Item->GetCount() > Plan.DeltaCount);
+		ItemToAdd = SplitItem(ToContainer->GetOwner(), Item, Plan.DeltaCount);
+		check(ItemToAdd);
+	}
+	else
+	{
+		// remove the whole item
+		FromContainer->RemoveItem(Item);
+	}
+
+	// add the item
+	TArray<UGameItem*> Result = ToContainer->AddItem(ItemToAdd);
+
+	return Result;
 }
 
 const UGameItemFragment* UGameItemSubsystem::FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass) const
