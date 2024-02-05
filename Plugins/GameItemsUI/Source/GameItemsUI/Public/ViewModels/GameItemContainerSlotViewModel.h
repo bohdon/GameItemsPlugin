@@ -45,6 +45,8 @@ protected:
 
 	void UpdateItem();
 
+	void OnItemSlotChanged(int32 InSlot);
+
 public:
 	/** Create an slot view model for each slot in a container, which can be provided to a list view. */
 	UFUNCTION(BlueprintCallable, Meta = (DefaultToSelf = "Outer"))

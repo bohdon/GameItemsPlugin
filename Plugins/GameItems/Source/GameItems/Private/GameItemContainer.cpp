@@ -262,7 +262,7 @@ TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot
 			NewItem->SetCount(SlotDeltaCount);
 
 			ItemList.AddEntryAt(Item, Slot);
-			OnItemAdded(Item);
+			OnItemAdded(Item, Slot);
 
 			Result.Add(NewItem);
 		}
@@ -278,14 +278,19 @@ void UGameItemContainer::RemoveItem(UGameItem* Item)
 		return;
 	}
 
-	ItemList.RemoveEntry(Item);
-	OnItemRemoved(Item);
+	const int32 Index = GetItemSlot(Item);
+	if (Index != INDEX_NONE)
+	{
+		RemoveItemAt(Index);
+	}
 }
 
 UGameItem* UGameItemContainer::RemoveItemAt(int32 Slot)
 {
-	UGameItem* RemovedItem = ItemList.RemoveEntryAt(Slot);
-	OnItemRemoved(RemovedItem);
+	// don't preserve indeces for unlimited inventories
+	bool bPreserveIndeces = GetContainerDefCDO()->bLimitSlots;
+	UGameItem* RemovedItem = ItemList.RemoveEntryAt(Slot, bPreserveIndeces);
+	OnItemRemoved(RemovedItem, Slot);
 
 	return RemovedItem;
 }
@@ -550,9 +555,10 @@ UWorld* UGameItemContainer::GetWorld() const
 	return nullptr;
 }
 
-void UGameItemContainer::OnItemAdded(UGameItem* Item)
+void UGameItemContainer::OnItemAdded(UGameItem* Item, int32 Slot)
 {
 	OnItemAddedEvent.Broadcast(Item);
+	OnItemSlotChangedEvent.Broadcast(Slot);
 
 	// if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && Item)
 	// {
@@ -560,9 +566,10 @@ void UGameItemContainer::OnItemAdded(UGameItem* Item)
 	// }
 }
 
-void UGameItemContainer::OnItemRemoved(UGameItem* Item)
+void UGameItemContainer::OnItemRemoved(UGameItem* Item, int32 Slot)
 {
 	OnItemRemovedEvent.Broadcast(Item);
+	OnItemSlotChangedEvent.Broadcast(Slot);
 
 	// if (IsUsingRegisteredSubObjectList() && Item)
 	// {

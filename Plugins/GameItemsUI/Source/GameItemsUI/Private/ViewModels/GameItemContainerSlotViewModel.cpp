@@ -18,13 +18,21 @@ void UGameItemContainerSlotViewModel::SetContainerAndSlot(UGameItemContainer* Ne
 {
 	if (Container != NewContainer || Slot != NewSlot)
 	{
+		if (Container)
+		{
+			Container->OnItemSlotChangedEvent.RemoveAll(this);
+		}
+
 		Container = NewContainer;
 		Slot = NewSlot;
 
+		if (Container)
+		{
+			Container->OnItemSlotChangedEvent.AddUObject(this, &UGameItemContainerSlotViewModel::OnItemSlotChanged);
+		}
+
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(Container);
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(Slot);
-
-		// TODO: bind to slot-item change event
 
 		UpdateItem();
 	}
@@ -49,6 +57,14 @@ void UGameItemContainerSlotViewModel::UpdateItem()
 
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(Item);
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(HasItem);
+	}
+}
+
+void UGameItemContainerSlotViewModel::OnItemSlotChanged(int32 InSlot)
+{
+	if (Slot == InSlot)
+	{
+		UpdateItem();
 	}
 }
 

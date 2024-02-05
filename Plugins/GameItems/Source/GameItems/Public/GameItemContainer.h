@@ -204,12 +204,16 @@ public:
 	virtual UWorld* GetWorld() const override;
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FItemAddOrRemoveDelegate, UGameItem* /*Item*/);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FItemSlotChangedDelegate, int32 /*Slot*/);
 
 	/** Called when a new item is added. */
 	FItemAddOrRemoveDelegate OnItemAddedEvent;
 
 	/** Called when an item is removed. */
 	FItemAddOrRemoveDelegate OnItemRemovedEvent;
+
+	/** Called the item in a slot is changed. */
+	FItemSlotChangedDelegate OnItemSlotChangedEvent;
 
 protected:
 	/** Have the default items already been added to this container? */
@@ -228,8 +232,8 @@ protected:
 	 */
 	FGameItemContainerAddPlan GetAddItemPlan(UGameItem* Item, int32 TargetSlot = -1, bool bWarn = true) const;
 
-	virtual void OnItemAdded(UGameItem* Item);
-	virtual void OnItemRemoved(UGameItem* Item);
+	virtual void OnItemAdded(UGameItem* Item, int32 Slot);
+	virtual void OnItemRemoved(UGameItem* Item, int32 Slot);
 
 	/** Called when the underlying list has changed. */
 	virtual void OnListChanged(FGameItemListEntry& Entry, int32 NewCount, int32 OldCount);
