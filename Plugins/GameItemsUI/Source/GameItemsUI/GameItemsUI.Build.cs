@@ -12,9 +12,9 @@ public class GameItemsUI : ModuleRules
 		{
 			"Core",
 			"GameItems",
+			"GameplayTags",
 			"ModelViewViewModel",
 		});
-
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{

@@ -20,6 +20,8 @@ class GAMEITEMSUI_API UGameItemContainerViewModel : public UMVVMViewModelBase
 	GENERATED_BODY()
 
 public:
+	UGameItemContainer* GetContainer() const { return Container; }
+
 	/** Set the container to use. */
 	UFUNCTION(BlueprintCallable)
 	void SetContainer(UGameItemContainer* NewContainer);

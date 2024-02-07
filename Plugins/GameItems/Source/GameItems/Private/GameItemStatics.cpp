@@ -17,6 +17,18 @@ UGameItemSubsystem* UGameItemStatics::GetItemSubsystemFromContextObject(const UO
 	return nullptr;
 }
 
+TArray<UGameItemContainer*> UGameItemStatics::GetAllItemContainersForActor(AActor* Actor)
+{
+	const UGameItemSubsystem* ItemSubsystem = GetItemSubsystemFromContextObject(Actor);
+	return ItemSubsystem ? ItemSubsystem->GetAllContainersForActor(Actor) : TArray<UGameItemContainer*>();
+}
+
+UGameItemContainer* UGameItemStatics::GetItemContainerForActor(AActor* Actor, FGameplayTag ContainerId)
+{
+	const UGameItemSubsystem* ItemSubsystem = GetItemSubsystemFromContextObject(Actor);
+	return ItemSubsystem ? ItemSubsystem->GetContainerForActor(Actor, ContainerId) : nullptr;
+}
+
 const UGameItemFragment* UGameItemStatics::FindGameItemFragment(const UObject* WorldContextObject, TSubclassOf<UGameItemDef> ItemDef,
                                                                 TSubclassOf<UGameItemFragment> FragmentClass)
 {
