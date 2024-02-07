@@ -7,12 +7,6 @@
 #include "DemoInteractionContextInterface.h"
 
 
-FDemoInteractionContext::FDemoInteractionContext(APawn* InInteractor, UDemoInteractionComponent* InInteractionComponent)
-	: Interactor(InInteractor),
-	  InteractionComponent(InInteractionComponent)
-{
-}
-
 UDemoInteraction::UDemoInteraction(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {

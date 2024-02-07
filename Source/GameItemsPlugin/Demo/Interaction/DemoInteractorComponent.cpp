@@ -54,6 +54,11 @@ void UDemoInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	SetFocusedInteraction(GetBestInteraction());
 }
 
+void UDemoInteractorComponent::SetContext(FDemoInteractionContext NewInteractionContext)
+{
+	Context = NewInteractionContext;
+}
+
 void UDemoInteractorComponent::LatentUpdateInteractions()
 {
 	NearbyInteractions.Reset();
@@ -170,4 +175,13 @@ float UDemoInteractorComponent::GetDeltaAngle(const FVector& DirectionA, const F
 {
 	const float Dot = DirectionA.GetSafeNormal() | DirectionB.GetSafeNormal();
 	return FMath::RadiansToDegrees(FMath::Acos(Dot));
+}
+
+FDemoInteractionContext UDemoInteractorComponent::GetInteractionContextForActor(AActor* Actor)
+{
+	if (UDemoInteractorComponent* InteractorComp = Actor->FindComponentByClass<UDemoInteractorComponent>())
+	{
+		return InteractorComp->GetContext();
+	}
+	return FDemoInteractionContext();
 }

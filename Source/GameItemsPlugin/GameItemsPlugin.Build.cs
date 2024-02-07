@@ -23,8 +23,10 @@ public class GameItemsPlugin : ModuleRules
 			"Engine",
 			"EnhancedInput",
 			"GameItems",
+			"GameItemsUI",
 			"GameplayTags",
 			"InputCore",
+			"ModelViewViewModel",
 			"UMG",
 		});
 

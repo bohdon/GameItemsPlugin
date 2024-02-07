@@ -3,32 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DemoInteractionTypes.h"
 #include "UObject/Object.h"
 #include "DemoInteraction.generated.h"
 
 class UDemoInteractionComponent;
 class UInputAction;
-
-
-USTRUCT(BlueprintType)
-struct FDemoInteractionContext
-{
-	GENERATED_BODY()
-
-	FDemoInteractionContext()
-	{
-	}
-
-	FDemoInteractionContext(APawn* InInteractor, UDemoInteractionComponent* InInteractionComponent);
-
-	/** The pawn that triggered the interaction. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TWeakObjectPtr<APawn> Interactor;
-
-	/** The interaction component which owns the interaction. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TWeakObjectPtr<UDemoInteractionComponent> InteractionComponent;
-};
 
 
 /**

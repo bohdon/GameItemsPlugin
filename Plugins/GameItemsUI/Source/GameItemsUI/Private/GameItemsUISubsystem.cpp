@@ -1,13 +1,15 @@
 ﻿// Copyright Bohdon Sayre, All Rights Reserved.
 
 
-#include "ViewModels/GameItemsUISubsystem.h"
+#include "GameItemsUISubsystem.h"
 
 #include "GameItemContainer.h"
 #include "GameItemSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "ViewModels/GameItemContainerSlotViewModel.h"
 #include "ViewModels/GameItemContainerViewModel.h"
+#include "ViewModels/GameItemViewModel.h"
 
 
 UGameItemContainerViewModel* UGameItemsUISubsystem::GetOrCreateContainerViewModel(UGameItemContainer* Container)
@@ -39,6 +41,39 @@ UGameItemContainerViewModel* UGameItemsUISubsystem::GetOrCreateContainerViewMode
 	const UGameItemSubsystem* ItemSubsystem = UGameInstance::GetSubsystem<UGameItemSubsystem>(GetWorld()->GetGameInstance());
 	UGameItemContainer* Container = ItemSubsystem->GetContainerForActor(Actor, ContainerId);
 	return GetOrCreateContainerViewModel(Container);
+}
+
+UGameItem* UGameItemsUISubsystem::GetItemFromObject(UObject* ItemObject) const
+{
+	if (UGameItem* GameItem = Cast<UGameItem>(ItemObject))
+	{
+		return GameItem;
+	}
+	else if (const UGameItemViewModel* ItemViewModel = Cast<UGameItemViewModel>(ItemObject))
+	{
+		return ItemViewModel->GetItem();
+	}
+	else if (const UGameItemContainerSlotViewModel* SlotViewModel = Cast<UGameItemContainerSlotViewModel>(ItemObject))
+	{
+		return SlotViewModel->GetItem();
+	}
+	return nullptr;
+}
+
+void UGameItemsUISubsystem::GetContainerAndItem(UObject* ViewModelObject, bool& bSuccess, UGameItemContainer*& Container, UGameItem*& Item) const
+{
+	if (const UGameItemContainerSlotViewModel* SlotViewModel = Cast<UGameItemContainerSlotViewModel>(ViewModelObject))
+	{
+		Container = SlotViewModel->GetContainer();
+		Item = SlotViewModel->GetItem();
+		bSuccess = Item && Container;
+	}
+	else
+	{
+		Container = nullptr;
+		Item = nullptr;
+		bSuccess = false;
+	}
 }
 
 UGameItemContainerViewModel* UGameItemsUISubsystem::CreateContainerViewModel(UGameItemContainer* Container)

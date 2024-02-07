@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DemoInteractionTypes.h"
 #include "Components/SceneComponent.h"
 #include "DemoInteractorComponent.generated.h"
 
@@ -28,7 +29,17 @@ public:
 	virtual void Deactivate() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	const FDemoInteractionContext& GetContext() const { return Context; }
+
+	/** Set the current interaction context. */
+	UFUNCTION(BlueprintCallable)
+	void SetContext(FDemoInteractionContext NewInteractionContext);
+
 protected:
+	/** The current interaction context. */
+	UPROPERTY(Transient, BlueprintReadWrite, Meta = (AllowPrivateAccess = true))
+	FDemoInteractionContext Context;
+
 	FTimerHandle LatentUpdateTimer;
 
 	/** All interactions in the area. */
@@ -45,7 +56,7 @@ protected:
 	FTransform GetAimTransform() const;
 
 	bool CanInteract() const;
-	
+
 	UDemoInteractionComponent* GetBestInteraction() const;
 
 	/** Set the currently focused interaction. */
@@ -55,4 +66,8 @@ public:
 	/** Return the delta angle between two directions. */
 	UFUNCTION(BlueprintPure)
 	static float GetDeltaAngle(const FVector& DirectionA, const FVector& DirectionB);
+
+	/** Get the interaction context from an actor with a UDemoInteractorComponent */
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	static FDemoInteractionContext GetInteractionContextForActor(AActor* Actor);
 };

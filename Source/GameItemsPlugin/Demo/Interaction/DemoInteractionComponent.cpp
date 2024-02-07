@@ -8,7 +8,6 @@
 #include "EnhancedInputComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/Pawn.h"
-#include "GameFramework/PlayerState.h"
 
 
 UDemoInteractionComponent::UDemoInteractionComponent()
@@ -107,7 +106,16 @@ void UDemoInteractionComponent::TriggerInteraction_Implementation(APawn* Interac
 		return;
 	}
 
-	Interaction->Trigger(FDemoInteractionContext(Interactor, this));
+	// create context
+	const FDemoInteractionContext Context = FDemoInteractionContext(Interactor, this, Interaction);
+
+	// pass context to interactor if available
+	if (UDemoInteractorComponent* InteractorComponent = Interactor->FindComponentByClass<UDemoInteractorComponent>())
+	{
+		InteractorComponent->SetContext(Context);
+	}
+
+	Interaction->Trigger(Context);
 }
 
 void UDemoInteractionComponent::CreateInteractUI()

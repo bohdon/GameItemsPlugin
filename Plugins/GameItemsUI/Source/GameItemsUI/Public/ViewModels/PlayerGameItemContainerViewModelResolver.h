@@ -24,4 +24,7 @@ public:
 	FGameplayTag ContainerId;
 
 	virtual UObject* CreateInstance(const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View) const override;
+
+	/** Return the actor that has the container to retrieve. */
+	virtual AActor* GetContainerActor(const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View) const;
 };

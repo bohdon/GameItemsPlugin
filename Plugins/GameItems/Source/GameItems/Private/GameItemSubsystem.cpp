@@ -150,6 +150,16 @@ TArray<UGameItem*> UGameItemSubsystem::MoveItems(UGameItemContainer* FromContain
 	return Result;
 }
 
+TArray<UGameItem*> UGameItemSubsystem::MoveAllItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, bool bAllowPartial)
+{
+	if (FromContainer)
+	{
+		const TArray<UGameItem*> Items = FromContainer->GetAllItems();
+		return MoveItems(FromContainer, ToContainer, Items, bAllowPartial);
+	}
+	return TArray<UGameItem*>();
+}
+
 const UGameItemFragment* UGameItemSubsystem::FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass) const
 {
 	if (!ItemDef || !FragmentClass)

@@ -26,6 +26,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetContainerAndSlot(UGameItemContainer* NewContainer, int32 NewSlot);
 
+	UGameItemContainer* GetContainer() const { return Container; }
+
+	int32 GetSlot() const { return Slot; }
+
 	/** Does the slot have an item in it? */
 	UFUNCTION(BlueprintPure, FieldNotify)
 	bool HasItem() const;
@@ -33,6 +37,15 @@ public:
 	/** Is this a valid slot in the container? */
 	UFUNCTION(BlueprintPure, FieldNotify)
 	bool IsValidSlot() const;
+
+	/** Return the current item. */
+	UGameItem* GetItem() const { return Item; }
+
+	/** Move the item in this slot to a new container. */
+	UFUNCTION(BlueprintCallable)
+	TArray<UGameItem*> MoveItem(UGameItemContainer* ToContainer, bool bAllowPartial = true);
+
+	virtual UWorld* GetWorld() const override;
 
 protected:
 	/** The owning container. */

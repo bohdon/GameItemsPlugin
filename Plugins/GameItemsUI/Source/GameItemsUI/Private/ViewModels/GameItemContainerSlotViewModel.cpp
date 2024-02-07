@@ -5,6 +5,9 @@
 
 #include "GameItemContainer.h"
 #include "GameItemContainerDef.h"
+#include "GameItemSubsystem.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
 
 
 UGameItemContainerSlotViewModel::UGameItemContainerSlotViewModel()
@@ -12,6 +15,12 @@ UGameItemContainerSlotViewModel::UGameItemContainerSlotViewModel()
 	  Slot(INDEX_NONE),
 	  Item(nullptr)
 {
+}
+
+UWorld* UGameItemContainerSlotViewModel::GetWorld() const
+{
+	const UObject* Outer = GetOuter();
+	return Outer ? Outer->GetWorld() : nullptr;
 }
 
 void UGameItemContainerSlotViewModel::SetContainerAndSlot(UGameItemContainer* NewContainer, int32 NewSlot)
@@ -50,6 +59,17 @@ bool UGameItemContainerSlotViewModel::HasItem() const
 bool UGameItemContainerSlotViewModel::IsValidSlot() const
 {
 	return Container && Container->IsValidSlot(Slot);
+}
+
+TArray<UGameItem*> UGameItemContainerSlotViewModel::MoveItem(UGameItemContainer* ToContainer, bool bAllowPartial)
+{
+	if (!Container || !Item)
+	{
+		return TArray<UGameItem*>();
+	}
+
+	UGameItemSubsystem* ItemSubsystem = UGameInstance::GetSubsystem<UGameItemSubsystem>(GetWorld()->GetGameInstance());
+	return ItemSubsystem->MoveItem(Container, ToContainer, Item, bAllowPartial);
 }
 
 void UGameItemContainerSlotViewModel::UpdateItem()

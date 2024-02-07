@@ -14,6 +14,7 @@ public class GameItemsUI : ModuleRules
 			"GameItems",
 			"GameplayTags",
 			"ModelViewViewModel",
+			"UMG",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]

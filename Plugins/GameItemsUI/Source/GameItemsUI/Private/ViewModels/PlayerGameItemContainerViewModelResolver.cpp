@@ -4,9 +4,9 @@
 #include "ViewModels/PlayerGameItemContainerViewModelResolver.h"
 
 #include "GameItemSettings.h"
+#include "GameItemsUISubsystem.h"
 #include "Blueprint/UserWidget.h"
 #include "ViewModels/GameItemContainerViewModel.h"
-#include "ViewModels/GameItemsUISubsystem.h"
 
 
 UPlayerGameItemContainerViewModelResolver::UPlayerGameItemContainerViewModelResolver()
@@ -17,6 +17,11 @@ UPlayerGameItemContainerViewModelResolver::UPlayerGameItemContainerViewModelReso
 UObject* UPlayerGameItemContainerViewModelResolver::CreateInstance(const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View) const
 {
 	UGameItemsUISubsystem* GameItemsUISubsystem = UserWidget->GetWorld()->GetSubsystem<UGameItemsUISubsystem>();
-	APlayerController* OwningPlayer = UserWidget->GetOwningPlayer();
-	return GameItemsUISubsystem->GetOrCreateContainerViewModelForActor(OwningPlayer, ContainerId);
+	AActor* OwningActor = GetContainerActor(ExpectedType, UserWidget, View);
+	return GameItemsUISubsystem->GetOrCreateContainerViewModelForActor(OwningActor, ContainerId);
+}
+
+AActor* UPlayerGameItemContainerViewModelResolver::GetContainerActor(const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View) const
+{
+	return UserWidget->GetOwningPlayer();
 }
