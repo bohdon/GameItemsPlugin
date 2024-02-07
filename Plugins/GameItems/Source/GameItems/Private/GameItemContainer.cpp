@@ -44,7 +44,9 @@ void FGameItemContainerAddPlan::UpdateDerivedValues(int32 ItemCount)
 // ------------------
 
 UGameItemContainer::UGameItemContainer(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+	: Super(ObjectInitializer),
+	  ActiveChangeOperations(0),
+	  NumSlotsPreChange(INDEX_NONE)
 {
 	ItemList.OnListChangedEvent.AddUObject(this, &UGameItemContainer::OnListChanged);
 }
@@ -232,6 +234,8 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 
 TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot)
 {
+	FScopedSlotChanges SlotChangeScope(this);
+
 	FGameItemContainerAddPlan Plan = GetAddItemPlan(Item, TargetSlot);
 	check(Plan.TargetSlots.Num() == Plan.SlotDeltaCounts.Num());
 
@@ -261,6 +265,7 @@ TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot
 
 			ItemList.AddEntryAt(NewItem, Slot);
 			OnItemAdded(NewItem, Slot);
+			OnSlotChanged(Slot);
 
 			Result.Add(NewItem);
 		}
@@ -285,10 +290,13 @@ void UGameItemContainer::RemoveItem(UGameItem* Item)
 
 UGameItem* UGameItemContainer::RemoveItemAt(int32 Slot)
 {
+	FScopedSlotChanges SlotChangeScope(this);
+
 	// don't preserve indeces for unlimited inventories
 	bool bPreserveIndeces = GetContainerDefCDO()->bLimitSlots;
 	UGameItem* RemovedItem = ItemList.RemoveEntryAt(Slot, bPreserveIndeces);
 	OnItemRemoved(RemovedItem, Slot);
+	OnSlotRangeChanged(Slot, bPreserveIndeces ? Slot : GetNumSlots() - 1);
 
 	return RemovedItem;
 }
@@ -451,6 +459,11 @@ int32 UGameItemContainer::GetNextEmptySlot() const
 	return ItemList.Entries.Num() + 1;
 }
 
+bool UGameItemContainer::IsValidSlot(int32 Slot) const
+{
+	return ItemList.Entries.IsValidIndex(Slot);
+}
+
 bool UGameItemContainer::IsSlotEmpty(int32 Slot) const
 {
 	return !ItemList.Entries.IsValidIndex(Slot) || ItemList.Entries[Slot].GetItem() == nullptr;
@@ -563,8 +576,8 @@ UWorld* UGameItemContainer::GetWorld() const
 
 void UGameItemContainer::OnItemAdded(UGameItem* Item, int32 Slot)
 {
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s OnItemAdded [%d] %s"), *GetName(), Slot, *GetNameSafe(Item));
 	OnItemAddedEvent.Broadcast(Item);
-	OnItemSlotChangedEvent.Broadcast(Slot);
 
 	// if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && Item)
 	// {
@@ -574,13 +587,134 @@ void UGameItemContainer::OnItemAdded(UGameItem* Item, int32 Slot)
 
 void UGameItemContainer::OnItemRemoved(UGameItem* Item, int32 Slot)
 {
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s OnItemRemoved [%d] %s"), *GetName(), Slot, *GetNameSafe(Item));
 	OnItemRemovedEvent.Broadcast(Item);
-	OnItemSlotChangedEvent.Broadcast(Slot);
 
 	// if (IsUsingRegisteredSubObjectList() && Item)
 	// {
 	// 	RemoveReplicatedSubObject(Item);
 	// }
+}
+
+void UGameItemContainer::BeginSlotChanges()
+{
+	if (ActiveChangeOperations == 0)
+	{
+		NumSlotsPreChange = GetNumSlots();
+	}
+	++ActiveChangeOperations;
+}
+
+void UGameItemContainer::EndSlotChanges()
+{
+	--ActiveChangeOperations;
+	check(ActiveChangeOperations >= 0);
+
+	if (ActiveChangeOperations == 0)
+	{
+		BroadcastSlotChanges();
+	}
+}
+
+void UGameItemContainer::BroadcastSlotChanges()
+{
+	struct FSlotRange
+	{
+		FSlotRange()
+		{
+		}
+
+		FSlotRange(int32 Slot)
+			: Start(Slot), End(Slot)
+		{
+		}
+
+		int32 Start = -1;
+		int32 End = -1;
+
+		bool IsValid() const
+		{
+			return Start != -1;
+		}
+
+		bool Adjoins(const int32& Next) const
+		{
+			return Next == End + 1;
+		}
+	};
+
+	auto BroadcastRange = [this](const FSlotRange& Range)
+	{
+		if (Range.Start == Range.End)
+		{
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s OnItemSlotChanged %d"), *GetName(), Range.Start);
+			OnItemSlotChangedEvent.Broadcast(Range.Start);
+		}
+		else
+		{
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s OnItemSlotsChanged %d - %d"), *GetName(), Range.Start, Range.End);
+			OnItemSlotsChangedEvent.Broadcast(Range.Start, Range.End);
+		}
+	};
+
+	// aggregate into adjacent ranges
+	FSlotRange CurrentRange;
+	for (int32 Idx = 0; Idx < ChangedSlots.Num(); ++Idx)
+	{
+		const int32& Slot = ChangedSlots[Idx];
+		if (!CurrentRange.IsValid())
+		{
+			CurrentRange = Slot;
+		}
+		else if (CurrentRange.Adjoins(Slot))
+		{
+			CurrentRange.End = Slot;
+		}
+		else
+		{
+			BroadcastRange(CurrentRange);
+
+			// start a new range
+			CurrentRange = Slot;
+		}
+
+		if (Idx == ChangedSlots.Num() - 1)
+		{
+			BroadcastRange(CurrentRange);
+		}
+	}
+	ChangedSlots.Empty();
+
+	if (NumSlotsPreChange != INDEX_NONE)
+	{
+		const int32 NewNumSlots = GetNumSlots();
+		if (NumSlotsPreChange != NewNumSlots)
+		{
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s OnNumSlotsChanged %d -> %d"), *GetName(), NumSlotsPreChange, NewNumSlots);
+			OnNumSlotsChangedEvent.Broadcast(NewNumSlots, NumSlotsPreChange);
+		}
+	}
+}
+
+void UGameItemContainer::OnSlotChanged(int32 Slot)
+{
+	ChangedSlots.Add(Slot);
+}
+
+void UGameItemContainer::OnSlotsChanged(const TArray<int32>& Slots)
+{
+	for (const int32& Slot : Slots)
+	{
+		ChangedSlots.Add(Slot);
+	}
+}
+
+void UGameItemContainer::OnSlotRangeChanged(int32 StartSlot, int32 EndSlot)
+{
+	for (int32 Slot = StartSlot; Slot <= EndSlot; ++Slot)
+	{
+		ChangedSlots.Add(Slot);
+	}
 }
 
 void UGameItemContainer::OnListChanged(FGameItemListEntry& Entry, int32 NewCount, int32 OldCount)

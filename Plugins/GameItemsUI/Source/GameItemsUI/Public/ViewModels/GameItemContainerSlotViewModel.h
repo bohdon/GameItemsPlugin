@@ -30,22 +30,28 @@ public:
 	UFUNCTION(BlueprintPure, FieldNotify)
 	bool HasItem() const;
 
+	/** Is this a valid slot in the container? */
+	UFUNCTION(BlueprintPure, FieldNotify)
+	bool IsValidSlot() const;
+
 protected:
 	/** The owning container. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, FieldNotify)
+	UPROPERTY(Transient, BlueprintReadOnly, FieldNotify)
 	UGameItemContainer* Container;
 
 	/** The slot in the container. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, FieldNotify)
+	UPROPERTY(Transient, BlueprintReadOnly, FieldNotify)
 	int32 Slot;
 
 	/** The currently slotted item. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, FieldNotify)
+	UPROPERTY(Transient, BlueprintReadOnly, FieldNotify)
 	UGameItem* Item;
 
 	void UpdateItem();
 
 	void OnItemSlotChanged(int32 InSlot);
+	void OnItemSlotsChanged(int32 StartSlot, int32 EndSlot);
+	void OnNumSlotsChanged(int32 NewNumSlots, int32 OldNumSlots);
 
 public:
 	/** Create an slot view model for each slot in a container, which can be provided to a list view. */

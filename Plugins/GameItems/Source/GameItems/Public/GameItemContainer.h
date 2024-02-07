@@ -183,6 +183,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	int32 GetNextEmptySlot() const;
 
+	/** Return true if a slot is a valid index into this container. */
+	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
+	bool IsValidSlot(int32 Slot) const;
+
 	/** Return true if a slot in this container is empty and available. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	bool IsSlotEmpty(int32 Slot) const;
@@ -209,6 +213,8 @@ public:
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FItemAddOrRemoveDelegate, UGameItem* /*Item*/);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FItemSlotChangedDelegate, int32 /*Slot*/);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FItemSlotsChangedDelegate, int32 /*StartSlot*/, int32 /*EndSlot*/);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FNumSlotsChangedDelegate, int32 /*NewNumSlots*/, int32 /*OldNumSlots*/);
 
 	/** Called when a new item is added. */
 	FItemAddOrRemoveDelegate OnItemAddedEvent;
@@ -219,9 +225,45 @@ public:
 	/** Called the item in a slot is changed. */
 	FItemSlotChangedDelegate OnItemSlotChangedEvent;
 
+	/** Called when a range of item slots have changed. */
+	FItemSlotsChangedDelegate OnItemSlotsChangedEvent;
+
+	/** Called when the total number of slots has changed. */
+	FNumSlotsChangedDelegate OnNumSlotsChangedEvent;
+
 protected:
 	/** Have the default items already been added to this container? */
 	bool bHasDefaultItems;
+
+	/** Used to track slot changes and broadcast after several operations are completed. */
+	struct FScopedSlotChanges
+	{
+		FScopedSlotChanges(UGameItemContainer* InContainer)
+			: Container(InContainer)
+		{
+			check(Container);
+			Container->BeginSlotChanges();
+		}
+
+		~FScopedSlotChanges()
+		{
+			if (Container)
+			{
+				Container->EndSlotChanges();
+			}
+		}
+
+		UGameItemContainer* Container;
+	};
+
+	/** Number of open change operations. */
+	int32 ActiveChangeOperations;
+
+	/** Number of slots in the container before any change operations. */
+	int32 NumSlotsPreChange;
+
+	/** Set of slots that were changed during change operations. */
+	TArray<int32> ChangedSlots;
 
 	/** Create and return a new item instance using the GameItemSubsystem. */
 	UGameItem* CreateItem(TSubclassOf<UGameItemDef> ItemDef, int32 Count) const;
@@ -238,6 +280,18 @@ protected:
 
 	virtual void OnItemAdded(UGameItem* Item, int32 Slot);
 	virtual void OnItemRemoved(UGameItem* Item, int32 Slot);
+
+	/** Start a slot change operation, gathering slot changes to broadcast later. */
+	void BeginSlotChanges();
+
+	/** End a slot change operation. Once all operations are finished, the changes will be broadcast. */
+	void EndSlotChanges();
+
+	void OnSlotChanged(int32 Slot);
+	void OnSlotsChanged(const TArray<int32>& Slots);
+	void OnSlotRangeChanged(int32 StartSlot, int32 EndSlot);
+
+	void BroadcastSlotChanges();
 
 	/** Called when the underlying list has changed. */
 	virtual void OnListChanged(FGameItemListEntry& Entry, int32 NewCount, int32 OldCount);
