@@ -7,6 +7,7 @@
 #include "GameItem.h"
 #include "GameItemContainer.h"
 #include "GameItemContainerComponent.h"
+#include "GameItemContainerComponentInterface.h"
 #include "GameItemContainerInterface.h"
 #include "GameItemDef.h"
 #include "GameItemsModule.h"
@@ -160,6 +161,21 @@ TArray<UGameItem*> UGameItemSubsystem::MoveAllItems(UGameItemContainer* FromCont
 	return TArray<UGameItem*>();
 }
 
+TArray<UGameItem*> UGameItemSubsystem::TryAutoSlotItem(UGameItem* Item, AActor* Actor, FGameplayTagContainer ContextTags)
+{
+	if (!Actor)
+	{
+		return TArray<UGameItem*>();
+	}
+	const UGameItemContainerComponent* ContainerComponent = GetContainerComponentForActor(Actor);
+	if (ContainerComponent)
+	{
+		return ContainerComponent->TryAutoSlotItem(Item, ContextTags);
+	}
+
+	return TArray<UGameItem*>();
+}
+
 const UGameItemFragment* UGameItemSubsystem::FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass) const
 {
 	if (!ItemDef || !FragmentClass)
@@ -169,6 +185,20 @@ const UGameItemFragment* UGameItemSubsystem::FindFragment(TSubclassOf<UGameItemD
 
 	const UGameItemDef* ItemDefCDO = GetDefault<UGameItemDef>(ItemDef);
 	return ItemDefCDO->FindFragment(FragmentClass);
+}
+
+UGameItemContainerComponent* UGameItemSubsystem::GetContainerComponentForActor(AActor* Actor) const
+{
+	if (!Actor)
+	{
+		return nullptr;
+	}
+	if (const IGameItemContainerComponentInterface* ComponentInterface = Cast<IGameItemContainerComponentInterface>(Actor))
+	{
+		return ComponentInterface->GetItemContainerComponent();
+	}
+
+	return Actor->FindComponentByClass<UGameItemContainerComponent>();
 }
 
 TArray<UGameItemContainer*> UGameItemSubsystem::GetAllContainersForActor(AActor* Actor) const
@@ -201,18 +231,13 @@ UGameItemContainer* UGameItemSubsystem::GetDefaultContainerForActor(AActor* Acto
 
 IGameItemContainerInterface* UGameItemSubsystem::GetContainerInterfaceForActor(AActor* Actor) const
 {
-	if (Actor)
+	if (IGameItemContainerInterface* ContainerInterface = Cast<IGameItemContainerInterface>(Actor))
 	{
-		if (IGameItemContainerInterface* ContainerInterface = Cast<IGameItemContainerInterface>(Actor))
-		{
-			return ContainerInterface;
-		}
-		if (UGameItemContainerComponent* ContainerComponent = Actor->FindComponentByClass<UGameItemContainerComponent>())
-		{
-			return ContainerComponent;
-		}
+		return ContainerInterface;
 	}
-	return nullptr;
+
+	// fallback to finding a container component
+	return GetContainerComponentForActor(Actor);
 }
 
 void UGameItemSubsystem::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& YL, float& YPos)

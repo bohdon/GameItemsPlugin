@@ -5,6 +5,7 @@
 
 #include "GameItemContainer.h"
 #include "GameItemSettings.h"
+#include "GameItemStatics.h"
 
 
 TArray<FGameplayTag> IGameItemContainerInterface::GetAllItemContainerIds() const
@@ -21,16 +22,7 @@ TArray<FGameplayTag> IGameItemContainerInterface::GetAllItemContainerIds() const
 
 UGameItemContainer* IGameItemContainerInterface::GetItemContainer(FGameplayTag ContainerId) const
 {
-	const TArray<UGameItemContainer*> AllItemContainers = GetAllItemContainers();
-	for (UGameItemContainer* ItemContainer : AllItemContainers)
-	{
-		if (ItemContainer->ContainerId == ContainerId)
-		{
-			return ItemContainer;
-		}
-	}
-
-	return nullptr;
+	return UGameItemStatics::GetItemContainerById(GetAllItemContainers(), ContainerId);
 }
 
 UGameItemContainer* IGameItemContainerInterface::GetDefaultItemContainer() const

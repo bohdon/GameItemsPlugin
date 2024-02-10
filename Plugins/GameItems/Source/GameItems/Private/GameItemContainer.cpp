@@ -5,7 +5,7 @@
 
 #include "GameItem.h"
 #include "GameItemContainerDef.h"
-#include "GameItemContainerStockRule.h"
+#include "GameItemContainerRule.h"
 #include "GameItemDef.h"
 #include "GameItemSet.h"
 #include "GameItemsModule.h"
@@ -132,7 +132,7 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 {
 	FGameItemContainerAddPlan Plan;
 
-	if (!Item || Contains(Item))
+	if (!Item || Contains(Item) || !CanContainItem(Item))
 	{
 		return Plan;
 	}
@@ -444,7 +444,7 @@ int32 UGameItemContainer::GetNextEmptySlot() const
 				return Idx;
 			}
 		}
-		return -1;
+		return INDEX_NONE;
 	}
 
 	// iterate over existing entries looking for any gaps
@@ -461,12 +461,35 @@ int32 UGameItemContainer::GetNextEmptySlot() const
 
 bool UGameItemContainer::IsValidSlot(int32 Slot) const
 {
-	return ItemList.Entries.IsValidIndex(Slot);
+	return Slot >= 0 && (!GetContainerDefCDO()->bLimitSlots || Slot < GetContainerDefCDO()->SlotCount);
 }
 
 bool UGameItemContainer::IsSlotEmpty(int32 Slot) const
 {
 	return !ItemList.Entries.IsValidIndex(Slot) || ItemList.Entries[Slot].GetItem() == nullptr;
+}
+
+bool UGameItemContainer::CanContainItem(const UGameItem* Item) const
+{
+	if (!Item)
+	{
+		return false;
+	}
+
+	const UGameItemDef* ItemDefCDO = Item->GetItemDefCDO();
+	if (!ItemDefCDO)
+	{
+		return false;
+	}
+
+	for (const UGameItemContainerRule* Rule : GetContainerDefCDO()->Rules)
+	{
+		if (!Rule->CanContainItem(this, Item))
+		{
+			return false;
+		}
+	}
+	return true;
 }
 
 int32 UGameItemContainer::GetItemMaxCount(const UGameItem* Item) const
@@ -490,9 +513,9 @@ int32 UGameItemContainer::GetItemMaxCount(const UGameItem* Item) const
 		Result = ItemDefCDO->StockRules.MaxCount;
 	}
 
-	for (const UGameItemContainerStockRule* StockRule : GetContainerDefCDO()->StockRules)
+	for (const UGameItemContainerRule* Rule : GetContainerDefCDO()->Rules)
 	{
-		const int32 RuleMaxCount = StockRule->GetItemMaxCount(this, Item);
+		const int32 RuleMaxCount = Rule->GetItemMaxCount(this, Item);
 		if (RuleMaxCount >= 0)
 		{
 			Result = FMath::Min(Result, RuleMaxCount);
@@ -523,9 +546,9 @@ int32 UGameItemContainer::GetItemStackMaxCount(const UGameItem* Item) const
 		Result = ItemDefCDO->StockRules.StackMaxCount;
 	}
 
-	for (const UGameItemContainerStockRule* StockRule : GetContainerDefCDO()->StockRules)
+	for (const UGameItemContainerRule* Rule : GetContainerDefCDO()->Rules)
 	{
-		const int32 RuleMaxCount = StockRule->GetItemStackMaxCount(this, Item);
+		const int32 RuleMaxCount = Rule->GetItemStackMaxCount(this, Item);
 		if (RuleMaxCount >= 0)
 		{
 			Result = FMath::Min(Result, RuleMaxCount);

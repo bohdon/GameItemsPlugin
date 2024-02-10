@@ -44,6 +44,10 @@ public:
 
 	void SetItemDef(TSubclassOf<UGameItemDef> NewItemDef);
 
+	/** Return the owned tags of the item definition. */
+	UFUNCTION(BlueprintPure)
+	const FGameplayTagContainer& GetOwnedTags() const;
+
 	int32 GetCount() const { return Count; }
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItem")

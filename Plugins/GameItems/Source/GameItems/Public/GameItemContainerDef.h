@@ -8,7 +8,7 @@
 #include "GameItemContainerDef.generated.h"
 
 class UGameItemContainer;
-class UGameItemContainerStockRule;
+class UGameItemContainerRule;
 class UGameItemSet;
 
 
@@ -51,7 +51,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
 	TArray<TObjectPtr<UGameItemSet>> DefaultItemSets;
 
-	/** Custom stock rules specific to this container. */
+	/** Rules and limitations specific to this container. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "GameItemContainer")
-	TArray<TObjectPtr<UGameItemContainerStockRule>> StockRules;
+	TArray<TObjectPtr<UGameItemContainerRule>> Rules;
 };

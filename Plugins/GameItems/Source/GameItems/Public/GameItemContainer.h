@@ -10,7 +10,7 @@
 
 class UGameItem;
 class UGameItemContainerDef;
-class UGameItemContainerStockRule;
+class UGameItemContainerRule;
 class UGameItemDef;
 class UGameItemSet;
 
@@ -190,6 +190,10 @@ public:
 	/** Return true if a slot in this container is empty and available. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	bool IsSlotEmpty(int32 Slot) const;
+
+	/** Return true if the container is ever allowed to contain an item. */
+	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
+	bool CanContainItem(const UGameItem* Item) const;
 
 	/** Return the maximum total number of an item allowed in this container (for all stacks combined). */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")

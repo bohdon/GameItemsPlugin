@@ -3,6 +3,7 @@
 
 #include "GameItemContainerComponent.h"
 
+#include "GameItemAutoSlotRule.h"
 #include "GameItemContainer.h"
 #include "GameItemContainerDef.h"
 #include "GameItemSettings.h"
@@ -99,6 +100,26 @@ void UGameItemContainerComponent::CreateStartupContainers()
 	}
 }
 
+TArray<UGameItem*> UGameItemContainerComponent::TryAutoSlotItem(UGameItem* Item, FGameplayTagContainer ContextTags) const
+{
+	const TArray<UGameItemContainer*> AllContainers = GetAllItemContainers();
+
+	for (const UGameItemAutoSlotRule* AutoSlotRule : AutoSlotRules)
+	{
+		if (!AutoSlotRule)
+		{
+			continue;
+		}
+
+		TArray<UGameItem*> Result = AutoSlotRule->TryAutoSlotItem(Item, AllContainers, ContextTags);
+		if (!Result.IsEmpty())
+		{
+			return Result;
+		}
+	}
+	return TArray<UGameItem*>();
+}
+
 UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag ContainerId, TSubclassOf<UGameItemContainerDef> ContainerDef)
 {
 	if (Containers.Contains(ContainerId))
@@ -130,6 +151,17 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag Co
 	AddContainer(NewContainer);
 
 	return NewContainer;
+}
+
+void UGameItemContainerComponent::PostLoad()
+{
+	Super::PostLoad();
+
+	// cleanup empty rules
+	AutoSlotRules.RemoveAll([](const UGameItemAutoSlotRule* Rule)
+	{
+		return Rule == nullptr;
+	});
 }
 
 void UGameItemContainerComponent::AddContainer(UGameItemContainer* Container)

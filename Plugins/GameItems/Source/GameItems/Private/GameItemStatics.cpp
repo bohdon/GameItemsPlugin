@@ -35,3 +35,15 @@ const UGameItemFragment* UGameItemStatics::FindGameItemFragment(const UObject* W
 	const UGameItemSubsystem* ItemSubsystem = GetItemSubsystemFromContextObject(WorldContextObject);
 	return ItemSubsystem ? ItemSubsystem->FindFragment(ItemDef, FragmentClass) : nullptr;
 }
+
+UGameItemContainer* UGameItemStatics::GetItemContainerById(const TArray<UGameItemContainer*>& Containers, FGameplayTag ContainerId)
+{
+	for (UGameItemContainer* Container : Containers)
+	{
+		if (Container->ContainerId == ContainerId)
+		{
+			return Container;
+		}
+	}
+	return nullptr;
+}

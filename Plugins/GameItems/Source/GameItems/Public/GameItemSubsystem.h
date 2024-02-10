@@ -13,6 +13,7 @@ class IGameItemContainerInterface;
 class UCanvas;
 class UGameItem;
 class UGameItemContainer;
+class UGameItemContainerComponent;
 class UGameItemDef;
 class UGameItemFragment;
 
@@ -76,11 +77,22 @@ public:
 	TArray<UGameItem*> MoveAllItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, bool bAllowPartial = true);
 
 	/**
+	 * Automatically slot an item into a matching container on an actor.
+	 * Uses the auto slot rules defined on the actors UGameItemContainerComponent.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	TArray<UGameItem*> TryAutoSlotItem(UGameItem* Item, AActor* Actor, FGameplayTagContainer ContextTags);
+
+	/**
 	 * Find a return an item fragment by class.
 	 * Convenience function that uses the GameItemSubsystem.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Meta = (DeterminesOutputType = "FragmentClass"), Category = "GameItems")
 	const UGameItemFragment* FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass) const;
+
+	/** Return a game item container component from an actor, using the IGameItemContainerComponentInterface if possible. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
+	UGameItemContainerComponent* GetContainerComponentForActor(AActor* Actor) const;
 
 	/** Return all game item containers from an actor, using the IGameItemContainerInterface if possible. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")

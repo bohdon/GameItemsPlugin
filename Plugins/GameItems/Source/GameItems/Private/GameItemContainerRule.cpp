@@ -1,7 +1,7 @@
 ﻿// Copyright Bohdon Sayre, All Rights Reserved.
 
 
-#include "GameItemContainerStockRule.h"
+#include "GameItemContainerRule.h"
 
 #include "GameItem.h"
 #include "GameItemDef.h"
@@ -10,18 +10,33 @@
 // UGameItemContainerStockRule
 // ---------------------------
 
-UGameItemContainerStockRule::UGameItemContainerStockRule()
+UGameItemContainerRule::UGameItemContainerRule()
 {
 }
 
-int32 UGameItemContainerStockRule::GetItemMaxCount_Implementation(const UGameItemContainer* Container, const UGameItem* Item) const
+bool UGameItemContainerRule::CanContainItem_Implementation(const UGameItemContainer* Container, const UGameItem* Item) const
+{
+	return true;
+}
+
+int32 UGameItemContainerRule::GetItemMaxCount_Implementation(const UGameItemContainer* Container, const UGameItem* Item) const
 {
 	return -1;
 }
 
-int32 UGameItemContainerStockRule::GetItemStackMaxCount_Implementation(const UGameItemContainer* Container, const UGameItem* Item) const
+int32 UGameItemContainerRule::GetItemStackMaxCount_Implementation(const UGameItemContainer* Container, const UGameItem* Item) const
 {
 	return -1;
+}
+
+
+// UGameItemContainerRule_TagRequirements
+// --------------------------------------
+
+bool UGameItemContainerRule_TagRequirements::CanContainItem_Implementation(const UGameItemContainer* Container, const UGameItem* Item) const
+{
+	const FGameplayTagContainer ItemTags = Item->GetItemDefCDO()->OwnedTags;
+	return ItemTags.HasAll(RequireTags) && !ItemTags.HasAny(IgnoreTags) && (Query.IsEmpty() || Query.Matches(ItemTags));
 }
 
 

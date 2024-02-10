@@ -26,6 +26,12 @@ void UGameItem::SetItemDef(TSubclassOf<UGameItemDef> NewItemDef)
 	ItemDef = NewItemDef;
 }
 
+const FGameplayTagContainer& UGameItem::GetOwnedTags() const
+{
+	const UGameItemDef* ItemDefCDO = GetItemDefCDO();
+	return ItemDefCDO ? ItemDefCDO->OwnedTags : FGameplayTagContainer::EmptyContainer;
+}
+
 void UGameItem::SetCount(int32 NewCount)
 {
 	if (Count != NewCount)
