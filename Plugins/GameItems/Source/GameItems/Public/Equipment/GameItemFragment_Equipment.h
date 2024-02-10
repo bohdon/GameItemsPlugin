@@ -12,7 +12,7 @@ class UGameEquipmentDef;
 /**
  * Item fragment that defines equipment to grant from this item.
  */
-UCLASS()
+UCLASS(DisplayName = "Equipment")
 class GAMEITEMS_API UGameItemFragment_Equipment : public UGameItemFragment
 {
 	GENERATED_BODY()

@@ -21,3 +21,8 @@ UGameItemContainer* AItemsDemoPlayerState::GetItemContainer(FGameplayTag Contain
 {
 	return GameItemContainerComponent->GetItemContainer(ContainerId);
 }
+
+UGameItemContainerComponent* AItemsDemoPlayerState::GetItemContainerComponent() const
+{
+	return GameItemContainerComponent;
+}

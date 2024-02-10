@@ -13,7 +13,7 @@ class UGameItemDef;
 /**
  * Defines common UI data for an item, like description and icon.
  */
-UCLASS(DisplayName = "UIData")
+UCLASS(DisplayName = "UI Data")
 class GAMEITEMS_API UGameItemFragment_UIData : public UGameItemFragment
 {
 	GENERATED_BODY()

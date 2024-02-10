@@ -12,7 +12,7 @@ class UGameItem;
 /**
  * A fragment of an item definition.
  */
-UCLASS(DefaultToInstanced, EditInlineNew, Abstract)
+UCLASS(BlueprintType, Blueprintable, DefaultToInstanced, EditInlineNew, Abstract)
 class GAMEITEMS_API UGameItemFragment : public UObject
 {
 	GENERATED_BODY()

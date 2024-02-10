@@ -11,7 +11,7 @@
 /**
  * Defines starting tag-based stats, like level or ammo.
  */
-UCLASS()
+UCLASS(DisplayName = "Tag Stats")
 class GAMEITEMS_API UGameItemFragment_TagStats : public UGameItemFragment
 {
 	GENERATED_BODY()

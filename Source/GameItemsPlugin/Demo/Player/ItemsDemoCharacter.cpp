@@ -56,9 +56,13 @@ TArray<UGameItemContainer*> AItemsDemoCharacter::GetAllItemContainers() const
 UGameItemContainer* AItemsDemoCharacter::GetItemContainer(FGameplayTag ContainerId) const
 {
 	// use the item containers from the player state
-	if (const AItemsDemoPlayerState* DemoPlayerState = GetPlayerState<AItemsDemoPlayerState>())
-	{
-		return DemoPlayerState->GetItemContainer(ContainerId);
-	}
-	return nullptr;
+	const AItemsDemoPlayerState* DemoPlayerState = GetPlayerState<AItemsDemoPlayerState>();
+	return DemoPlayerState ? DemoPlayerState->GetItemContainer(ContainerId) : nullptr;
+}
+
+UGameItemContainerComponent* AItemsDemoCharacter::GetItemContainerComponent() const
+{
+	// use the container component on the player state
+	const AItemsDemoPlayerState* DemoPlayerState = GetPlayerState<AItemsDemoPlayerState>();
+	return DemoPlayerState ? DemoPlayerState->GetItemContainerComponent() : nullptr;
 }

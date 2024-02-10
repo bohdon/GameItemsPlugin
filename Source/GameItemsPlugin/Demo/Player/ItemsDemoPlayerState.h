@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameItemContainerComponentInterface.h"
 #include "GameItemContainerInterface.h"
 #include "GameFramework/PlayerState.h"
 #include "ItemsDemoPlayerState.generated.h"
@@ -15,7 +16,8 @@ class UGameItemContainerComponent;
  */
 UCLASS()
 class GAMEITEMSPLUGIN_API AItemsDemoPlayerState : public APlayerState,
-                                                  public IGameItemContainerInterface
+                                                  public IGameItemContainerInterface,
+                                                  public IGameItemContainerComponentInterface
 {
 	GENERATED_BODY()
 
@@ -29,4 +31,7 @@ public:
 	// IGameItemContainerInterface
 	virtual TArray<UGameItemContainer*> GetAllItemContainers() const override;
 	virtual UGameItemContainer* GetItemContainer(FGameplayTag ContainerId) const override;
+
+	// IGameItemContainerComponentInterface
+	virtual UGameItemContainerComponent* GetItemContainerComponent() const override;
 };

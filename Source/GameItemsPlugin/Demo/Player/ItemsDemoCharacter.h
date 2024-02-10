@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameItemContainerComponentInterface.h"
 #include "GameItemContainerInterface.h"
 #include "InputAction.h"
 #include "InputActionValue.h"
@@ -14,7 +15,8 @@ class UDemoInteractorComponent;
 
 UCLASS()
 class GAMEITEMSPLUGIN_API AItemsDemoCharacter : public ACharacter,
-                                                public IGameItemContainerInterface
+                                                public IGameItemContainerInterface,
+                                                public IGameItemContainerComponentInterface
 {
 	GENERATED_BODY()
 
@@ -39,4 +41,7 @@ public:
 	// IGameItemContainerInterface
 	virtual TArray<UGameItemContainer*> GetAllItemContainers() const override;
 	virtual UGameItemContainer* GetItemContainer(FGameplayTag ContainerId) const override;
+
+	// IGameItemContainerComponentInterface
+	virtual UGameItemContainerComponent* GetItemContainerComponent() const override;
 };
