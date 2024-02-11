@@ -49,15 +49,15 @@ public:
 
 protected:
 	/** The owning container. */
-	UPROPERTY(Transient, BlueprintReadOnly, FieldNotify)
+	UPROPERTY(BlueprintReadOnly, Getter, FieldNotify, Meta = (AllowPrivateAccess))
 	UGameItemContainer* Container;
 
 	/** The slot in the container. */
-	UPROPERTY(Transient, BlueprintReadOnly, FieldNotify)
+	UPROPERTY(BlueprintReadOnly, Getter, FieldNotify, Meta = (AllowPrivateAccess))
 	int32 Slot;
 
 	/** The currently slotted item. */
-	UPROPERTY(Transient, BlueprintReadOnly, FieldNotify)
+	UPROPERTY(BlueprintReadOnly, Getter, FieldNotify)
 	UGameItem* Item;
 
 	void UpdateItem();

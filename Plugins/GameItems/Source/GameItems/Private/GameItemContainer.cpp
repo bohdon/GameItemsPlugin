@@ -300,6 +300,8 @@ TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot
 			NewItem->SetCount(SlotDeltaCount);
 
 			ItemList.AddEntryAt(NewItem, Slot);
+			NewItem->Containers.AddUnique(this);
+
 			OnItemAdded(NewItem, Slot);
 			OnSlotChanged(Slot);
 
@@ -331,6 +333,11 @@ UGameItem* UGameItemContainer::RemoveItemAt(int32 Slot)
 	// don't preserve indeces for unlimited inventories
 	bool bPreserveIndeces = GetContainerDefCDO()->bLimitSlots;
 	UGameItem* RemovedItem = ItemList.RemoveEntryAt(Slot, bPreserveIndeces);
+	if (RemovedItem)
+	{
+		RemovedItem->Containers.Remove(this);
+	}
+
 	OnItemRemoved(RemovedItem, Slot);
 	OnSlotRangeChanged(Slot, bPreserveIndeces ? Slot : GetNumSlots() - 1);
 
@@ -665,8 +672,11 @@ UWorld* UGameItemContainer::GetWorld() const
 
 void UGameItemContainer::OnItemAdded(UGameItem* Item, int32 Slot)
 {
+	check(Item);
+
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s OnItemAdded [%d] %s"), *GetName(), Slot, *GetNameSafe(Item));
 	OnItemAddedEvent.Broadcast(Item);
+	Item->OnSlottedEvent.Broadcast(this, Slot, INDEX_NONE);
 
 	// if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && Item)
 	// {
@@ -676,8 +686,11 @@ void UGameItemContainer::OnItemAdded(UGameItem* Item, int32 Slot)
 
 void UGameItemContainer::OnItemRemoved(UGameItem* Item, int32 Slot)
 {
+	check(Item);
+
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s OnItemRemoved [%d] %s"), *GetName(), Slot, *GetNameSafe(Item));
 	OnItemRemovedEvent.Broadcast(Item);
+	Item->OnUnslottedEvent.Broadcast(this, Slot);
 
 	// if (IsUsingRegisteredSubObjectList() && Item)
 	// {

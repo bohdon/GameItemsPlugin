@@ -9,6 +9,7 @@
 #include "GameItem.generated.h"
 
 class UGameItemDef;
+class UGameItemContainer;
 
 
 /**
@@ -78,25 +79,37 @@ public:
 	 */
 	void CopyItemProperties(const UGameItem* Item);
 
+	/** Return all containers that this item is in. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	TArray<UGameItemContainer*> GetContainers() const;
+
 	/** Return a debug string representation of this item instance. */
 	UFUNCTION(BlueprintPure, Category = "GameItem")
 	FString ToDebugString() const;
 
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FCountChangedDelegate,
-	                                     int32 /*NewCount*/,
-	                                     int32 /*OldCount*/);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FCountChangedDelegate, int32 /*NewCount*/, int32 /*OldCount*/);
+	DECLARE_MULTICAST_DELEGATE_ThreeParams(FTagStatChangedDelegate, const FGameplayTag& /*Tag*/, int32 /*NewValue*/, int32 /*OldValue*/);
+	DECLARE_MULTICAST_DELEGATE_ThreeParams(FSlottedDelegate, const UGameItemContainer* /*Container*/, int32 /*NewSlot*/, int32 /*OldSlot*/);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FUnslottedDelegate, const UGameItemContainer* /*Container*/, int32 /*OldSlot*/);
 
 	/** Called when the quantity of this item stack has changed. */
 	FCountChangedDelegate OnCountChangedEvent;
 
-	DECLARE_MULTICAST_DELEGATE_ThreeParams(FTagStatChangedDelegate,
-	                                       const FGameplayTag& /*Tag*/,
-	                                       int32 /*NewValue*/,
-	                                       int32 /*OldValue*/);
-
 	/** Called when a tag stat of this item has changed. */
 	FTagStatChangedDelegate OnTagStatChangedEvent;
 
+	/** Called when this item is added or moved in any container. */
+	FSlottedDelegate OnSlottedEvent;
+
+	/** Called when this item is removed from any container. */
+	FUnslottedDelegate OnUnslottedEvent;
 
 	virtual bool IsSupportedForNetworking() const override { return true; }
+
+protected:
+	/** All containers that this item is in. */
+	UPROPERTY(Transient)
+	TArray<TWeakObjectPtr<UGameItemContainer>> Containers;
+
+	friend UGameItemContainer;
 };

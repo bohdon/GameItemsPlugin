@@ -140,6 +140,22 @@ TArray<UGameItem*> UGameItemContainerComponent::TryAutoSlotItem(UGameItem* Item,
 	return TArray<UGameItem*>();
 }
 
+bool UGameItemContainerComponent::IsItemSlotted(UGameItem* Item, FGameplayTagContainer ContainerTags) const
+{
+	const TArray<UGameItemContainer*> AllContainers = GetAllItemContainers();
+	for (const UGameItemContainer* Container : AllContainers)
+	{
+		if (Container->GetOwnedTags().HasAny(ContainerTags))
+		{
+			if (Container->Contains(Item))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag ContainerId, TSubclassOf<UGameItemContainerDef> ContainerDef)
 {
 	if (Containers.Contains(ContainerId))

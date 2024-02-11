@@ -20,12 +20,11 @@ class GAMEITEMSUI_API UGameItemViewModel : public UMVVMViewModelBase
 public:
 	UGameItemViewModel();
 
+	/** Set the game item for this view model .*/
+	void SetItem(UGameItem* NewItem);
+
 	/** Return the current item. */
 	UGameItem* GetItem() const { return Item; }
-
-	/** Set the game item for this view model .*/
-	UFUNCTION(BlueprintCallable)
-	void SetItem(UGameItem* NewItem);
 
 	/** Return the quantity of the item. */
 	UFUNCTION(BlueprintPure, FieldNotify)
@@ -41,7 +40,7 @@ public:
 
 protected:
 	/** The game item. */
-	UPROPERTY(Transient, BlueprintReadOnly, FieldNotify, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(BlueprintReadWrite, Setter, Getter, FieldNotify, Meta = (AllowPrivateAccess))
 	TObjectPtr<UGameItem> Item;
 
 	void OnCountChanged(int32 NewCount, int32 OldCount);

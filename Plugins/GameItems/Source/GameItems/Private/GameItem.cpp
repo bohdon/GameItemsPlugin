@@ -94,6 +94,15 @@ void UGameItem::CopyItemProperties(const UGameItem* Item)
 	TagStats = Item->TagStats;
 }
 
+TArray<UGameItemContainer*> UGameItem::GetContainers() const
+{
+	TArray<UGameItemContainer*> Result;
+	Algo::TransformIf(Containers, Result,
+	                  [](const TWeakObjectPtr<UGameItemContainer>& Container) { return Container.IsValid(); },
+	                  [](const TWeakObjectPtr<UGameItemContainer>& Container) { return Container.Get(); });
+	return Result;
+}
+
 FString UGameItem::ToDebugString() const
 {
 	return FString::Printf(TEXT("%s (%sx%d)"), *GetName(), *GetNameSafe(ItemDef), Count);

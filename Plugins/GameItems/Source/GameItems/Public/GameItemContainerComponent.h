@@ -82,6 +82,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false)
 	TArray<UGameItem*> TryAutoSlotItem(UGameItem* Item, FGameplayTagContainer ContextTags) const;
 
+	/** Return true if an item is slotted in a container with any of the given tags. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	bool IsItemSlotted(UGameItem* Item, FGameplayTagContainer ContainerTags) const;
+
 	/**
 	 * Create a new item container.
 	 * @return The new container, or null if a container already exists with the same id.
