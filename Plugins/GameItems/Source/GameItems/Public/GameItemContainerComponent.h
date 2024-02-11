@@ -10,8 +10,12 @@
 class UGameItem;
 class UGameItemAutoSlotRule;
 class UGameItemContainerDef;
+class UGameItemContainerLink;
 
 
+/**
+ * Defines a container.
+ */
 USTRUCT(BlueprintType)
 struct FGameItemContainerSpec
 {
@@ -25,6 +29,28 @@ struct FGameItemContainerSpec
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText DisplayName;
+};
+
+
+/**
+ * Defines a container link to add to all matching containers.
+ */
+USTRUCT(BlueprintType)
+struct FGameItemContainerLinkSpec
+{
+	GENERATED_BODY()
+
+	/** Apply this link to all containers matching this query. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ContainerLink")
+	FGameplayTagQuery ContainerQuery;
+
+	/** The linked container id. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ContainerLink")
+	FGameplayTag LinkedContainerId;
+
+	/** The container link class to create for each matching container. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ContainerLink")
+	TSubclassOf<UGameItemContainerLink> ContainerLinkClass;
 };
 
 
@@ -43,6 +69,10 @@ public:
 	/** The definitions for all additional containers to create at startup. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (TitleProperty = "{ContainerId}"), Category = "GameItems")
 	TArray<FGameItemContainerSpec> StartupContainers;
+
+	/** The container links to add on any containers created by this component. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (TitleProperty = "{LinkedContainerId} {ContainerLinkClass}"), Category = "GameItems")
+	TArray<FGameItemContainerLinkSpec> ContainerLinks;
 
 	/** Logic for determining how to auto-slot items, in order of priority. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "GameItems")
@@ -74,6 +104,9 @@ protected:
 
 	/** Create all startup containers. */
 	void CreateStartupContainers();
+
+	/** Update all container link rules to assign any containers that aren't set yet. */
+	void ResolveContainerLinks();
 
 	void AddContainer(UGameItemContainer* Container);
 };

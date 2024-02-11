@@ -93,9 +93,45 @@ UGameItem* UGameItemContainer::DuplicateItem(UGameItem* Item) const
 	return ItemSubsystem->DuplicateItem(OwningActor, Item);
 }
 
+void UGameItemContainer::SetContainerDef(TSubclassOf<UGameItemContainerDef> NewContainerDef)
+{
+	if (!ContainerDef)
+	{
+		ContainerDef = NewContainerDef;
+
+		// duplicate container rules from the definition so that they can be stateful
+		if (const UGameItemContainerDef* ContainerDefCDO = GetContainerDefCDO())
+		{
+			for (const UGameItemContainerRule* CDORule : ContainerDefCDO->Rules)
+			{
+				if (!CDORule)
+				{
+					continue;
+				}
+
+				UGameItemContainerRule* NewRule = DuplicateObject(CDORule, this);
+				check(NewRule);
+				Rules.Add(NewRule);
+				NewRule->Initialize();
+			}
+		}
+	}
+}
+
 const UGameItemContainerDef* UGameItemContainer::GetContainerDefCDO() const
 {
-	return GetDefault<UGameItemContainerDef>(ContainerDef);
+	return ContainerDef ? GetDefault<UGameItemContainerDef>(ContainerDef) : nullptr;
+}
+
+FGameplayTagContainer UGameItemContainer::GetOwnedTags() const
+{
+	FGameplayTagContainer Result;
+	Result.AddTag(ContainerId);
+	if (ContainerDef)
+	{
+		Result.AppendTags(GetContainerDefCDO()->OwnedTags);
+	}
+	return Result;
 }
 
 bool UGameItemContainer::CanAddNewItem(TSubclassOf<UGameItemDef> ItemDef, int32 Count)
@@ -353,7 +389,7 @@ TArray<UGameItem*> UGameItemContainer::GetAllMatchingItems(const UGameItem* Item
 	return Result;
 }
 
-int32 UGameItemContainer::GetItemSlot(UGameItem* Item) const
+int32 UGameItemContainer::GetItemSlot(const UGameItem* Item) const
 {
 	return ItemList.Entries.IndexOfByPredicate([Item](const FGameItemListEntry& Entry)
 	{
@@ -361,7 +397,7 @@ int32 UGameItemContainer::GetItemSlot(UGameItem* Item) const
 	});
 }
 
-bool UGameItemContainer::Contains(UGameItem* Item) const
+bool UGameItemContainer::Contains(const UGameItem* Item) const
 {
 	return GetItemSlot(Item) != INDEX_NONE;
 }
@@ -482,9 +518,9 @@ bool UGameItemContainer::CanContainItem(const UGameItem* Item) const
 		return false;
 	}
 
-	for (const UGameItemContainerRule* Rule : GetContainerDefCDO()->Rules)
+	for (const UGameItemContainerRule* Rule : Rules)
 	{
-		if (!Rule->CanContainItem(this, Item))
+		if (!Rule->CanContainItem(Item))
 		{
 			return false;
 		}
@@ -513,9 +549,9 @@ int32 UGameItemContainer::GetItemMaxCount(const UGameItem* Item) const
 		Result = ItemDefCDO->StockRules.MaxCount;
 	}
 
-	for (const UGameItemContainerRule* Rule : GetContainerDefCDO()->Rules)
+	for (const UGameItemContainerRule* Rule : Rules)
 	{
-		const int32 RuleMaxCount = Rule->GetItemMaxCount(this, Item);
+		const int32 RuleMaxCount = Rule->GetItemMaxCount(Item);
 		if (RuleMaxCount >= 0)
 		{
 			Result = FMath::Min(Result, RuleMaxCount);
@@ -546,9 +582,9 @@ int32 UGameItemContainer::GetItemStackMaxCount(const UGameItem* Item) const
 		Result = ItemDefCDO->StockRules.StackMaxCount;
 	}
 
-	for (const UGameItemContainerRule* Rule : GetContainerDefCDO()->Rules)
+	for (const UGameItemContainerRule* Rule : Rules)
 	{
-		const int32 RuleMaxCount = Rule->GetItemStackMaxCount(this, Item);
+		const int32 RuleMaxCount = Rule->GetItemStackMaxCount(Item);
 		if (RuleMaxCount >= 0)
 		{
 			Result = FMath::Min(Result, RuleMaxCount);
@@ -581,6 +617,36 @@ void UGameItemContainer::AddDefaultItems(bool bForce)
 	}
 
 	bHasDefaultItems = true;
+}
+
+UGameItemContainerRule* UGameItemContainer::AddRule(TSubclassOf<UGameItemContainerRule> RuleClass)
+{
+	UGameItemContainerRule* NewRule = NewObject<UGameItemContainerRule>(this, RuleClass);
+	if (NewRule)
+	{
+		Rules.Add(NewRule);
+		NewRule->Initialize();
+		return NewRule;
+	}
+	return nullptr;
+}
+
+int32 UGameItemContainer::RemoveRule(TSubclassOf<UGameItemContainerRule> RuleClass)
+{
+	TArray<UGameItemContainerRule*> MatchingRules = Rules.FilterByPredicate([RuleClass](const UGameItemContainerRule* Rule)
+	{
+		check(Rule);
+		return Rule->GetClass() == RuleClass;
+	});
+
+	int32 NumRemoved = 0;
+	for (UGameItemContainerRule* Rule : MatchingRules)
+	{
+		Rule->Uninitialize();
+		Rules.Remove(Rule);
+		++NumRemoved;
+	}
+	return NumRemoved;
 }
 
 AActor* UGameItemContainer::GetOwner() const

@@ -6,6 +6,7 @@
 #include "GameItemAutoSlotRule.h"
 #include "GameItemContainer.h"
 #include "GameItemContainerDef.h"
+#include "GameItemContainerLink.h"
 #include "GameItemSettings.h"
 #include "Engine/ActorChannel.h"
 #include "Engine/World.h"
@@ -100,6 +101,25 @@ void UGameItemContainerComponent::CreateStartupContainers()
 	}
 }
 
+void UGameItemContainerComponent::ResolveContainerLinks()
+{
+	for (const auto& Elem : Containers)
+	{
+		const UGameItemContainer* Container = Elem.Value;
+		const TArray<UGameItemContainerRule*>& Rules = Container->GetRules();
+		for (UGameItemContainerRule* Rule : Rules)
+		{
+			if (UGameItemContainerLink* LinkRule = Cast<UGameItemContainerLink>(Rule))
+			{
+				if (!LinkRule->GetLinkedContainer() && LinkRule->LinkedContainerId.IsValid())
+				{
+					LinkRule->SetLinkedContainer(GetItemContainer(LinkRule->LinkedContainerId));
+				}
+			}
+		}
+	}
+}
+
 TArray<UGameItem*> UGameItemContainerComponent::TryAutoSlotItem(UGameItem* Item, FGameplayTagContainer ContextTags) const
 {
 	const TArray<UGameItemContainer*> AllContainers = GetAllItemContainers();
@@ -146,9 +166,29 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag Co
 	UGameItemContainer* NewContainer = NewObject<UGameItemContainer>(this, ContainerClass);
 	check(NewContainer);
 	NewContainer->ContainerId = ContainerId;
-	NewContainer->ContainerDef = ContainerDef;
+	NewContainer->SetContainerDef(ContainerDef);
+
+	// add link rules
+	for (const FGameItemContainerLinkSpec& LinkSpec : ContainerLinks)
+	{
+		if (!LinkSpec.ContainerLinkClass)
+		{
+			continue;
+		}
+		if (LinkSpec.ContainerQuery.Matches(NewContainer->GetOwnedTags()))
+		{
+			UGameItemContainerLink* NewLink = NewContainer->AddRule<UGameItemContainerLink>(LinkSpec.ContainerLinkClass);
+			if (NewLink)
+			{
+				// just set the container id, then resolve this (and any other links) later
+				NewLink->LinkedContainerId = LinkSpec.LinkedContainerId;
+			}
+		}
+	}
 
 	AddContainer(NewContainer);
+
+	ResolveContainerLinks();
 
 	return NewContainer;
 }

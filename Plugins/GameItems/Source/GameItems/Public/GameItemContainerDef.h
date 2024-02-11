@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameItemTypes.h"
 #include "UObject/Object.h"
+#include "UObject/ObjectSaveContext.h"
 #include "GameItemContainerDef.generated.h"
 
 class UGameItemContainer;
@@ -54,4 +55,8 @@ public:
 	/** Rules and limitations specific to this container. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "GameItemContainer")
 	TArray<TObjectPtr<UGameItemContainerRule>> Rules;
+
+#if WITH_EDITOR
+	virtual void PreSave(FObjectPreSaveContext SaveContext) override;
+#endif
 };

@@ -14,3 +14,16 @@ UGameItemContainerDef::UGameItemContainerDef(const FObjectInitializer& ObjectIni
 	  bAutoStack(false)
 {
 }
+
+#if WITH_EDITOR
+void UGameItemContainerDef::PreSave(FObjectPreSaveContext SaveContext)
+{
+	// cleanup invalid rules
+	Rules.RemoveAll([](const UGameItemContainerRule* Rule)
+	{
+		return Rule == nullptr;
+	});
+
+	UObject::PreSave(SaveContext);
+}
+#endif

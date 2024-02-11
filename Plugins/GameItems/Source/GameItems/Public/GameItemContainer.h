@@ -10,6 +10,7 @@
 
 class UGameItem;
 class UGameItemContainerDef;
+class UGameItemContainerLink;
 class UGameItemContainerRule;
 class UGameItemDef;
 class UGameItemSet;
@@ -56,10 +57,10 @@ struct FGameItemContainerAddPlan
 
 
 /**
- * Component that contains one or more game item instances,
+ * Object that contains one or more game item instances,
  * like an inventory, treasure chest, or just a simple item pickup.
  */
-UCLASS(BlueprintType, Blueprintable, DefaultToInstanced, EditInlineNew)
+UCLASS(BlueprintType, Blueprintable)
 class GAMEITEMS_API UGameItemContainer : public UObject
 {
 	GENERATED_BODY()
@@ -75,13 +76,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
 	FText DisplayName;
 
-	/** The settings and rules for this container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, DisplayName = "ContainerDefClass", Category = "GameItemContainer")
-	TSubclassOf<UGameItemContainerDef> ContainerDef;
+	/** Set the definition for this container. Cannot be changed once set. */
+	UFUNCTION(BlueprintCallable)
+	void SetContainerDef(TSubclassOf<UGameItemContainerDef> NewContainerDef);
 
 	/** Return the CDO of the container definition. */
 	UFUNCTION(BlueprintPure, DisplayName = "GetContainerDef")
 	FORCEINLINE const UGameItemContainerDef* GetContainerDefCDO() const;
+
+	/** Get all tags that this container has. */
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
+	FGameplayTagContainer GetOwnedTags() const;
 
 	/** Return true if a new item could be added to this container. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Meta = (DeprecatedFunction), Category = "GameItemContainer")
@@ -143,11 +148,11 @@ public:
 
 	/** Return the slot of an item in this container, or -1 if not in the container. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
-	int32 GetItemSlot(UGameItem* Item) const;
+	int32 GetItemSlot(const UGameItem* Item) const;
 
 	/** Return true if an item exists in the container. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
-	bool Contains(UGameItem* Item) const;
+	bool Contains(const UGameItem* Item) const;
 
 	/** Return the total number of an item in this container by definition. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
@@ -210,6 +215,26 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void AddDefaultItems(bool bForce = false);
 
+	/** Return all rules applied to this container. */
+	const TArray<UGameItemContainerRule*>& GetRules() const { return Rules; }
+
+	/** Add a container rule. */
+	UGameItemContainerRule* AddRule(TSubclassOf<UGameItemContainerRule> RuleClass);
+
+	/** Add a container rule. */
+	template <class T>
+	T* AddRule(TSubclassOf<UGameItemContainerRule> RuleClass)
+	{
+		static_assert(TIsDerivedFrom<T, UGameItemContainerRule>::IsDerived, "T must be a UGameItemContainerRule type");
+		return Cast<T>(AddRule(RuleClass));
+	}
+
+	/**
+	 * Remove a container rule by class.
+	 * @return The number of rules that were removed.
+	 */
+	int32 RemoveRule(TSubclassOf<UGameItemContainerRule> RuleClass);
+
 	/** Return the owning actor of this container. */
 	virtual AActor* GetOwner() const;
 
@@ -236,6 +261,14 @@ public:
 	FNumSlotsChangedDelegate OnNumSlotsChangedEvent;
 
 protected:
+	/** The settings for this container. */
+	UPROPERTY(Transient, BlueprintReadOnly, DisplayName = "ContainerDefClass", Meta = (AllowPrivateAccess = true), Category = "GameItemContainer")
+	TSubclassOf<UGameItemContainerDef> ContainerDef;
+
+	/** The active rules applied to this container. */
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "GameItemContainer")
+	TArray<TObjectPtr<UGameItemContainerRule>> Rules;
+
 	/** Have the default items already been added to this container? */
 	bool bHasDefaultItems;
 
