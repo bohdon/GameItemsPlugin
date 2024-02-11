@@ -5,7 +5,11 @@
 
 #include "GameItem.h"
 #include "GameItemContainer.h"
+#include "GameItemContainerComponent.h"
 #include "GameItemDef.h"
+#include "GameItemsModule.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemContainerRule)
 
 
 // UGameItemContainerStockRule
@@ -108,4 +112,34 @@ int32 UGameItemContainerStockRule_Tags::GetItemStackMaxCount_Implementation(cons
 {
 	const FGameItemStockRules ItemStockRules = GetStockRulesForItem(Item);
 	return ItemStockRules.bLimitStackCount ? ItemStockRules.StackMaxCount : -1;
+}
+
+
+// UGameItemContainerRule_AutoSlot
+// -------------------------------
+
+void UGameItemContainerRule_AutoSlot::Initialize()
+{
+	Super::Initialize();
+
+	Container->OnItemAddedEvent.AddUObject(this, &UGameItemContainerRule_AutoSlot::OnItemAdded);
+}
+
+void UGameItemContainerRule_AutoSlot::Uninitialize()
+{
+	Super::Uninitialize();
+
+	Container->OnItemAddedEvent.RemoveAll(this);
+}
+
+void UGameItemContainerRule_AutoSlot::OnItemAdded(UGameItem* Item)
+{
+	const UGameItemContainerComponent* ContainerComp = Container->GetTypedOuter<UGameItemContainerComponent>();
+	if (!ContainerComp)
+	{
+		UE_LOG(LogGameItems, Error, TEXT("UGameItemContainerRule_AutoSlot requires a Container that is part of a UGameItemContainerComponent"));
+		return;
+	}
+
+	ContainerComp->TryAutoSlotItem(Item, ContextTags);
 }

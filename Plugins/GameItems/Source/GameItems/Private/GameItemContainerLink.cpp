@@ -6,6 +6,8 @@
 #include "GameItemContainer.h"
 #include "GameItemsModule.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemContainerLink)
+
 
 // UGameItemContainerLink
 // ----------------------

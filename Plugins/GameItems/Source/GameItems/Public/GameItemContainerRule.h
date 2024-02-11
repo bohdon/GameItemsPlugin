@@ -90,7 +90,7 @@ public:
 	UGameItemContainerStockRule_Simple();
 
 	/** The stock rules for all items. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Meta = (ShowOnlyInnerProperties), Category = "GameItem")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Meta = (ShowOnlyInnerProperties), Category = "Stock Rules")
 	FGameItemStockRules StockRules;
 
 	virtual int32 GetItemMaxCount_Implementation(const UGameItem* Item) const override;
@@ -109,11 +109,33 @@ class GAMEITEMS_API UGameItemContainerStockRule_Tags : public UGameItemContainer
 public:
 	UGameItemContainerStockRule_Tags();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameItem")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tag Stock Rules")
 	TMap<FGameplayTag, FGameItemStockRules> StockRules;
 
 	FGameItemStockRules GetStockRulesForItem(const UGameItem* Item) const;
 
 	virtual int32 GetItemMaxCount_Implementation(const UGameItem* Item) const override;
 	virtual int32 GetItemStackMaxCount_Implementation(const UGameItem* Item) const override;
+};
+
+
+/**
+ * Attempts to auto-slot an item whenever it is added to this container.
+ * Requires the container to be in a UGameItemContainerComponent.
+ */
+UCLASS(DisplayName = "Auto-Slot")
+class UGameItemContainerRule_AutoSlot : public UGameItemContainerRule
+{
+	GENERATED_BODY()
+
+public:
+	/** Context tags to pass when auto slotting. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Auto Slot")
+	FGameplayTagContainer ContextTags;
+
+	virtual void Initialize() override;
+	virtual void Uninitialize() override;
+
+protected:
+	void OnItemAdded(UGameItem* Item);
 };

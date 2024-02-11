@@ -59,18 +59,3 @@ public:
 protected:
 	void OnLinkedItemRemoved(UGameItem* Item);
 };
-
-
-/**
- * Attempts to automatically slot an item to this container when it is added to the linked container.
- */
-UCLASS(DisplayName = "Link Auto-Slot")
-class UGameItemContainerLink_AutoSlot : public UGameItemContainerLink
-{
-	GENERATED_BODY()
-
-public:
-	/** Context tags passed to the auto slot calls. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Auto Slot")
-	FGameplayTagContainer ContextTags;
-};
