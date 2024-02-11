@@ -4,7 +4,7 @@
 #include "ViewModels/GameItemContainerViewModel.h"
 
 #include "GameItemContainer.h"
-#include "ViewModels/GameItemContainerSlotViewModel.h"
+#include "ViewModels/GameItemSlotViewModel.h"
 
 
 void UGameItemContainerViewModel::SetContainer(UGameItemContainer* NewContainer)
@@ -45,7 +45,7 @@ TArray<UGameItem*> UGameItemContainerViewModel::GetItems() const
 	return Container ? Container->GetAllItems() : TArray<UGameItem*>();
 }
 
-TArray<UGameItemContainerSlotViewModel*> UGameItemContainerViewModel::GetSlotViewModels() const
+TArray<UGameItemSlotViewModel*> UGameItemContainerViewModel::GetSlotViewModels() const
 {
 	UGameItemContainerViewModel* MutableThis = const_cast<UGameItemContainerViewModel*>(this);
 
@@ -58,7 +58,7 @@ TArray<UGameItemContainerSlotViewModel*> UGameItemContainerViewModel::GetSlotVie
 		// create any new models
 		for (int32 Slot = OldNumSlots; Slot < NumSlots; ++Slot)
 		{
-			UGameItemContainerSlotViewModel* SlotViewModel = NewObject<UGameItemContainerSlotViewModel>(MutableThis);
+			UGameItemSlotViewModel* SlotViewModel = NewObject<UGameItemSlotViewModel>(MutableThis);
 			SlotViewModel->SetContainerAndSlot(Container, Slot);
 			MutableThis->SlotViewModels[Slot] = SlotViewModel;
 		}

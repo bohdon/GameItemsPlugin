@@ -7,7 +7,7 @@
 #include "GameItemContainerViewModel.generated.h"
 
 class UGameItem;
-class UGameItemContainerSlotViewModel;
+class UGameItemSlotViewModel;
 class UGameItemContainer;
 
 
@@ -36,7 +36,7 @@ public:
 
 	/** Return a slot view model for each slot in the container. Designed for use with list views. */
 	UFUNCTION(BlueprintPure, FieldNotify)
-	TArray<UGameItemContainerSlotViewModel*> GetSlotViewModels() const;
+	TArray<UGameItemSlotViewModel*> GetSlotViewModels() const;
 
 protected:
 	/** The owning container. */
@@ -45,7 +45,7 @@ protected:
 
 	/** The cached view models for each slot. */
 	UPROPERTY(Transient)
-	TArray<UGameItemContainerSlotViewModel*> SlotViewModels;
+	TArray<UGameItemSlotViewModel*> SlotViewModels;
 
 	void OnItemAdded(UGameItem* Item);
 	void OnItemRemoved(UGameItem* Item);

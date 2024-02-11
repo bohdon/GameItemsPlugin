@@ -7,7 +7,7 @@
 #include "GameItemSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
-#include "ViewModels/GameItemContainerSlotViewModel.h"
+#include "ViewModels/GameItemSlotViewModel.h"
 #include "ViewModels/GameItemContainerViewModel.h"
 #include "ViewModels/GameItemViewModel.h"
 
@@ -53,7 +53,7 @@ UGameItem* UGameItemsUISubsystem::GetItemFromObject(UObject* ItemObject) const
 	{
 		return ItemViewModel->GetItem();
 	}
-	else if (const UGameItemContainerSlotViewModel* SlotViewModel = Cast<UGameItemContainerSlotViewModel>(ItemObject))
+	else if (const UGameItemSlotViewModel* SlotViewModel = Cast<UGameItemSlotViewModel>(ItemObject))
 	{
 		return SlotViewModel->GetItem();
 	}
@@ -62,7 +62,7 @@ UGameItem* UGameItemsUISubsystem::GetItemFromObject(UObject* ItemObject) const
 
 void UGameItemsUISubsystem::GetContainerAndItem(UObject* ViewModelObject, bool& bSuccess, UGameItemContainer*& Container, UGameItem*& Item) const
 {
-	if (const UGameItemContainerSlotViewModel* SlotViewModel = Cast<UGameItemContainerSlotViewModel>(ViewModelObject))
+	if (const UGameItemSlotViewModel* SlotViewModel = Cast<UGameItemSlotViewModel>(ViewModelObject))
 	{
 		Container = SlotViewModel->GetContainer();
 		Item = SlotViewModel->GetItem();
