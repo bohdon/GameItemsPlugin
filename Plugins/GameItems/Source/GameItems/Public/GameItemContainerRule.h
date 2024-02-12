@@ -117,29 +117,3 @@ public:
 	virtual int32 GetItemMaxCount_Implementation(const UGameItem* Item) const override;
 	virtual int32 GetItemStackMaxCount_Implementation(const UGameItem* Item) const override;
 };
-
-
-/**
- * Attempts to auto-slot an item whenever it is added to this container.
- * Requires the container to be in a UGameItemContainerComponent.
- */
-UCLASS(DisplayName = "Auto-Slot")
-class UGameItemContainerRule_AutoSlot : public UGameItemContainerRule
-{
-	GENERATED_BODY()
-
-public:
-	/** Context tags to pass when auto slotting. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Auto Slot")
-	FGameplayTagContainer ContextTags;
-
-	virtual void Initialize() override;
-	virtual void Uninitialize() override;
-
-	/** Return true if auto-slotting should be performed. */
-	UFUNCTION(BlueprintNativeEvent)
-	bool ShouldAutoSlot(UGameItem* Item) const;
-
-protected:
-	void OnItemAdded(UGameItem* Item);
-};
