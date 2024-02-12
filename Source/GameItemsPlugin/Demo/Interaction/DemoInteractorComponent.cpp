@@ -179,7 +179,7 @@ float UDemoInteractorComponent::GetDeltaAngle(const FVector& DirectionA, const F
 
 FDemoInteractionContext UDemoInteractorComponent::GetInteractionContextForActor(AActor* Actor)
 {
-	if (UDemoInteractorComponent* InteractorComp = Actor->FindComponentByClass<UDemoInteractorComponent>())
+	if (const UDemoInteractorComponent* InteractorComp = Actor->FindComponentByClass<UDemoInteractorComponent>())
 	{
 		return InteractorComp->GetContext();
 	}
