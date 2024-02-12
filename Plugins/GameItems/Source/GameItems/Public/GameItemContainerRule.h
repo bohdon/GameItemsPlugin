@@ -136,6 +136,10 @@ public:
 	virtual void Initialize() override;
 	virtual void Uninitialize() override;
 
+	/** Return true if auto-slotting should be performed. */
+	UFUNCTION(BlueprintNativeEvent)
+	bool ShouldAutoSlot(UGameItem* Item) const;
+
 protected:
 	void OnItemAdded(UGameItem* Item);
 };

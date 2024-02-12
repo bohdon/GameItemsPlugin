@@ -37,12 +37,14 @@ public:
 	TArray<TObjectPtr<UGameItemFragment>> Fragments;
 
 	/** Find and return a fragment of this item definition by class. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Meta = (DeterminesOutputType = "FragmentClass"))
 	const UGameItemFragment* FindFragment(TSubclassOf<UGameItemFragment> FragmentClass) const;
 
 	/** Find and return a fragment of this item definition by class. */
 	template <class T>
 	const T* FindFragment() const
 	{
+		static_assert(TIsDerivedFrom<T, UGameItemFragment>::IsDerived, TEXT("T must be a UGameItemFragment type"));
 		return (T*)FindFragment(T::StaticClass());
 	}
 

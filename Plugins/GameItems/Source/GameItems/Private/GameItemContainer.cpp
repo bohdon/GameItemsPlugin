@@ -356,6 +356,11 @@ UGameItem* UGameItemContainer::GetItemAt(int32 Slot) const
 	return ItemList.Entries.IsValidIndex(Slot) ? ItemList.Entries[Slot].GetItem() : nullptr;
 }
 
+UGameItem* UGameItemContainer::GetFirstItem() const
+{
+	return GetItemAt(0);
+}
+
 UGameItem* UGameItemContainer::FindFirstItemByDef(TSubclassOf<UGameItemDef> ItemDef) const
 {
 	for (const FGameItemListEntry& Entry : ItemList.Entries)

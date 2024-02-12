@@ -125,8 +125,12 @@ public:
 	TArray<UGameItem*> GetAllItems() const;
 
 	/** Return the item in a specific slot of this container. */
-	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
+	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	UGameItem* GetItemAt(int32 Slot) const;
+
+	/** Return the item in teh first slot of the container. */
+	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
+	UGameItem* GetFirstItem() const;
 
 	/** Return the first stack of an item by definition. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")

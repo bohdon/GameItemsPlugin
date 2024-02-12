@@ -132,8 +132,18 @@ void UGameItemContainerRule_AutoSlot::Uninitialize()
 	Container->OnItemAddedEvent.RemoveAll(this);
 }
 
+bool UGameItemContainerRule_AutoSlot::ShouldAutoSlot_Implementation(UGameItem* Item) const
+{
+	return true;
+}
+
 void UGameItemContainerRule_AutoSlot::OnItemAdded(UGameItem* Item)
 {
+	if (!ShouldAutoSlot(Item))
+	{
+		return;
+	}
+
 	const UGameItemContainerComponent* ContainerComp = Container->GetTypedOuter<UGameItemContainerComponent>();
 	if (!ContainerComp)
 	{
