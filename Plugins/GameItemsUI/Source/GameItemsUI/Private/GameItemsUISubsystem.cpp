@@ -76,6 +76,20 @@ void UGameItemsUISubsystem::GetContainerAndItem(UObject* ViewModelObject, bool& 
 	}
 }
 
+UGameItemContainer* UGameItemsUISubsystem::GetContainerFromProvider(TSubclassOf<UGameItemContainerProvider> Provider,
+                                                                    const FGameplayTag& ContainerId,
+                                                                    const FGameItemViewContext& Context)
+{
+	if (Provider)
+	{
+		if (const UGameItemContainerProvider* ProviderCDO = GetDefault<UGameItemContainerProvider>(Provider))
+		{
+			return ProviderCDO->ProvideContainer(ContainerId, Context);
+		}
+	}
+	return nullptr;
+}
+
 UGameItemContainerViewModel* UGameItemsUISubsystem::CreateContainerViewModel(UGameItemContainer* Container)
 {
 	check(Container);

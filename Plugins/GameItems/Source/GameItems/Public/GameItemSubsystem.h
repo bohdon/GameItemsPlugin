@@ -106,9 +106,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	UGameItemContainer* GetDefaultContainerForActor(AActor* Actor) const;
 
-protected:
-	/** Return the a game item container interface object, either as the actor or a potential component. */
+	/** Find a game item container interface from an actor. Attempts to cast the actor first, then search for a component. */
 	virtual IGameItemContainerInterface* GetContainerInterfaceForActor(AActor* Actor) const;
 
+protected:
 	void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& YL, float& YPos);
 };

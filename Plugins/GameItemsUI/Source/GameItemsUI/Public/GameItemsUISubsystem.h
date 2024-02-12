@@ -4,12 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameItemContainer.h"
+#include "GameItemContainerProvider.h"
 #include "GameplayTagContainer.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "GameItemsUISubsystem.generated.h"
 
 class UGameItem;
 class UGameItemContainer;
+class UGameItemContainerProvider;
 class UGameItemContainerViewModel;
 
 
@@ -37,6 +39,11 @@ public:
 	/** Retrieve a game item and container from a container slot view model. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems|UI")
 	void GetContainerAndItem(UObject* ViewModelObject, bool& bSuccess, UGameItemContainer*& Container, UGameItem*& Item) const;
+
+	/** Retrieve a game item container from a provider class, given view context. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems|UI")
+	UGameItemContainer* GetContainerFromProvider(TSubclassOf<UGameItemContainerProvider> Provider,
+	                                             const FGameplayTag& ContainerId, const FGameItemViewContext& Context);
 
 protected:
 	/** All container view models that have been created. */
