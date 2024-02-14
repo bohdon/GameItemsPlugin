@@ -13,6 +13,7 @@ class UGameItem;
 class UGameItemContainer;
 class UGameItemContainerProvider;
 class UGameItemContainerViewModel;
+class UGameItemSlotViewModel;
 
 
 /**
@@ -44,6 +45,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems|UI")
 	UGameItemContainer* GetContainerFromProvider(TSubclassOf<UGameItemContainerProvider> Provider,
 	                                             const FGameplayTag& ContainerId, const FGameItemViewContext& Context);
+
+	/** Move an item from one slot to another, swapping or stacking as needed. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	void MoveSwapOrStackItem(UGameItemSlotViewModel* FromSlot, UGameItemSlotViewModel* ToSlot, bool bAllowPartial = true) const;
 
 protected:
 	/** All container view models that have been created. */

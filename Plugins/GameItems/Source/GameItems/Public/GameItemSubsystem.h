@@ -58,7 +58,8 @@ public:
 	 * @return The item or items that were moved into the target container.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
-	TArray<UGameItem*> MoveItem(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, UGameItem* Item, bool bAllowPartial = true);
+	TArray<UGameItem*> MoveItem(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer,
+	                            UGameItem* Item, int32 TargetSlot = -1, bool bAllowPartial = true);
 
 	/**
 	 * Move multiple items from one container to another. If bAllowPartial is true, allow moving only some

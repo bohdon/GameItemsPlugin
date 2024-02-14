@@ -99,14 +99,15 @@ UGameItem* UGameItemSubsystem::SplitItem(UObject* Outer, UGameItem* Item, int32 
 	return NewItem;
 }
 
-TArray<UGameItem*> UGameItemSubsystem::MoveItem(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, UGameItem* Item, bool bAllowPartial)
+TArray<UGameItem*> UGameItemSubsystem::MoveItem(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer,
+                                                UGameItem* Item, int32 TargetSlot, bool bAllowPartial)
 {
 	if (!FromContainer || !ToContainer || !FromContainer->Contains(Item))
 	{
 		return TArray<UGameItem*>();
 	}
 
-	const FGameItemContainerAddPlan Plan = ToContainer->CheckAddItem(Item);
+	const FGameItemContainerAddPlan Plan = ToContainer->CheckAddItem(Item, TargetSlot);
 	if (Plan.DeltaCount == 0)
 	{
 		// nothing to move
@@ -134,7 +135,7 @@ TArray<UGameItem*> UGameItemSubsystem::MoveItem(UGameItemContainer* FromContaine
 	}
 
 	// add the item
-	TArray<UGameItem*> Result = ToContainer->AddItem(ItemToAdd);
+	TArray<UGameItem*> Result = ToContainer->AddItem(ItemToAdd, TargetSlot);
 
 	return Result;
 }
@@ -145,7 +146,7 @@ TArray<UGameItem*> UGameItemSubsystem::MoveItems(UGameItemContainer* FromContain
 	TArray<UGameItem*> Result;
 	for (UGameItem* Item : Items)
 	{
-		TArray<UGameItem*> ItemResult = MoveItem(FromContainer, ToContainer, Item, bAllowPartial);
+		TArray<UGameItem*> ItemResult = MoveItem(FromContainer, ToContainer, Item, -1, bAllowPartial);
 		Result.Append(ItemResult);
 	}
 	return Result;

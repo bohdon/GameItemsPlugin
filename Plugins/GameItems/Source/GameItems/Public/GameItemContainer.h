@@ -120,6 +120,14 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
 	UGameItem* RemoveItemAt(int32 Slot);
 
+	/** Swap the location of two items in the container. */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
+	void SwapItems(int32 SlotA, int32 SlotB);
+
+	/** Stack two items in the container. */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
+	void StackItems(int32 FromSlot, int32 ToSlot, bool bAllowPartial = true);
+
 	/** Return all items in the container. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
 	TArray<UGameItem*> GetAllItems() const;
@@ -172,6 +180,10 @@ public:
 	/** Return the total number of all items, including stack quantities. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
 	int32 GetTotalItemCount() const;
+
+	/** Return true if an item in a slot is at the max stack count. */
+	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
+	bool IsStackFull(int32 Slot) const;
 
 	/** Return the number of items (stacks) in this container. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")

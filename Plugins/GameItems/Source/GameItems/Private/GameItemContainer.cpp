@@ -344,6 +344,67 @@ UGameItem* UGameItemContainer::RemoveItemAt(int32 Slot)
 	return RemovedItem;
 }
 
+void UGameItemContainer::SwapItems(int32 SlotA, int32 SlotB)
+{
+	if (!IsValidSlot(SlotA) || !IsValidSlot(SlotB))
+	{
+		return;
+	}
+
+	FScopedSlotChanges SlotChangeScope(this);
+
+	ItemList.SwapEntries(SlotA, SlotB);
+	OnSlotsChanged({SlotA, SlotB});
+}
+
+void UGameItemContainer::StackItems(int32 FromSlot, int32 ToSlot, bool bAllowPartial)
+{
+	UGameItem* FromItem = GetItemAt(FromSlot);
+	UGameItem* ToItem = GetItemAt(ToSlot);
+
+	if (!FromItem || !ToItem)
+	{
+		return;
+	}
+
+	if (!FromItem->IsMatching(ToItem))
+	{
+		return;
+	}
+
+	const int32 OldCount = ToItem->GetCount();
+	const int32 MaxStackCount = GetItemStackMaxCount(ToItem);
+	const int32 MaxDeltaCount = FMath::Max(MaxStackCount - OldCount, 0);
+
+	const int32 DeltaCount = FMath::Min(FromItem->GetCount(), MaxDeltaCount);
+
+	if (DeltaCount == 0)
+	{
+		// cant add item, max stack count reached
+		return;
+	}
+
+	if (DeltaCount < FromItem->GetCount() && !bAllowPartial)
+	{
+		// cant stack the full amount
+		return;
+	}
+
+	if (DeltaCount == FromItem->GetCount())
+	{
+		// remove all of the item
+		RemoveItemAt(FromSlot);
+	}
+	else
+	{
+		// remove delta
+		FromItem->SetCount(FromItem->Count - DeltaCount);
+	}
+
+	// add delta
+	ToItem->SetCount(ToItem->GetCount() + DeltaCount);
+}
+
 TArray<UGameItem*> UGameItemContainer::GetAllItems() const
 {
 	TArray<UGameItem*> Result;
@@ -454,6 +515,16 @@ int32 UGameItemContainer::GetTotalItemCount() const
 		}
 	}
 	return Total;
+}
+
+bool UGameItemContainer::IsStackFull(int32 Slot) const
+{
+	if (const UGameItem* Item = GetItemAt(Slot))
+	{
+		const int32 MaxStackCount = GetItemStackMaxCount(Item);
+		return Item->GetCount() >= MaxStackCount;
+	}
+	return false;
 }
 
 int32 UGameItemContainer::GetNumItems() const

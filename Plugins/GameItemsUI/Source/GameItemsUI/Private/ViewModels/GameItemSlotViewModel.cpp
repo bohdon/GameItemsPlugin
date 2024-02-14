@@ -69,7 +69,7 @@ TArray<UGameItem*> UGameItemSlotViewModel::MoveItem(UGameItemContainer* ToContai
 	}
 
 	UGameItemSubsystem* ItemSubsystem = UGameInstance::GetSubsystem<UGameItemSubsystem>(GetWorld()->GetGameInstance());
-	return ItemSubsystem->MoveItem(Container, ToContainer, Item, bAllowPartial);
+	return ItemSubsystem->MoveItem(Container, ToContainer, Item, -1, bAllowPartial);
 }
 
 void UGameItemSlotViewModel::UpdateItem()

@@ -258,6 +258,21 @@ UGameItem* FGameItemList::RemoveEntryAt(int32 Index, bool bPreserveIndices)
 	return RemovedItem;
 }
 
+void FGameItemList::SwapEntries(int32 IndexA, int32 IndexB)
+{
+	check(IndexA >= 0);
+	check(IndexB >= 0);
+
+	const int32 MaxIndex = FMath::Max(IndexA, IndexB);
+	if (MaxIndex >= Entries.Num() - 1)
+	{
+		Entries.SetNum(MaxIndex + 1);
+	}
+
+	Entries.Swap(IndexA, IndexB);
+	MarkArrayDirty();
+}
+
 void FGameItemList::GetAllItems(TArray<UGameItem*>& OutItems) const
 {
 	OutItems.Reset(Entries.Num());

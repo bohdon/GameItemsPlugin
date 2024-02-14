@@ -90,6 +90,40 @@ UGameItemContainer* UGameItemsUISubsystem::GetContainerFromProvider(TSubclassOf<
 	return nullptr;
 }
 
+void UGameItemsUISubsystem::MoveSwapOrStackItem(UGameItemSlotViewModel* FromSlot, UGameItemSlotViewModel* ToSlot, bool bAllowPartial) const
+{
+	if (!FromSlot || !FromSlot->GetContainer() || !FromSlot->GetItem() || !ToSlot || !ToSlot->GetContainer())
+	{
+		return;
+	}
+
+	if (FromSlot->GetContainer() == ToSlot->GetContainer())
+	{
+		if (FromSlot->GetSlot() == ToSlot->GetSlot())
+		{
+			// same slot
+			return;
+		}
+
+		if (FromSlot->GetItem()->IsMatching(ToSlot->GetItem()) && !ToSlot->GetContainer()->IsStackFull(ToSlot->GetSlot()))
+		{
+			// stack items
+			ToSlot->GetContainer()->StackItems(FromSlot->GetSlot(), ToSlot->GetSlot(), bAllowPartial);
+		}
+		else
+		{
+			// swap items in the container
+			ToSlot->GetContainer()->SwapItems(FromSlot->GetSlot(), ToSlot->GetSlot());
+		}
+	}
+	else
+	{
+		// move from another container
+		UGameItemSubsystem* ItemsSubsystem = UGameInstance::GetSubsystem<UGameItemSubsystem>(GetWorld()->GetGameInstance());
+		ItemsSubsystem->MoveItem(FromSlot->GetContainer(), ToSlot->GetContainer(), FromSlot->GetItem(), ToSlot->GetSlot(), bAllowPartial);
+	}
+}
+
 UGameItemContainerViewModel* UGameItemsUISubsystem::CreateContainerViewModel(UGameItemContainer* Container)
 {
 	check(Container);

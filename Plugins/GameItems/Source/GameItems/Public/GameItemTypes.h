@@ -246,6 +246,9 @@ struct GAMEITEMS_API FGameItemList : public FFastArraySerializer
 	 */
 	UGameItem* RemoveEntryAt(int32 Index, bool bPreserveIndices = false);
 
+	/** Swap the location of two entries, expanding the array size if needed. */
+	void SwapEntries(int32 IndexA, int32 IndexB);
+
 	void GetAllItems(TArray<UGameItem*>& OutItems) const;
 
 	DECLARE_MULTICAST_DELEGATE_ThreeParams(FGameItemListChangedDelegate, FGameItemListEntry& /*Entry*/, int32 /*NewCount*/, int32 /*OldCount*/);
