@@ -28,6 +28,11 @@ void UGameItemContainerRule::Uninitialize()
 {
 }
 
+bool UGameItemContainerRule::IsChild_Implementation() const
+{
+	return false;
+}
+
 UWorld* UGameItemContainerRule::GetWorld() const
 {
 	return GetOuter() ? GetOuter()->GetWorld() : nullptr;

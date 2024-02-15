@@ -251,6 +251,9 @@ public:
 	 */
 	int32 RemoveRule(TSubclassOf<UGameItemContainerRule> RuleClass);
 
+	/** Return true if the container is a child of another container, and cannot store its own items. */
+	virtual bool IsChild() const;
+
 	/** Return the owning actor of this container. */
 	virtual AActor* GetOwner() const;
 

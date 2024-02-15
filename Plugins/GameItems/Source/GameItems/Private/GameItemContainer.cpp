@@ -10,6 +10,7 @@
 #include "GameItemSet.h"
 #include "GameItemsModule.h"
 #include "GameItemSubsystem.h"
+#include "Algo/AnyOf.h"
 #include "Engine/ActorChannel.h"
 #include "Engine/Canvas.h"
 #include "Engine/GameInstance.h"
@@ -346,7 +347,7 @@ UGameItem* UGameItemContainer::RemoveItemAt(int32 Slot)
 
 void UGameItemContainer::SwapItems(int32 SlotA, int32 SlotB)
 {
-	if (!IsValidSlot(SlotA) || !IsValidSlot(SlotB))
+	if (!IsValidSlot(SlotA) || !IsValidSlot(SlotB) || SlotA == SlotB)
 	{
 		return;
 	}
@@ -730,6 +731,11 @@ int32 UGameItemContainer::RemoveRule(TSubclassOf<UGameItemContainerRule> RuleCla
 		++NumRemoved;
 	}
 	return NumRemoved;
+}
+
+bool UGameItemContainer::IsChild() const
+{
+	return Algo::AnyOf(Rules, [](const UGameItemContainerRule* Rule) { return Rule->IsChild(); });
 }
 
 AActor* UGameItemContainer::GetOwner() const

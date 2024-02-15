@@ -38,6 +38,11 @@ void UGameItemContainerLink::OnLinkedContainerChanged(UGameItemContainer* NewCon
 // UGameItemContainerLink_Parent
 // -----------------------------
 
+bool UGameItemContainerLink_Parent::IsChild_Implementation() const
+{
+	return true;
+}
+
 void UGameItemContainerLink_Parent::OnLinkedContainerChanged(UGameItemContainer* NewContainer, UGameItemContainer* OldContainer)
 {
 	Super::OnLinkedContainerChanged(NewContainer, OldContainer);

@@ -32,6 +32,10 @@ public:
 	/** Uninitialize the rule. Called when removed from a container. */
 	virtual void Uninitialize();
 
+	/** Return true if this rule makes the container a child of another container, such that it cannot store its own items. */
+	UFUNCTION(BlueprintNativeEvent)
+	bool IsChild() const;
+
 	/** Return true if an item is allowed in the container. */
 	UFUNCTION(BlueprintNativeEvent)
 	bool CanContainItem(const UGameItem* Item) const;

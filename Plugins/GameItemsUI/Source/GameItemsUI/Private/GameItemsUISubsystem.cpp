@@ -116,6 +116,25 @@ void UGameItemsUISubsystem::MoveSwapOrStackItem(UGameItemSlotViewModel* FromSlot
 			ToSlot->GetContainer()->SwapItems(FromSlot->GetSlot(), ToSlot->GetSlot());
 		}
 	}
+	else if (ToSlot->GetContainer()->IsChild())
+	{
+		// assign / replace item to a child container
+		if (ToSlot->GetItem())
+		{
+			ToSlot->GetContainer()->RemoveItemAt(ToSlot->GetSlot());
+		}
+		const int32 ExistingItemSlot = ToSlot->GetContainer()->GetItemSlot(FromSlot->GetItem());
+		if (ExistingItemSlot != INDEX_NONE)
+		{
+			// re-assigning an item from parent container, just move the item to the new location
+			ToSlot->GetContainer()->SwapItems(ExistingItemSlot, ToSlot->GetSlot());
+		}
+		else
+		{
+			// assign new item
+			ToSlot->GetContainer()->AddItem(FromSlot->GetItem(), ToSlot->GetSlot());
+		}
+	}
 	else
 	{
 		// move from another container
