@@ -254,6 +254,9 @@ public:
 	/** Return true if the container is a child of another container, and cannot store its own items. */
 	virtual bool IsChild() const;
 
+	/** Return true if a container is a parent of this container. */
+	virtual bool HasParent(UGameItemContainer* ParentContainer) const;
+
 	/** Return the owning actor of this container. */
 	virtual AActor* GetOwner() const;
 

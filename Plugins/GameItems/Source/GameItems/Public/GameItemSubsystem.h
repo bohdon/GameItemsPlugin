@@ -78,11 +78,11 @@ public:
 	TArray<UGameItem*> MoveAllItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, bool bAllowPartial = true);
 
 	/**
-	 * Automatically slot an item into a matching container on an actor.
-	 * Uses the auto slot rules defined on the actors UGameItemContainerComponent.
+	 * Find and return a child container best suited to receive an item.
+	 * This is useful for example to find an equip slot.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
-	TArray<UGameItem*> TryAutoSlotItem(UGameItem* Item, AActor* Actor, FGameplayTagContainer ContextTags);
+	UGameItemContainer* GetBestChildContainerForItem(UGameItemContainer* Container, UGameItem* Item, AActor* Actor, FGameplayTagContainer ContextTags);
 
 	/**
 	 * Find a return an item fragment by class.

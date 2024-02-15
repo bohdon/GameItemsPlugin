@@ -162,19 +162,11 @@ TArray<UGameItem*> UGameItemSubsystem::MoveAllItems(UGameItemContainer* FromCont
 	return TArray<UGameItem*>();
 }
 
-TArray<UGameItem*> UGameItemSubsystem::TryAutoSlotItem(UGameItem* Item, AActor* Actor, FGameplayTagContainer ContextTags)
+UGameItemContainer* UGameItemSubsystem::GetBestChildContainerForItem(UGameItemContainer* Container, UGameItem* Item,
+                                                                     AActor* Actor, FGameplayTagContainer ContextTags)
 {
-	if (!Actor)
-	{
-		return TArray<UGameItem*>();
-	}
 	const UGameItemContainerComponent* ContainerComponent = GetContainerComponentForActor(Actor);
-	if (ContainerComponent)
-	{
-		return ContainerComponent->TryAutoSlotItem(Item, ContextTags);
-	}
-
-	return TArray<UGameItem*>();
+	return ContainerComponent ? ContainerComponent->GetBestChildContainerForItem(Container, Item, ContextTags) : nullptr;
 }
 
 const UGameItemFragment* UGameItemSubsystem::FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass) const

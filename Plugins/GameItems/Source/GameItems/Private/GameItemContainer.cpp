@@ -5,6 +5,7 @@
 
 #include "GameItem.h"
 #include "GameItemContainerDef.h"
+#include "GameItemContainerLink.h"
 #include "GameItemContainerRule.h"
 #include "GameItemDef.h"
 #include "GameItemSet.h"
@@ -329,6 +330,11 @@ void UGameItemContainer::RemoveItem(UGameItem* Item)
 
 UGameItem* UGameItemContainer::RemoveItemAt(int32 Slot)
 {
+	if (!ItemList.Entries.IsValidIndex(Slot))
+	{
+		return nullptr;
+	}
+
 	FScopedSlotChanges SlotChangeScope(this);
 
 	// don't preserve indeces for unlimited inventories
@@ -736,6 +742,15 @@ int32 UGameItemContainer::RemoveRule(TSubclassOf<UGameItemContainerRule> RuleCla
 bool UGameItemContainer::IsChild() const
 {
 	return Algo::AnyOf(Rules, [](const UGameItemContainerRule* Rule) { return Rule->IsChild(); });
+}
+
+bool UGameItemContainer::HasParent(UGameItemContainer* ParentContainer) const
+{
+	return Algo::AnyOf(Rules, [ParentContainer](const UGameItemContainerRule* Rule)
+	{
+		const UGameItemContainerLink* LinkRule = Cast<UGameItemContainerLink>(Rule);
+		return LinkRule && LinkRule->IsChild() && LinkRule->GetLinkedContainer() == ParentContainer;
+	});
 }
 
 AActor* UGameItemContainer::GetOwner() const
