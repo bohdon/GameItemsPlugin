@@ -1,7 +1,7 @@
 ﻿// Copyright Bohdon Sayre, All Rights Reserved.
 
 
-#include "GameItemContainerRule.h"
+#include "Rules/GameItemContainerRule.h"
 
 #include "GameItem.h"
 #include "GameItemContainer.h"
@@ -51,16 +51,6 @@ int32 UGameItemContainerRule::GetItemMaxCount_Implementation(const UGameItem* It
 int32 UGameItemContainerRule::GetItemStackMaxCount_Implementation(const UGameItem* Item) const
 {
 	return -1;
-}
-
-
-// UGameItemContainerRule_TagRequirements
-// --------------------------------------
-
-bool UGameItemContainerRule_TagRequirements::CanContainItem_Implementation(const UGameItem* Item) const
-{
-	const FGameplayTagContainer ItemTags = Item->GetItemDefCDO()->OwnedTags;
-	return ItemTags.HasAll(RequireTags) && !ItemTags.HasAny(IgnoreTags) && (Query.IsEmpty() || Query.Matches(ItemTags));
 }
 
 

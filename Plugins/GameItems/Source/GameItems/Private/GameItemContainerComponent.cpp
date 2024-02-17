@@ -3,13 +3,13 @@
 
 #include "GameItemContainerComponent.h"
 
-#include "GameItemAutoSlotRule.h"
 #include "GameItemContainer.h"
 #include "GameItemContainerDef.h"
-#include "GameItemContainerLink.h"
 #include "GameItemSettings.h"
 #include "Engine/ActorChannel.h"
 #include "Engine/World.h"
+#include "Rules/GameItemAutoSlotRule.h"
+#include "Rules/GameItemContainerLink.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemContainerComponent)
 

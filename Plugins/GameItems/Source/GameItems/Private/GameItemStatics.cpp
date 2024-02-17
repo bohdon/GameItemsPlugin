@@ -3,6 +3,7 @@
 
 #include "GameItemStatics.h"
 
+#include "GameItemContainer.h"
 #include "GameItemSubsystem.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"

@@ -5,8 +5,6 @@
 
 #include "GameItem.h"
 #include "GameItemContainerDef.h"
-#include "GameItemContainerLink.h"
-#include "GameItemContainerRule.h"
 #include "GameItemDef.h"
 #include "GameItemSet.h"
 #include "GameItemsModule.h"
@@ -18,6 +16,8 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "Net/UnrealNetwork.h"
+#include "Rules/GameItemContainerLink.h"
+#include "Rules/GameItemContainerRule.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemContainer)
 

@@ -7,9 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "GameItemContainerLink.generated.h"
 
-class UGameItem;
 class UGameItemContainer;
-class UGameItemContainerLink;
 
 
 /**
@@ -41,43 +39,4 @@ protected:
 	/** The other container that is linked. */
 	UPROPERTY(Transient, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
 	TObjectPtr<UGameItemContainer> LinkedContainer;
-};
-
-
-/**
- * Requires an item exist in the linked container before it can be added to this one.
- * This link will also indicate that the container cannot store its own items, which affects how items are moved.
- */
-UCLASS(DisplayName = "Link Parent")
-class UGameItemContainerLink_Parent : public UGameItemContainerLink
-{
-	GENERATED_BODY()
-
-public:
-	virtual bool IsChild_Implementation() const override;
-	virtual void OnLinkedContainerChanged(UGameItemContainer* NewContainer, UGameItemContainer* OldContainer) override;
-	virtual bool CanContainItem_Implementation(const UGameItem* Item) const override;
-
-protected:
-	void OnLinkedItemRemoved(UGameItem* Item);
-};
-
-
-/**
- * Auto-slot an item in this container when added to the linked container.
- */
-UCLASS(DisplayName = "Link Auto-Slot")
-class UGameItemContainerLink_AutoSlot : public UGameItemContainerLink
-{
-	GENERATED_BODY()
-
-public:
-	/** Items must match this query to be auto-slotted. If empty, all compatible items are auto-slotted. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Auto Slot")
-	FGameplayTagQuery ItemQuery;
-
-	virtual void OnLinkedContainerChanged(UGameItemContainer* NewContainer, UGameItemContainer* OldContainer) override;
-
-protected:
-	void OnLinkedItemAdded(UGameItem* Item);
 };

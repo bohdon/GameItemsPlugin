@@ -1,7 +1,7 @@
 ﻿// Copyright Bohdon Sayre, All Rights Reserved.
 
 
-#include "GameItemAutoSlotRule.h"
+#include "Rules/GameItemAutoSlotRule.h"
 
 #include "GameItemStatics.h"
 

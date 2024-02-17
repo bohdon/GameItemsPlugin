@@ -58,31 +58,6 @@ protected:
 
 
 /**
- * Defines tag requirements defining which items are permitted in the container.
- */
-UCLASS(DisplayName = "Tag Requirements")
-class UGameItemContainerRule_TagRequirements : public UGameItemContainerRule
-{
-	GENERATED_BODY()
-
-public:
-	/** Items must have all of these tags to be permitted in the container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Requirements")
-	FGameplayTagContainer RequireTags;
-
-	/** Items cannot have any of these tags to be permitted in the container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Requirements")
-	FGameplayTagContainer IgnoreTags;
-
-	/** Items must match this query to be permitted in the container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Requirements")
-	FGameplayTagQuery Query;
-
-	virtual bool CanContainItem_Implementation(const UGameItem* Item) const override;
-};
-
-
-/**
  * Specifies a flat limit for max count and stack max count of any items.
  */
 UCLASS(DisplayName = "Simple Stock Rules")
