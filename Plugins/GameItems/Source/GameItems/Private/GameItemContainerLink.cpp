@@ -49,11 +49,13 @@ void UGameItemContainerLink_Parent::OnLinkedContainerChanged(UGameItemContainer*
 
 	if (OldContainer)
 	{
+		OldContainer->UnregisterChild(GetContainer());
 		OldContainer->OnItemRemovedEvent.RemoveAll(this);
 	}
 
 	if (NewContainer)
 	{
+		NewContainer->RegisterChild(GetContainer());
 		NewContainer->OnItemRemovedEvent.AddUObject(this, &UGameItemContainerLink_Parent::OnLinkedItemRemoved);
 	}
 }

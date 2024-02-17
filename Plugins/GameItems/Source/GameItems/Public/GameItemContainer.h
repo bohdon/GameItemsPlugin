@@ -257,6 +257,15 @@ public:
 	/** Return true if a container is a parent of this container. */
 	virtual bool HasParent(UGameItemContainer* ParentContainer) const;
 
+	/** Return all children containers. */
+	virtual TArray<UGameItemContainer*> GetChildren() const;
+
+	/** Register a child container. */
+	void RegisterChild(UGameItemContainer* ChildContainer);
+
+	/** Unregister a child container. */
+	void UnregisterChild(UGameItemContainer* ChildContainer);
+
 	/** Return the owning actor of this container. */
 	virtual AActor* GetOwner() const;
 
@@ -290,6 +299,10 @@ protected:
 	/** The active rules applied to this container. */
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "GameItemContainer")
 	TArray<TObjectPtr<UGameItemContainerRule>> Rules;
+
+	/** All child containers, which must register themself via Register/UnregisterChild */
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UGameItemContainer>> ChildContainers;
 
 	/** Have the default items already been added to this container? */
 	bool bHasDefaultItems;

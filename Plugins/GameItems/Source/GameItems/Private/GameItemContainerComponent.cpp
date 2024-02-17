@@ -209,35 +209,6 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag Co
 	return NewContainer;
 }
 
-TArray<UGameItemContainer*> UGameItemContainerComponent::GetChildContainers(UGameItemContainer* ParentContainer) const
-{
-	TArray<UGameItemContainer*> Result;
-	for (const auto& Elem : Containers)
-	{
-		UGameItemContainer* Container = Elem.Value;
-		if (Container->IsChild() && Container->HasParent(ParentContainer))
-		{
-			Result.Add(Container);
-		}
-	}
-	return Result;
-}
-
-UGameItemContainer* UGameItemContainerComponent::GetBestChildContainerForItem(UGameItemContainer* ParentContainer, UGameItem* Item,
-                                                                              FGameplayTagContainer ContextTags) const
-{
-	TArray<UGameItemContainer*> ChildContainers = GetChildContainers(ParentContainer);
-	for (UGameItemContainer* Container : ChildContainers)
-	{
-		if (Container->CanContainItem(Item))
-		{
-			// return the first match
-			return Container;
-		}
-	}
-	return nullptr;
-}
-
 void UGameItemContainerComponent::PostLoad()
 {
 	Super::PostLoad();

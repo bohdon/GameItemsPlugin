@@ -93,17 +93,6 @@ public:
 	UFUNCTION(BlueprintCallable, Meta = (DeterminesOutputType = "ContainerClass"))
 	UGameItemContainer* CreateContainer(FGameplayTag ContainerId, TSubclassOf<UGameItemContainerDef> ContainerDef = nullptr);
 
-	/** Return all containers that are a child of a container. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false)
-	TArray<UGameItemContainer*> GetChildContainers(UGameItemContainer* ParentContainer) const;
-
-	/**
-	 * Find and return a child container best suited to receive an item.
-	 * This is useful for example to find an equip slot.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false)
-	UGameItemContainer* GetBestChildContainerForItem(UGameItemContainer* ParentContainer, UGameItem* Item, FGameplayTagContainer ContextTags) const;
-
 	virtual void PostLoad() override;
 	virtual void InitializeComponent() override;
 	virtual void ReadyForReplication() override;

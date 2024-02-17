@@ -82,7 +82,7 @@ public:
 	 * This is useful for example to find an equip slot.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
-	UGameItemContainer* GetBestChildContainerForItem(UGameItemContainer* Container, UGameItem* Item, AActor* Actor, FGameplayTagContainer ContextTags);
+	UGameItemContainer* GetBestChildContainerForItem(UGameItemContainer* ParentContainer, UGameItem* Item, FGameplayTagContainer ContextTags);
 
 	/**
 	 * Find a return an item fragment by class.

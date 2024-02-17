@@ -753,6 +753,24 @@ bool UGameItemContainer::HasParent(UGameItemContainer* ParentContainer) const
 	});
 }
 
+TArray<UGameItemContainer*> UGameItemContainer::GetChildren() const
+{
+	return ChildContainers;
+}
+
+void UGameItemContainer::RegisterChild(UGameItemContainer* ChildContainer)
+{
+	if (ChildContainer)
+	{
+		ChildContainers.AddUnique(ChildContainer);
+	}
+}
+
+void UGameItemContainer::UnregisterChild(UGameItemContainer* ChildContainer)
+{
+	ChildContainers.Remove(ChildContainer);
+}
+
 AActor* UGameItemContainer::GetOwner() const
 {
 	return GetTypedOuter<AActor>();
