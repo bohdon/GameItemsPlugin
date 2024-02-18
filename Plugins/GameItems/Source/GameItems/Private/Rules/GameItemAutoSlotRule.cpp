@@ -3,68 +3,50 @@
 
 #include "Rules/GameItemAutoSlotRule.h"
 
-#include "GameItemStatics.h"
+#include "GameItemContainer.h"
 
 
-// UGameItemAutoSlotRule
-// ---------------------
-
-TArray<UGameItem*> UGameItemAutoSlotRule::TryAutoSlotItem_Implementation(UGameItem* Item, const TArray<UGameItemContainer*>& Containers,
-                                                                         const FGameplayTagContainer& ContextTags) const
+int32 UGameItemAutoSlotRule::GetAutoSlotPriorityForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
-	return TArray<UGameItem*>();
+	return 0;
 }
 
-TArray<UGameItem*> UGameItemAutoSlotRule::AutoSlotItem_Implementation(UGameItem* Item, UGameItemContainer* Container, int32 Slot, bool bShouldReplace) const
+bool UGameItemAutoSlotRule::CanAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
-	if (!Item || !Container || !Container->IsValidSlot(Slot))
-	{
-		return TArray<UGameItem*>();
-	}
+	return Container->CanContainItem(Item);
+}
 
-	// check for replacement
-	if (!Container->IsSlotEmpty(Slot))
+bool UGameItemAutoSlotRule::TryAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags, TArray<UGameItem*>& OutItems) const
+{
+	OutItems.Reset();
+
+	const int32 Slot = GetBestSlotForItem(Item, ContextTags);
+
+	// check for (and possibly remove) existing item
+	if (UGameItem* ExistingItem = Container->GetItemAt(Slot))
 	{
-		if (bShouldReplace)
+		if (ShouldReplaceItem(Item, ExistingItem, ContextTags))
 		{
-			// remove the item
+			// remove the existing item
 			Container->RemoveItemAt(Slot);
 		}
 		else
 		{
-			return TArray<UGameItem*>();
+			// don't replace
+			return false;
 		}
 	}
 
-	return Container->AddItem(Item, Slot);
+	OutItems = Container->AddItem(Item, Slot);
+	return !OutItems.IsEmpty();
 }
 
-
-// UGameItemAutoSlotRule_ItemTags
-// ------------------------------
-
-TArray<UGameItem*> UGameItemAutoSlotRule_ItemTags::TryAutoSlotItem_Implementation(UGameItem* Item, const TArray<UGameItemContainer*>& Containers,
-                                                                                  const FGameplayTagContainer& ContextTags) const
+int32 UGameItemAutoSlotRule::GetBestSlotForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
-	if (!Item || !Item->GetOwnedTags().HasAny(ItemTags))
-	{
-		return TArray<UGameItem*>();
-	}
+	return INDEX_NONE;
+}
 
-	// find target container
-	UGameItemContainer* Container = UGameItemStatics::GetItemContainerById(Containers, ContainerId);
-	if (!Container)
-	{
-		return TArray<UGameItem*>();
-	}
-
-	// determine target slot
-	int32 Slot = Container->GetNextEmptySlot();
-	if (Slot == INDEX_NONE)
-	{
-		Slot = 0;
-	}
-
-	const bool bShouldReplace = ContextTags.HasAny(ReplaceContextTags);
-	return AutoSlotItem(Item, Container, Slot, bShouldReplace);
+bool UGameItemAutoSlotRule::ShouldReplaceItem_Implementation(UGameItem* NewItem, UGameItem* ExistingItem, const FGameplayTagContainer& ContextTags) const
+{
+	return false;
 }

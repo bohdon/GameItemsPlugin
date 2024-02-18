@@ -78,13 +78,6 @@ public:
 	TArray<UGameItem*> MoveAllItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, bool bAllowPartial = true);
 
 	/**
-	 * Find and return a child container best suited to receive an item.
-	 * This is useful for example to find an equip slot.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
-	UGameItemContainer* GetBestChildContainerForItem(UGameItemContainer* ParentContainer, UGameItem* Item, FGameplayTagContainer ContextTags);
-
-	/**
 	 * Find a return an item fragment by class.
 	 * Convenience function that uses the GameItemSubsystem.
 	 */

@@ -3,59 +3,46 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameItemContainer.h"
-#include "UObject/Object.h"
+#include "GameItemContainerRule.h"
 #include "GameItemAutoSlotRule.generated.h"
 
 class UGameItem;
-class UGameItemContainer;
 
 
 /**
  * Defines logic for automatically slotting items into containers.
+ * Specifically, this rule selects the best slot for an item, and can report the priority
+ * of this container when selecting the 'best' container for an item.
  *
  * Auto-slotting can be used for variety of actions, often synonymous with 'equipping':
- *	- When a user right-clicks an item, 'equip' it to a matching slot
- *	- When an item is picked up, 'auto-equip' it to a matching slot if that slot is empty
+ *	- When a user right-clicks an item, equip it to the best slot
+ *	- Auto-equip items when picked up, but only if nothing is already equipped
  */
-UCLASS(Abstract, DefaultToInstanced, EditInlineNew)
-class GAMEITEMS_API UGameItemAutoSlotRule : public UObject
+UCLASS(Abstract)
+class GAMEITEMS_API UGameItemAutoSlotRule : public UGameItemContainerRule
 {
 	GENERATED_BODY()
 
 public:
-	/** Attempt to auto-slot an item to a container, and return the added items if auto-slotting was successful. */
+	/** Return the priority of this container when selecting the 'best' container for auto-slotting an item. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false)
-	TArray<UGameItem*> TryAutoSlotItem(UGameItem* Item, const TArray<UGameItemContainer*>& Containers, const FGameplayTagContainer& ContextTags) const;
+	int32 GetAutoSlotPriorityForItem(UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
 
-protected:
+	/** Return true if this rule can handle auto-slotting an item. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false)
-	TArray<UGameItem*> AutoSlotItem(UGameItem* Item, UGameItemContainer* Container, int32 Slot, bool bShouldReplace) const;
-};
+	bool CanAutoSlot(UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
 
+	/**
+	 * Try auto-slotting an item.
+	 * @return Trie of the auto-slotting was successful. */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false)
+	bool TryAutoSlot(UGameItem* Item, const FGameplayTagContainer& ContextTags, TArray<UGameItem*>& OutItems) const;
 
-/**
- * Auto-slots items to a specific container based on the item tags.
- * Replaces existing items based on the AutoSlotTags.
- */
-UCLASS(DisplayName = "Item Tags")
-class UGameItemAutoSlotRule_ItemTags : public UGameItemAutoSlotRule
-{
-	GENERATED_BODY()
+	/** Return the best slot to use for auto-slotting an item. */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false)
+	int32 GetBestSlotForItem(UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
 
-public:
-	/** Match items that have any of these tags. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Tags")
-	FGameplayTagContainer ItemTags;
-
-	/** The container to auto-slot the item to. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Tags")
-	FGameplayTag ContainerId;
-
-	/** If ContextTags matches any of these tags, replace existing items in the container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Tags")
-	FGameplayTagContainer ReplaceContextTags;
-
-	virtual TArray<UGameItem*> TryAutoSlotItem_Implementation(UGameItem* Item, const TArray<UGameItemContainer*>& Containers,
-	                                                          const FGameplayTagContainer& ContextTags) const override;
+	/** Return true if an item should replace an existing item in the container. */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false)
+	bool ShouldReplaceItem(UGameItem* NewItem, UGameItem* ExistingItem, const FGameplayTagContainer& ContextTags) const;
 };

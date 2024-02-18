@@ -16,6 +16,7 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "Net/UnrealNetwork.h"
+#include "Rules/GameItemAutoSlotRule.h"
 #include "Rules/GameItemContainerLink.h"
 #include "Rules/GameItemContainerRule.h"
 
@@ -337,16 +338,16 @@ UGameItem* UGameItemContainer::RemoveItemAt(int32 Slot)
 
 	FScopedSlotChanges SlotChangeScope(this);
 
-	// don't preserve indeces for unlimited inventories
-	bool bPreserveIndeces = GetContainerDefCDO()->bLimitSlots;
-	UGameItem* RemovedItem = ItemList.RemoveEntryAt(Slot, bPreserveIndeces);
+	// don't preserve indexes for unlimited inventories
+	const bool bPreserveIndexes = GetContainerDefCDO()->bLimitSlots;
+	UGameItem* RemovedItem = ItemList.RemoveEntryAt(Slot, bPreserveIndexes);
 	if (RemovedItem)
 	{
 		RemovedItem->Containers.Remove(this);
-	}
 
-	OnItemRemoved(RemovedItem, Slot);
-	OnSlotRangeChanged(Slot, bPreserveIndeces ? Slot : GetNumSlots() - 1);
+		OnItemRemoved(RemovedItem, Slot);
+		OnSlotRangeChanged(Slot, bPreserveIndexes ? Slot : GetNumSlots() - 1);
+	}
 
 	return RemovedItem;
 }
@@ -550,6 +551,11 @@ int32 UGameItemContainer::GetNumItems() const
 int32 UGameItemContainer::GetNumSlots() const
 {
 	return GetContainerDefCDO()->bLimitSlots ? GetContainerDefCDO()->SlotCount : GetNumItems();
+}
+
+bool UGameItemContainer::IsSlotCountLimited() const
+{
+	return GetContainerDefCDO()->bLimitSlots;
 }
 
 int32 UGameItemContainer::GetNumEmptySlots() const
@@ -769,6 +775,72 @@ void UGameItemContainer::RegisterChild(UGameItemContainer* ChildContainer)
 void UGameItemContainer::UnregisterChild(UGameItemContainer* ChildContainer)
 {
 	ChildContainers.Remove(ChildContainer);
+}
+
+int32 UGameItemContainer::GetAutoSlotPriorityForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const
+{
+	int32 Priority = 0;
+	for (const UGameItemContainerRule* Rule : Rules)
+	{
+		if (const UGameItemAutoSlotRule* AutoSlotRule = Cast<UGameItemAutoSlotRule>(Rule))
+		{
+			Priority = FMath::Max(Priority, AutoSlotRule->GetAutoSlotPriorityForItem(Item, ContextTags));
+		}
+	}
+	return Priority;
+}
+
+bool UGameItemContainer::CanAutoSlot(UGameItem* Item, FGameplayTagContainer ContextTags) const
+{
+	for (const UGameItemContainerRule* Rule : Rules)
+	{
+		if (const UGameItemAutoSlotRule* AutoSlotRule = Cast<UGameItemAutoSlotRule>(Rule))
+		{
+			if (AutoSlotRule->CanAutoSlot(Item, ContextTags))
+			{
+				// at least 1 rule can handle the auto-slot
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+TArray<UGameItem*> UGameItemContainer::TryAutoSlot(UGameItem* Item, FGameplayTagContainer ContextTags)
+{
+	for (const UGameItemContainerRule* Rule : Rules)
+	{
+		if (const UGameItemAutoSlotRule* AutoSlotRule = Cast<UGameItemAutoSlotRule>(Rule))
+		{
+			if (AutoSlotRule->CanAutoSlot(Item, ContextTags))
+			{
+				TArray<UGameItem*> OutItems;
+				if (AutoSlotRule->TryAutoSlot(Item, ContextTags, OutItems))
+				{
+					return OutItems;
+				}
+			}
+		}
+	}
+	return TArray<UGameItem*>();
+}
+
+UGameItemContainer* UGameItemContainer::FindAutoSlotChildContainerForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const
+{
+	UGameItemContainer* BestContainer = nullptr;
+	int32 BestPriority = -1;
+
+	for (UGameItemContainer* Container : ChildContainers)
+	{
+		check(Container);
+		const int32 Priority = Container->GetAutoSlotPriorityForItem(Item, ContextTags);
+		if (!BestContainer || Priority > BestPriority)
+		{
+			BestContainer = Container;
+			BestPriority = Priority;
+		}
+	}
+	return BestContainer;
 }
 
 AActor* UGameItemContainer::GetOwner() const

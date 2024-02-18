@@ -4,9 +4,15 @@
 #include "Rules/GameItemContainerLink_AutoSlot.h"
 
 #include "GameItemContainer.h"
+#include "Rules/GameItemAutoSlotRule_Basic.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemContainerLink_AutoSlot)
 
+
+UGameItemContainerLink_AutoSlot::UGameItemContainerLink_AutoSlot()
+	: ContextTags(TAG_Item_AutoSlot_NoReplace)
+{
+}
 
 void UGameItemContainerLink_AutoSlot::OnLinkedContainerChanged(UGameItemContainer* NewContainer, UGameItemContainer* OldContainer)
 {
@@ -25,12 +31,8 @@ void UGameItemContainerLink_AutoSlot::OnLinkedContainerChanged(UGameItemContaine
 
 void UGameItemContainerLink_AutoSlot::OnLinkedItemAdded(UGameItem* Item)
 {
-	if (Container->CanContainItem(Item) && (ItemQuery.IsEmpty() || ItemQuery.Matches(Item->GetOwnedTags())))
+	if (Container->CanAutoSlot(Item, ContextTags) && (ItemQuery.IsEmpty() || ItemQuery.Matches(Item->GetOwnedTags())))
 	{
-		const int32 Slot = Container->GetNextEmptySlot();
-		if (Slot != INDEX_NONE)
-		{
-			Container->AddItem(Item, Slot);
-		}
+		Container->TryAutoSlot(Item, ContextTags);
 	}
 }

@@ -22,6 +22,7 @@ UGameItemContainerRule::UGameItemContainerRule()
 void UGameItemContainerRule::Initialize()
 {
 	Container = GetTypedOuter<UGameItemContainer>();
+	check(Container);
 }
 
 void UGameItemContainerRule::Uninitialize()

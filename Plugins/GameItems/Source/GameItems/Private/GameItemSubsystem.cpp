@@ -162,20 +162,6 @@ TArray<UGameItem*> UGameItemSubsystem::MoveAllItems(UGameItemContainer* FromCont
 	return TArray<UGameItem*>();
 }
 
-UGameItemContainer* UGameItemSubsystem::GetBestChildContainerForItem(UGameItemContainer* ParentContainer, UGameItem* Item, FGameplayTagContainer ContextTags)
-{
-	TArray<UGameItemContainer*> ChildContainers = ParentContainer->GetChildren();
-	for (UGameItemContainer* Container : ChildContainers)
-	{
-		if (Container->CanContainItem(Item))
-		{
-			// return the first match
-			return Container;
-		}
-	}
-	return nullptr;
-}
-
 const UGameItemFragment* UGameItemSubsystem::FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass) const
 {
 	if (!ItemDef || !FragmentClass)

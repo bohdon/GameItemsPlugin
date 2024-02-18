@@ -120,26 +120,6 @@ void UGameItemContainerComponent::ResolveContainerLinks()
 	}
 }
 
-TArray<UGameItem*> UGameItemContainerComponent::TryAutoSlotItem(UGameItem* Item, FGameplayTagContainer ContextTags) const
-{
-	const TArray<UGameItemContainer*> AllContainers = GetAllItemContainers();
-
-	for (const UGameItemAutoSlotRule* AutoSlotRule : AutoSlotRules)
-	{
-		if (!AutoSlotRule)
-		{
-			continue;
-		}
-
-		TArray<UGameItem*> Result = AutoSlotRule->TryAutoSlotItem(Item, AllContainers, ContextTags);
-		if (!Result.IsEmpty())
-		{
-			return Result;
-		}
-	}
-	return TArray<UGameItem*>();
-}
-
 bool UGameItemContainerComponent::IsItemSlotted(UGameItem* Item, FGameplayTagContainer ContainerTags) const
 {
 	const TArray<UGameItemContainer*> AllContainers = GetAllItemContainers();
@@ -207,17 +187,6 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag Co
 	ResolveContainerLinks();
 
 	return NewContainer;
-}
-
-void UGameItemContainerComponent::PostLoad()
-{
-	Super::PostLoad();
-
-	// cleanup empty rules
-	AutoSlotRules.RemoveAll([](const UGameItemAutoSlotRule* Rule)
-	{
-		return Rule == nullptr;
-	});
 }
 
 void UGameItemContainerComponent::AddContainer(UGameItemContainer* Container)

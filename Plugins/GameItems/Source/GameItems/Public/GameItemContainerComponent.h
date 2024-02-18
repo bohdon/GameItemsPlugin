@@ -8,7 +8,6 @@
 #include "GameItemContainerComponent.generated.h"
 
 class UGameItem;
-class UGameItemAutoSlotRule;
 class UGameItemContainerDef;
 class UGameItemContainerLink;
 
@@ -74,14 +73,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (TitleProperty = "{LinkedContainerId} {ContainerLinkClass}"), Category = "GameItems")
 	TArray<FGameItemContainerLinkSpec> ContainerLinks;
 
-	/** Logic for determining how to auto-slot items, in order of priority. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "GameItems")
-	TArray<TObjectPtr<UGameItemAutoSlotRule>> AutoSlotRules;
-
-	/** Attempt to auto-slot an item into a container using the AutoSlotRules. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false)
-	TArray<UGameItem*> TryAutoSlotItem(UGameItem* Item, FGameplayTagContainer ContextTags) const;
-
 	/** Return true if an item is slotted in a container with any of the given tags. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false)
 	bool IsItemSlotted(UGameItem* Item, FGameplayTagContainer ContainerTags) const;
@@ -93,7 +84,6 @@ public:
 	UFUNCTION(BlueprintCallable, Meta = (DeterminesOutputType = "ContainerClass"))
 	UGameItemContainer* CreateContainer(FGameplayTag ContainerId, TSubclassOf<UGameItemContainerDef> ContainerDef = nullptr);
 
-	virtual void PostLoad() override;
 	virtual void InitializeComponent() override;
 	virtual void ReadyForReplication() override;
 	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;

@@ -194,42 +194,46 @@ public:
 	 * If slot count is unlimited, return the number of items.
 	 */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
-	int32 GetNumSlots() const;
+	virtual int32 GetNumSlots() const;
+
+	/** Return true if the container has a limited number of slots. */
+	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
+	virtual bool IsSlotCountLimited() const;
 
 	/** Return the number of empty slots available in this container, or -1 if unlimited. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
-	int32 GetNumEmptySlots() const;
+	virtual int32 GetNumEmptySlots() const;
 
 	/** Return the next available empty slot in this container, or -1 if no slots are available. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
-	int32 GetNextEmptySlot() const;
+	virtual int32 GetNextEmptySlot() const;
 
 	/** Return true if a slot is a valid index into this container. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
-	bool IsValidSlot(int32 Slot) const;
+	virtual bool IsValidSlot(int32 Slot) const;
 
 	/** Return true if a slot in this container is empty and available. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
-	bool IsSlotEmpty(int32 Slot) const;
+	virtual bool IsSlotEmpty(int32 Slot) const;
 
 	/** Return true if the container is ever allowed to contain an item. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
-	bool CanContainItem(const UGameItem* Item) const;
+	virtual bool CanContainItem(const UGameItem* Item) const;
 
 	/** Return the maximum total number of an item allowed in this container (for all stacks combined). */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
-	int32 GetItemMaxCount(const UGameItem* Item) const;
+	virtual int32 GetItemMaxCount(const UGameItem* Item) const;
 
 	/** Return the maximum count for a single stack of an item in this container. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
-	int32 GetItemStackMaxCount(const UGameItem* Item) const;
+	virtual int32 GetItemStackMaxCount(const UGameItem* Item) const;
 
 	/**
 	 * Add the default items defined for this container.
 	 * @param bForce If true, add the items even if they had previously been added.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
-	void AddDefaultItems(bool bForce = false);
+	virtual void AddDefaultItems(bool bForce = false);
 
 	/** Return all rules applied to this container. */
 	const TArray<UGameItemContainerRule*>& GetRules() const { return Rules; }
@@ -265,6 +269,25 @@ public:
 
 	/** Unregister a child container. */
 	void UnregisterChild(UGameItemContainer* ChildContainer);
+
+	/** Return the priority of this container when selecting the 'best' container for auto-slotting an item. */
+	UFUNCTION(BlueprintPure)
+	virtual int32 GetAutoSlotPriorityForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const;
+
+	/** Return true if this container has rules allowing it to auto-slot an item. */
+	UFUNCTION(BlueprintPure)
+	virtual bool CanAutoSlot(UGameItem* Item, FGameplayTagContainer ContextTags) const;
+
+	/**
+	 * Add an item to this container, automatically selecting the best slot for it based on rules,
+	 * and potentially replacing existing items, or cancelling if desired.
+	 */
+	UFUNCTION(BlueprintCallable)
+	virtual TArray<UGameItem*> TryAutoSlot(UGameItem* Item, FGameplayTagContainer ContextTags);
+
+	/** Return the child container with the highest auto-slot priority for an item. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	UGameItemContainer* FindAutoSlotChildContainerForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const;
 
 	/** Return the owning actor of this container. */
 	virtual AActor* GetOwner() const;
@@ -363,7 +386,7 @@ protected:
 	void OnSlotsChanged(const TArray<int32>& Slots);
 	void OnSlotRangeChanged(int32 StartSlot, int32 EndSlot);
 
-	void BroadcastSlotChanges();
+	virtual void BroadcastSlotChanges();
 
 	/** Called when the underlying list has changed. */
 	virtual void OnListChanged(FGameItemListEntry& Entry, int32 NewCount, int32 OldCount);
