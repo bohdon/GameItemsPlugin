@@ -33,7 +33,7 @@ public:
 	FGameplayTagContainer OwnedTags;
 
 	/** Limit the number of items/stacks that can be in this container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (InlineEditConditionToggle), Category = "GameItemContainer")
 	bool bLimitSlots;
 
 	/** The limited number of slots available in this container, when bLimitSlots is true. */

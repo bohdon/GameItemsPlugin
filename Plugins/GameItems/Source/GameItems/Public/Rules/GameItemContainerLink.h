@@ -22,7 +22,7 @@ class GAMEITEMS_API UGameItemContainerLink : public UGameItemContainerRule
 
 public:
 	/** The id of the other container to link to. */
-	UPROPERTY(Transient, BlueprintReadWrite, Category = "Link")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Link")
 	FGameplayTag LinkedContainerId;
 
 	/** Return the linked container. */

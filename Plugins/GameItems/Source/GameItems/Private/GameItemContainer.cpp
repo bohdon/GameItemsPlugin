@@ -715,6 +715,18 @@ void UGameItemContainer::AddDefaultItems(bool bForce)
 	bHasDefaultItems = true;
 }
 
+UGameItemContainerRule* UGameItemContainer::GetRule(TSubclassOf<UGameItemContainerRule> RuleClass) const
+{
+	for (UGameItemContainerRule* Rule : Rules)
+	{
+		if (Rule->IsA(RuleClass))
+		{
+			return Rule;
+		}
+	}
+	return nullptr;
+}
+
 UGameItemContainerRule* UGameItemContainer::AddRule(TSubclassOf<UGameItemContainerRule> RuleClass)
 {
 	UGameItemContainerRule* NewRule = NewObject<UGameItemContainerRule>(this, RuleClass);

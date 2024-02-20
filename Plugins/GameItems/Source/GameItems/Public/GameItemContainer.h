@@ -238,6 +238,17 @@ public:
 	/** Return all rules applied to this container. */
 	const TArray<UGameItemContainerRule*>& GetRules() const { return Rules; }
 
+	/** Return a rule by class. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Meta = (DeterminesOutputType = "RuleClass"))
+	UGameItemContainerRule* GetRule(TSubclassOf<UGameItemContainerRule> RuleClass) const;
+
+	template <class T>
+	T* GetRule() const
+	{
+		static_assert(TIsDerivedFrom<T, UGameItemContainerRule>::IsDerived, "T must be a UGameItemContainerRule type");
+		return Cast<T>(GetRule(T::StaticClass()));
+	}
+
 	/** Add a container rule. */
 	UGameItemContainerRule* AddRule(TSubclassOf<UGameItemContainerRule> RuleClass);
 
