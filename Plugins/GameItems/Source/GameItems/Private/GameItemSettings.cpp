@@ -3,8 +3,16 @@
 
 #include "GameItemSettings.h"
 
+#include "GameItemCheatsExtension.h"
+#include "GameItemDebugSubsystem.h"
 #include "GameItemsModule.h"
 
+
+UGameItemSettings::UGameItemSettings()
+	: bRequireValidDefaultContainerId(true),
+	  ItemCheatsExtensionClass(UGameItemCheatsExtension::StaticClass())
+{
+}
 
 FName UGameItemSettings::GetCategoryName() const
 {
