@@ -29,7 +29,7 @@ struct FGameItemStockRules
 	}
 
 	/** Limit the maximum count of this item that can be in a container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItem")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (InlineEditConditionToggle), Category = "GameItem")
 	bool bLimitCount = false;
 
 	/** The total maximum quantity allowed for the item in a container. */
@@ -37,7 +37,7 @@ struct FGameItemStockRules
 	int32 MaxCount = 1;
 
 	/** Limit the maximum count for a single stack of the item. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItem")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (InlineEditConditionToggle), Category = "GameItem")
 	bool bLimitStackCount = false;
 
 	/** The maximum count for a single stack of the item. */

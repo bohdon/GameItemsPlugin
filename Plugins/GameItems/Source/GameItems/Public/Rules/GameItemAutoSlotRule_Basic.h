@@ -21,7 +21,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_AutoSlot_Toggle);
  *	- 'Item.AutoSlot.Replace' - Replace existing items in the target slot (if bReplaceByDefault is disabled)
  *	- 'Item.AutoSlot.Toggle' - Remove the item instead of slotting it, if it's already in the container.
  */
-UCLASS(DisplayName = "Basic Auto Slot")
+UCLASS(DisplayName = "Auto Slot (Basic)")
 class GAMEITEMS_API UGameItemAutoSlotRule_Basic : public UGameItemAutoSlotRule
 {
 	GENERATED_BODY()

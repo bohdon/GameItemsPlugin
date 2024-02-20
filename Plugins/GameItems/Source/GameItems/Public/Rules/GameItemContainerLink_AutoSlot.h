@@ -7,10 +7,10 @@
 
 
 /**
- * Auto-slot an item in this container when added to the linked container.
+ * Tries to auto-slot an item in this container when it's added to the linked container.
  * By default, this rule includes the 'Item.AutoSlot.NoReplace' context tag when auto-slotting.
  */
-UCLASS(DisplayName = "Link Auto-Slot")
+UCLASS(DisplayName = "Link (Trigger Auto Slot)")
 class UGameItemContainerLink_AutoSlot : public UGameItemContainerLink
 {
 	GENERATED_BODY()

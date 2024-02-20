@@ -9,9 +9,6 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemContainerRule_TagRequirements)
 
 
-// UGameItemContainerRule_TagRequirements
-// --------------------------------------
-
 bool UGameItemContainerRule_TagRequirements::CanContainItem_Implementation(const UGameItem* Item) const
 {
 	const FGameplayTagContainer ItemTags = Item->GetItemDefCDO()->OwnedTags;
