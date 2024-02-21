@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameItemContainerComponentInterface.h"
 #include "GameItemContainerInterface.h"
+#include "Demo/SaveGame/DemoSaveGameSubsystem.h"
 #include "GameFramework/PlayerState.h"
+#include "GameFramework/SaveGame.h"
 #include "ItemsDemoPlayerState.generated.h"
 
 class UGameItemContainerComponent;
@@ -34,4 +36,8 @@ public:
 
 	// IGameItemContainerComponentInterface
 	virtual UGameItemContainerComponent* GetItemContainerComponent() const override;
+
+	void CommitSaveGame(USaveGame* SaveGame);
+
+	void LoadSaveGame(USaveGame* SaveGame);
 };

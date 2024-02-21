@@ -26,6 +26,8 @@ public class GameItemsPlugin : ModuleRules
 			"GameItemsUI",
 			"GameplayTags",
 			"InputCore",
+			"Json",
+			"JsonUtilities",
 			"ModelViewViewModel",
 			"UMG",
 		});
