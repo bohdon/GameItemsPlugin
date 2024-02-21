@@ -5,6 +5,8 @@
 #include "GameItem.h"
 #include "GameItemDef.h"
 #include "GameItemsModule.h"
+#include "Serialization/MemoryWriter.h"
+#include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemTypes)
 
@@ -258,6 +260,12 @@ UGameItem* FGameItemList::RemoveEntryAt(int32 Index, bool bPreserveIndices)
 	return RemovedItem;
 }
 
+void FGameItemList::Reset()
+{
+	Entries.Reset();
+	MarkArrayDirty();
+}
+
 void FGameItemList::SwapEntries(int32 IndexA, int32 IndexB)
 {
 	check(IndexA >= 0);
@@ -280,4 +288,32 @@ void FGameItemList::GetAllItems(TArray<UGameItem*>& OutItems) const
 	{
 		OutItems.Add(Entry.Item);
 	}
+}
+
+FGameItemSaveData::FGameItemSaveData()
+{
+}
+
+FGameItemSaveData::FGameItemSaveData(UGameItem* InItem)
+	: FGameItemSaveData()
+{
+	if (!InItem)
+	{
+		return;
+	}
+
+	ItemDef = InItem->GetItemDef();
+
+	FMemoryWriter MemWriter(ByteData);
+	FObjectAndNameAsStringProxyArchive Ar(MemWriter, true);
+	Ar.ArIsSaveGame = true;
+	InItem->Serialize(Ar);
+
+	// create a new guid for this save data
+	Guid = FGuid::NewGuid();
+}
+
+FGameItemSaveData::FGameItemSaveData(const FGuid& InGuid)
+	: Guid(InGuid)
+{
 }

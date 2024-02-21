@@ -246,6 +246,9 @@ struct GAMEITEMS_API FGameItemList : public FFastArraySerializer
 	 */
 	UGameItem* RemoveEntryAt(int32 Index, bool bPreserveIndices = false);
 
+	/** Clear all entries. */
+	void Reset();
+
 	/** Swap the location of two entries, expanding the array size if needed. */
 	void SwapEntries(int32 IndexA, int32 IndexB);
 
@@ -271,4 +274,86 @@ struct TStructOpsTypeTraits<FGameItemList> : public TStructOpsTypeTraitsBase2<FG
 	{
 		WithNetDeltaSerializer = true,
 	};
+};
+
+
+/**
+ * Save data for a single game item.
+ */
+USTRUCT()
+struct GAMEITEMS_API FGameItemSaveData
+{
+	GENERATED_BODY()
+
+	FGameItemSaveData();
+
+	/** Create save data from an item. */
+	FGameItemSaveData(UGameItem* InItem);
+
+	/** Create save data using only a guid, pointing to an item in a parent container. */
+	FGameItemSaveData(const FGuid& InGuid);
+
+	/** The unique id of this item. */
+	UPROPERTY()
+	FGuid Guid;
+
+	/** The item definition class. */
+	UPROPERTY()
+	TSoftClassPtr<UGameItemDef> ItemDef;
+
+	/** The item's serialized SaveGame properties. */
+	UPROPERTY()
+	TArray<uint8> ByteData;
+};
+
+
+/**
+ * Save data for a single game item container.
+ */
+USTRUCT()
+struct GAMEITEMS_API FGameItemContainerSaveData
+{
+	GENERATED_BODY()
+
+	/** All items in the container by slot */
+	UPROPERTY()
+	TMap<int32, FGameItemSaveData> ItemList;
+
+	/** The container's serialized SaveGame properties. */
+	UPROPERTY()
+	TArray<uint8> ByteData;
+};
+
+
+/**
+ * Save data for a collection of related containers.
+ */
+USTRUCT()
+struct GAMEITEMS_API FGameItemContainerCollectionSaveData
+{
+	GENERATED_BODY()
+
+	/** Save data for all containers by id. */
+	UPROPERTY()
+	TMap<FGameplayTag, FGameItemContainerSaveData> Containers;
+};
+
+
+/**
+ * Contains all save data needed to store both player and world game
+ * items and containers. Player data is stored separately to avoid possible
+ * conflicts with world data.
+ */
+USTRUCT()
+struct GAMEITEMS_API FPlayerAndWorldGameItemSaveData
+{
+	GENERATED_BODY()
+
+	/** Save data for all the player's item collections. */
+	UPROPERTY()
+	TMap<FName, FGameItemContainerCollectionSaveData> PlayerItemData;
+
+	/** Save data for all world item containers. */
+	UPROPERTY()
+	TMap<FName, FGameItemContainerCollectionSaveData> WorldItemData;
 };

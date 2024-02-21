@@ -5,17 +5,21 @@
 
 #include "GameItemContainer.h"
 #include "GameItemContainerDef.h"
+#include "GameItemSaveDataInterface.h"
 #include "GameItemSettings.h"
 #include "Engine/ActorChannel.h"
 #include "Engine/World.h"
-#include "Rules/GameItemAutoSlotRule.h"
+#include "GameFramework/SaveGame.h"
 #include "Rules/GameItemContainerLink.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemContainerComponent)
 
 
 UGameItemContainerComponent::UGameItemContainerComponent(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+	: Super(ObjectInitializer),
+	  bEnableSaveGame(false),
+	  SaveCollectionId(NAME_None),
+	  bIsPlayerCollection(false)
 {
 	bWantsInitializeComponent = true;
 	SetIsReplicatedByDefault(true);
@@ -85,6 +89,82 @@ TArray<UGameItemContainer*> UGameItemContainerComponent::GetAllItemContainers() 
 UGameItemContainer* UGameItemContainerComponent::GetItemContainer(FGameplayTag ContainerId) const
 {
 	return Containers.FindRef(ContainerId);
+}
+
+void UGameItemContainerComponent::CommitSaveGame(USaveGame* SaveGame)
+{
+	IGameItemSaveDataInterface* ItemSaveDataInterface = Cast<IGameItemSaveDataInterface>(SaveGame);
+	if (!ItemSaveDataInterface)
+	{
+		return;
+	}
+
+	FPlayerAndWorldGameItemSaveData& AllSaveData = ItemSaveDataInterface->GetItemSaveData();
+	FGameItemContainerCollectionSaveData& CollectionData = bIsPlayerCollection
+		                                                       ? AllSaveData.PlayerItemData.FindOrAdd(SaveCollectionId)
+		                                                       : AllSaveData.WorldItemData.FindOrAdd(SaveCollectionId);
+
+	TMap<UGameItem*, FGuid> SavedItems;
+
+	// save parent containers
+	for (const auto& ContainerElem : Containers)
+	{
+		UGameItemContainer* Container = ContainerElem.Value;
+		if (!Container->IsChild())
+		{
+			FGameItemContainerSaveData& ContainerData = CollectionData.Containers.FindOrAdd(Container->ContainerId);
+			Container->CommitSaveData(ContainerData, SavedItems);
+		}
+	}
+
+	// ...then save all children, now that item guids have been created
+	for (const auto& ContainerElem : Containers)
+	{
+		UGameItemContainer* Container = ContainerElem.Value;
+		if (Container->IsChild())
+		{
+			FGameItemContainerSaveData& ContainerData = CollectionData.Containers.FindOrAdd(Container->ContainerId);
+			Container->CommitSaveData(ContainerData, SavedItems);
+		}
+	}
+}
+
+void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame)
+{
+	IGameItemSaveDataInterface* ItemSaveDataInterface = Cast<IGameItemSaveDataInterface>(SaveGame);
+	if (!ItemSaveDataInterface)
+	{
+		return;
+	}
+
+	FPlayerAndWorldGameItemSaveData& AllSaveData = ItemSaveDataInterface->GetItemSaveData();
+	const FGameItemContainerCollectionSaveData& CollectionData = bIsPlayerCollection
+		                                                             ? AllSaveData.PlayerItemData.FindOrAdd(SaveCollectionId)
+		                                                             : AllSaveData.WorldItemData.FindOrAdd(SaveCollectionId);
+
+	TMap<FGuid, UGameItem*> LoadedItems;
+
+	// load parent containers
+	for (const auto& ContainerElem : Containers)
+	{
+		UGameItemContainer* Container = ContainerElem.Value;
+		if (!Container->IsChild())
+		{
+			const FGameItemContainerSaveData ContainerData = CollectionData.Containers.FindRef(Container->ContainerId);
+			Container->LoadSaveData(ContainerData, LoadedItems);
+		}
+	}
+
+	// ...then load all children, now that items have been created
+	for (const auto& ContainerElem : Containers)
+	{
+		UGameItemContainer* Container = ContainerElem.Value;
+		if (Container->IsChild())
+		{
+			const FGameItemContainerSaveData ContainerData = CollectionData.Containers.FindRef(Container->ContainerId);
+			Container->LoadSaveData(ContainerData, LoadedItems);
+		}
+	}
 }
 
 void UGameItemContainerComponent::CreateStartupContainers()

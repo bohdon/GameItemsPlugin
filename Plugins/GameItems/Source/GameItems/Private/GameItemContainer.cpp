@@ -19,6 +19,9 @@
 #include "Rules/GameItemAutoSlotRule.h"
 #include "Rules/GameItemContainerLink.h"
 #include "Rules/GameItemContainerRule.h"
+#include "Serialization/MemoryReader.h"
+#include "Serialization/MemoryWriter.h"
+#include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemContainer)
 
@@ -350,6 +353,42 @@ UGameItem* UGameItemContainer::RemoveItemAt(int32 Slot)
 	}
 
 	return RemovedItem;
+}
+
+void UGameItemContainer::RemoveAllItems()
+{
+	// gather items that will be removed, and record which slot they were in
+	int32 MaxSlot = 0;
+	TMap<int32, UGameItem*> RemovedItems;
+	for (int32 Slot = 0; Slot < ItemList.Entries.Num(); ++Slot)
+	{
+		if (UGameItem* Item = ItemList.Entries[Slot].GetItem())
+		{
+			RemovedItems.Add(Slot, Item);
+			MaxSlot = FMath::Max(MaxSlot, Slot);
+		}
+	}
+
+	if (RemovedItems.IsEmpty())
+	{
+		// nothing to do
+		return;
+	}
+
+	FScopedSlotChanges SlotChangeScope(this);
+
+	ItemList.Reset();
+
+	for (const auto& Elem : RemovedItems)
+	{
+		const int32 Slot = Elem.Key;
+		UGameItem* Item = Elem.Value;
+
+		Item->Containers.Remove(this);
+		OnItemRemoved(Item, Slot);
+	}
+
+	OnSlotRangeChanged(0, MaxSlot);
 }
 
 void UGameItemContainer::SwapItems(int32 SlotA, int32 SlotB)
@@ -867,6 +906,102 @@ UWorld* UGameItemContainer::GetWorld() const
 		return GetOuter()->GetWorld();
 	}
 	return nullptr;
+}
+
+void UGameItemContainer::CommitSaveData(FGameItemContainerSaveData& ContainerData, TMap<UGameItem*, FGuid>& SavedItems)
+{
+	// serialize all items
+	bool bIsChild = IsChild();
+	TArray<UGameItem*> Items = GetAllItems();
+	ContainerData.ItemList.Reset();
+	for (UGameItem* Item : Items)
+	{
+		int32 Slot = GetItemSlot(Item);
+		check(Slot != INDEX_NONE);
+
+		if (bIsChild)
+		{
+			// store only guid pointing to parent item
+			if (FGuid* ItemGuid = SavedItems.Find(Item))
+			{
+				ContainerData.ItemList.Emplace(Slot, *ItemGuid);
+			}
+		}
+		else
+		{
+			// serialize item data
+			const FGameItemSaveData& ItemData = ContainerData.ItemList.Emplace(Slot, Item);
+
+			// store item guid for children to access
+			SavedItems.Add(Item, ItemData.Guid);
+		}
+	}
+
+	// serialize additional container data
+	FMemoryWriter MemWriter(ContainerData.ByteData);
+	FObjectAndNameAsStringProxyArchive Ar(MemWriter, true);
+	Ar.ArIsSaveGame = true;
+	Serialize(Ar);
+}
+
+void UGameItemContainer::LoadSaveData(const FGameItemContainerSaveData& ContainerData, TMap<FGuid, UGameItem*>& LoadedItems)
+{
+	UGameItemSubsystem* ItemSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGameItemSubsystem>();
+
+	RemoveAllItems();
+
+	// load items
+	bool bIsChild = IsChild();
+	for (const auto& ItemElem : ContainerData.ItemList)
+	{
+		int32 Slot = ItemElem.Key;
+		const FGameItemSaveData& ItemData = ItemElem.Value;
+
+		if (bIsChild)
+		{
+			// look for existing item loaded by parent
+			if (UGameItem* LoadedItem = LoadedItems.FindRef(ItemData.Guid))
+			{
+				AddItem(LoadedItem, Slot);
+			}
+		}
+		else
+		{
+			// create new item from save data
+			if (ItemData.ItemDef.IsNull())
+			{
+				UE_LOG(LogGameItems, Warning, TEXT("Found null item def when loading save game: %s.%d"), *ContainerId.ToString(), Slot);
+				continue;
+			}
+
+			const TSubclassOf<UGameItemDef> ItemDef = ItemData.ItemDef.LoadSynchronous();
+			if (!ItemDef)
+			{
+				UE_LOG(LogGameItems, Warning, TEXT("Failed to load item def when loading save game: %s"), *ItemData.ItemDef.ToString());
+				continue;
+			}
+
+			UGameItem* NewItem = ItemSubsystem->CreateItem(GetOwner(), ItemDef);
+			check(NewItem);
+
+			// save item so it can be retrieved by children
+			LoadedItems.Add(ItemData.Guid, NewItem);
+
+			// serialize item properties
+			FMemoryReader MemReader(ItemData.ByteData);
+			FObjectAndNameAsStringProxyArchive Ar(MemReader, true);
+			Ar.ArIsSaveGame = true;
+			NewItem->Serialize(Ar);
+
+			AddItem(NewItem, Slot);
+		}
+	}
+
+	// load serialized properties
+	FMemoryReader MemReader(ContainerData.ByteData);
+	FObjectAndNameAsStringProxyArchive Ar(MemReader, true);
+	Ar.ArIsSaveGame = true;
+	Serialize(Ar);
 }
 
 void UGameItemContainer::OnItemAdded(UGameItem* Item, int32 Slot)

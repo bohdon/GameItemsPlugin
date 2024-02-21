@@ -120,6 +120,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
 	UGameItem* RemoveItemAt(int32 Slot);
 
+	/** Remove all items from this container. */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
+	void RemoveAllItems();
+
 	/** Swap the location of two items in the container. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
 	void SwapItems(int32 SlotA, int32 SlotB);
@@ -304,6 +308,12 @@ public:
 	virtual AActor* GetOwner() const;
 
 	virtual UWorld* GetWorld() const override;
+
+	/** Save this container's items and properties to save data. */ 
+	void CommitSaveData(FGameItemContainerSaveData& ContainerData, TMap<UGameItem*, FGuid>& SavedItems);
+
+	/** Load this container's items and properties from save data. */
+	void LoadSaveData(const FGameItemContainerSaveData& ContainerData, TMap<FGuid, UGameItem*>& LoadedItems);
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FItemAddOrRemoveDelegate, UGameItem* /*Item*/);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FItemSlotChangedDelegate, int32 /*Slot*/);

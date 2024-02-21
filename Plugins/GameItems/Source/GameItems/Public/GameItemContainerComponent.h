@@ -10,6 +10,7 @@
 class UGameItem;
 class UGameItemContainerDef;
 class UGameItemContainerLink;
+class USaveGame;
 
 
 /**
@@ -73,6 +74,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (TitleProperty = "{LinkedContainerId} {ContainerLinkClass}"), Category = "GameItems")
 	TArray<FGameItemContainerLinkSpec> ContainerLinks;
 
+	/** Whether this container collection should be saved. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveGame")
+	bool bEnableSaveGame;
+
+	/** The id of this container collection for save games. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (EditCondition = "bEnableSaveGame"), Category = "SaveGame")
+	FName SaveCollectionId;
+
+	/** Should this game item collection be saved to player save data? */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Meta = (EditCondition = "bEnableSaveGame"), Category = "SaveGame")
+	bool bIsPlayerCollection;
+
 	/** Return true if an item is slotted in a container with any of the given tags. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false)
 	bool IsItemSlotted(UGameItem* Item, FGameplayTagContainer ContainerTags) const;
@@ -91,6 +104,14 @@ public:
 	// IGameItemContainerInterface
 	virtual TArray<UGameItemContainer*> GetAllItemContainers() const override;
 	virtual UGameItemContainer* GetItemContainer(FGameplayTag ContainerId) const override;
+
+	/** Write all containers and items to a save game. */
+	UFUNCTION(BlueprintCallable)
+	void CommitSaveGame(USaveGame* SaveGame);
+
+	/** Load all containers and items from a save game. */
+	UFUNCTION(BlueprintCallable)
+	void LoadSaveGame(USaveGame* SaveGame);
 
 protected:
 	UPROPERTY(Transient)

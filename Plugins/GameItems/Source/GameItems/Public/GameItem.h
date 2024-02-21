@@ -29,11 +29,11 @@ private:
 	TSubclassOf<UGameItemDef> ItemDef;
 
 	/** The quantity of this item in this instance (aka stack). */
-	UPROPERTY(Replicated, BlueprintReadOnly, Meta = (AllowPrivateAccess))
+	UPROPERTY(SaveGame, Replicated, BlueprintReadOnly, Meta = (AllowPrivateAccess))
 	int32 Count;
 
 	/** Tags representing various stats about this item, such as level, use count, remaining ammo, etc. */
-	UPROPERTY(Replicated)
+	UPROPERTY(SaveGame, Replicated)
 	FGameItemTagStackContainer TagStats;
 
 public:
