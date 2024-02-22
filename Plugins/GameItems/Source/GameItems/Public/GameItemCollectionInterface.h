@@ -26,5 +26,6 @@ class GAMEITEMS_API IGameItemCollectionInterface
 
 public:
 	/** Return the total quantity of an item in the collection. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false)
 	virtual int32 GetTotalMatchingItemCount(const UGameItem* Item) const = 0;
 };

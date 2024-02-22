@@ -93,6 +93,11 @@ UGameItemContainer* UGameItemContainerComponent::GetItemContainer(FGameplayTag C
 
 int32 UGameItemContainerComponent::GetTotalMatchingItemCount(const UGameItem* Item) const
 {
+	if (!Item)
+	{
+		return 0;
+	}
+
 	// TODO: cache the counts for faster lookup
 	int32 Result = 0;
 	for (const auto& Elem : Containers)
