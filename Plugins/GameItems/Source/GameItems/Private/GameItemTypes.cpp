@@ -11,6 +11,15 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemTypes)
 
 
+// FGameItemCountLimit
+// -------------------
+
+int32 FGameItemCountLimit::GetMaxCount(int32 Default) const
+{
+	return bLimitCount ? MaxCount : Default;
+}
+
+
 // FGameItemTagStack
 // -----------------
 

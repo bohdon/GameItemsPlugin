@@ -25,15 +25,23 @@ public:
 	FGameplayTagContainer OwnedTags;
 
 	/** The user-facing display name. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameItem")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItem")
 	FText DisplayName;
 
-	/** The maximum quantity and stacking rules for this item. Additional rules can be defined using UGameItemContainerStockRule. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameItem")
-	FGameItemStockRules StockRules;
+	/** The maximum quantity of this item in a collection. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItem")
+	FGameItemCountLimit CollectionLimit;
+
+	/** The maximum quantity of this item in a single container. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItem")
+	FGameItemCountLimit ContainerLimit;
+
+	/** The maximum quantity of this item in a single stack. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItem")
+	FGameItemCountLimit StackLimit;
 
 	/** The fragments that make up this item. Can be anything from UI data to gameplay functionality. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Instanced, Category = "GameItem")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "GameItem")
 	TArray<TObjectPtr<UGameItemFragment>> Fragments;
 
 	/** Find and return a fragment of this item definition by class. */

@@ -91,6 +91,21 @@ UGameItemContainer* UGameItemContainerComponent::GetItemContainer(FGameplayTag C
 	return Containers.FindRef(ContainerId);
 }
 
+int32 UGameItemContainerComponent::GetTotalMatchingItemCount(const UGameItem* Item) const
+{
+	// TODO: cache the counts for faster lookup
+	int32 Result = 0;
+	for (const auto& Elem : Containers)
+	{
+		// only parent containers contribute to collection count
+		if (!Elem.Value->IsChild())
+		{
+			Result += Elem.Value->GetTotalMatchingItemCount(Item);
+		}
+	}
+	return Result;
+}
+
 void UGameItemContainerComponent::CommitSaveGame(USaveGame* SaveGame)
 {
 	IGameItemSaveDataInterface* ItemSaveDataInterface = Cast<IGameItemSaveDataInterface>(SaveGame);
@@ -242,6 +257,7 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag Co
 	UGameItemContainer* NewContainer = NewObject<UGameItemContainer>(this, ContainerClass);
 	check(NewContainer);
 	NewContainer->ContainerId = ContainerId;
+	NewContainer->SetCollection(this);
 	NewContainer->SetContainerDef(ContainerDef);
 
 	// add link rules

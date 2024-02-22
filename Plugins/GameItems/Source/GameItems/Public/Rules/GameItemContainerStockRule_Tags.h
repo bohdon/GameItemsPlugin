@@ -20,10 +20,14 @@ public:
 	UGameItemContainerStockRule_Tags();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tag Stock Rules")
-	TMap<FGameplayTag, FGameItemStockRules> StockRules;
+	TMap<FGameplayTag, FGameItemCountLimit> ContainerLimits;
 
-	FGameItemStockRules GetStockRulesForItem(const UGameItem* Item) const;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tag Stock Rules")
+	TMap<FGameplayTag, FGameItemCountLimit> StackLimits;
 
 	virtual int32 GetItemMaxCount_Implementation(const UGameItem* Item) const override;
 	virtual int32 GetItemStackMaxCount_Implementation(const UGameItem* Item) const override;
+
+protected:
+	static FGameItemCountLimit FindLimitForItem(const UGameItem* Item, const TMap<FGameplayTag, FGameItemCountLimit>& Limits);
 };

@@ -4,6 +4,7 @@
 #include "GameItemContainer.h"
 
 #include "GameItem.h"
+#include "GameItemCollectionInterface.h"
 #include "GameItemContainerDef.h"
 #include "GameItemDef.h"
 #include "GameItemSet.h"
@@ -124,6 +125,11 @@ void UGameItemContainer::SetContainerDef(TSubclassOf<UGameItemContainerDef> NewC
 	}
 }
 
+void UGameItemContainer::SetCollection(TScriptInterface<IGameItemCollectionInterface> NewCollection)
+{
+	Collection = NewCollection;
+}
+
 const UGameItemContainerDef* UGameItemContainer::GetContainerDefCDO() const
 {
 	return ContainerDef ? GetDefault<UGameItemContainerDef>(ContainerDef) : nullptr;
@@ -165,12 +171,14 @@ UGameItem* UGameItemContainer::AddNewItem(TSubclassOf<UGameItemDef> ItemDef, int
 	return NewItem;
 }
 
-FGameItemContainerAddPlan UGameItemContainer::CheckAddItem(UGameItem* Item, int32 TargetSlot) const
+FGameItemContainerAddPlan UGameItemContainer::CheckAddItem(UGameItem* Item, int32 TargetSlot, UGameItemContainer* OldContainer) const
 {
-	return GetAddItemPlan(Item, TargetSlot, false);
+	// when moving items within a collection, ignore collection limits
+	const bool bIgnoreCollectionLimit = OldContainer && OldContainer->Collection == Collection;
+	return GetAddItemPlan(Item, TargetSlot, bIgnoreCollectionLimit, false);
 }
 
-FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, int32 TargetSlot, bool bWarn) const
+FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, int32 TargetSlot, bool bIgnoreCollectionLimit, bool bWarn) const
 {
 	FGameItemContainerAddPlan Plan;
 
@@ -179,9 +187,15 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 		return Plan;
 	}
 
-	const int32 OldTotalCount = GetTotalMatchingItemCount(Item);
-	const int32 MaxCount = GetItemMaxCount(Item);
-	const int32 MaxDeltaCount = FMath::Max(MaxCount - OldTotalCount, 0);
+	// get remaining space in the container
+	int32 MaxDeltaCount = GetRemainingSpaceForItem(Item);
+
+	// get remaining space in collection
+	if (!bIgnoreCollectionLimit && !IsChild())
+	{
+		const int32 CollectionSpace = GetRemainingCollectionSpaceForItem(Item);
+		MaxDeltaCount = FMath::Min(MaxDeltaCount, CollectionSpace);
+	}
 
 	// the total desired amount to add based on stock rules.
 	// this doesn't include loss that may happen due from limited slots.
@@ -550,6 +564,12 @@ int32 UGameItemContainer::GetTotalMatchingItemCount(const UGameItem* Item) const
 	return Total;
 }
 
+int32 UGameItemContainer::GetCollectionMatchingItemCount(const UGameItem* Item) const
+{
+	const IGameItemCollectionInterface* CollectionInterface = Collection.GetInterface();
+	return CollectionInterface ? CollectionInterface->GetTotalMatchingItemCount(Item) : GetTotalMatchingItemCount(Item);
+}
+
 int32 UGameItemContainer::GetTotalItemCount() const
 {
 	int32 Total = 0;
@@ -665,24 +685,14 @@ bool UGameItemContainer::CanContainItem(const UGameItem* Item) const
 
 int32 UGameItemContainer::GetItemMaxCount(const UGameItem* Item) const
 {
-	if (!Item)
-	{
-		return 0;
-	}
-
-	const UGameItemDef* ItemDefCDO = Item->GetItemDefCDO();
+	const UGameItemDef* ItemDefCDO = Item ? Item->GetItemDefCDO() : nullptr;
 	if (!ItemDefCDO)
 	{
 		return 0;
 	}
 
 	// find the smallest stack limit as defined by stock rules
-	int32 Result = MAX_int32;
-
-	if (ItemDefCDO->StockRules.bLimitCount)
-	{
-		Result = ItemDefCDO->StockRules.MaxCount;
-	}
+	int32 Result = ItemDefCDO->ContainerLimit.GetMaxCount();
 
 	for (const UGameItemContainerRule* Rule : Rules)
 	{
@@ -698,24 +708,14 @@ int32 UGameItemContainer::GetItemMaxCount(const UGameItem* Item) const
 
 int32 UGameItemContainer::GetItemStackMaxCount(const UGameItem* Item) const
 {
-	if (!Item)
-	{
-		return 0;
-	}
-
-	const UGameItemDef* ItemDefCDO = Item->GetItemDefCDO();
+	const UGameItemDef* ItemDefCDO = Item ? Item->GetItemDefCDO() : nullptr;
 	if (!ItemDefCDO)
 	{
 		return 0;
 	}
 
 	// find the smallest stack limit as defined by stock rules
-	int32 Result = MAX_int32;
-
-	if (ItemDefCDO->StockRules.bLimitStackCount)
-	{
-		Result = ItemDefCDO->StockRules.StackMaxCount;
-	}
+	int32 Result = ItemDefCDO->StackLimit.GetMaxCount();
 
 	for (const UGameItemContainerRule* Rule : Rules)
 	{
@@ -727,6 +727,27 @@ int32 UGameItemContainer::GetItemStackMaxCount(const UGameItem* Item) const
 	}
 
 	return Result;
+}
+
+int32 UGameItemContainer::GetItemCollectionMaxCount(const UGameItem* Item) const
+{
+	const UGameItemDef* ItemDefCDO = Item ? Item->GetItemDefCDO() : nullptr;
+	if (!ItemDefCDO)
+	{
+		return 0;
+	}
+
+	return ItemDefCDO->CollectionLimit.GetMaxCount();
+}
+
+int32 UGameItemContainer::GetRemainingSpaceForItem(const UGameItem* Item) const
+{
+	return FMath::Max(GetItemMaxCount(Item) - GetTotalMatchingItemCount(Item), 0);
+}
+
+int32 UGameItemContainer::GetRemainingCollectionSpaceForItem(const UGameItem* Item) const
+{
+	return FMath::Max(GetItemCollectionMaxCount(Item) - GetCollectionMatchingItemCount(Item), 0);
 }
 
 void UGameItemContainer::AddDefaultItems(bool bForce)

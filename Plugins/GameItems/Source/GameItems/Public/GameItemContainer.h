@@ -8,7 +8,9 @@
 #include "UObject/Object.h"
 #include "GameItemContainer.generated.h"
 
+class IGameItemCollectionInterface;
 class UGameItem;
+class UGameItemCollectionInterface;
 class UGameItemContainerDef;
 class UGameItemContainerLink;
 class UGameItemContainerRule;
@@ -80,6 +82,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetContainerDef(TSubclassOf<UGameItemContainerDef> NewContainerDef);
 
+	/** Set the item collection that this container belongs to. */
+	UFUNCTION(BlueprintCallable)
+	void SetCollection(TScriptInterface<IGameItemCollectionInterface> NewCollection);
+
+	/** Set the item collection that this container belongs to. */
+	UFUNCTION(BlueprintPure)
+	virtual TScriptInterface<IGameItemCollectionInterface> GetCollection() const { return Collection; }
+
 	/** Return the CDO of the container definition. */
 	UFUNCTION(BlueprintPure, DisplayName = "GetContainerDef")
 	FORCEINLINE const UGameItemContainerDef* GetContainerDefCDO() const;
@@ -99,9 +109,15 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Meta = (DeprecatedFunction), Category = "GameItemContainer")
 	UGameItem* AddNewItem(TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
 
-	/** Check if an item can be fully added to a container and whether it will be split when added. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
-	FGameItemContainerAddPlan CheckAddItem(UGameItem* Item, int32 TargetSlot = -1) const;
+	/**
+	 * Check if an item can be fully added to a container and whether it will be split when added.
+	 * @param Item The item to be added.
+	 * @param TargetSlot The slot where the item should be added.
+	 * @param OldContainer A container from which the item is being moved, if applicable, which will be used to check collection rules.
+	 * @return A plan with info about where and how much of the item will be added.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Meta = (AdvancedDisplay = "2"), Category = "GameItemContainer")
+	FGameItemContainerAddPlan CheckAddItem(UGameItem* Item, int32 TargetSlot = -1, UGameItemContainer* OldContainer = nullptr) const;
 
 	/**
 	 * Add an item to this container. This does not remove the item from any existing containers.
@@ -181,6 +197,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
 	int32 GetTotalMatchingItemCount(const UGameItem* Item) const;
 
+	/**
+	 * Return the total number of matching items in the owning collection, including stack quantities.
+	 * See UGameItem::IsMatching.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
+	int32 GetCollectionMatchingItemCount(const UGameItem* Item) const;
+
 	/** Return the total number of all items, including stack quantities. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
 	int32 GetTotalItemCount() const;
@@ -231,6 +254,18 @@ public:
 	/** Return the maximum count for a single stack of an item in this container. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	virtual int32 GetItemStackMaxCount(const UGameItem* Item) const;
+
+	/** Return the maximum total number of an item allowed in a collection (across multiple containers). */
+	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
+	virtual int32 GetItemCollectionMaxCount(const UGameItem* Item) const;
+
+	/** Return the quantity of a matching item that can still be added to the container before reaching the limit. */
+	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
+	virtual int32 GetRemainingSpaceForItem(const UGameItem* Item) const;
+
+	/** Return the quantity of a matching item that can still be added to the collection before reaching the limit. */
+	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
+	virtual int32 GetRemainingCollectionSpaceForItem(const UGameItem* Item) const;
 
 	/**
 	 * Add the default items defined for this container.
@@ -309,7 +344,7 @@ public:
 
 	virtual UWorld* GetWorld() const override;
 
-	/** Save this container's items and properties to save data. */ 
+	/** Save this container's items and properties to save data. */
 	void CommitSaveData(FGameItemContainerSaveData& ContainerData, TMap<UGameItem*, FGuid>& SavedItems);
 
 	/** Load this container's items and properties from save data. */
@@ -347,6 +382,10 @@ protected:
 	/** All child containers, which must register themself via Register/UnregisterChild */
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UGameItemContainer>> ChildContainers;
+
+	/** The collection that this container belongs to. */
+	UPROPERTY()
+	TScriptInterface<IGameItemCollectionInterface> Collection;
 
 	/** Have the default items already been added to this container? */
 	bool bHasDefaultItems;
@@ -392,7 +431,7 @@ protected:
 	 * including exactly which slots and quantities should be added.
 	 * Can be used to check for item loss or split before adding.
 	 */
-	FGameItemContainerAddPlan GetAddItemPlan(UGameItem* Item, int32 TargetSlot = -1, bool bWarn = true) const;
+	FGameItemContainerAddPlan GetAddItemPlan(UGameItem* Item, int32 TargetSlot = -1, bool bIgnoreCollectionLimit = false, bool bWarn = true) const;
 
 	virtual void OnItemAdded(UGameItem* Item, int32 Slot);
 	virtual void OnItemRemoved(UGameItem* Item, int32 Slot);

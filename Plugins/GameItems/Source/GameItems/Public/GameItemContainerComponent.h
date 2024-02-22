@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameItemCollectionInterface.h"
 #include "GameItemContainerInterface.h"
 #include "Components/ActorComponent.h"
 #include "GameItemContainerComponent.generated.h"
@@ -55,11 +56,12 @@ struct FGameItemContainerLinkSpec
 
 
 /**
- * Component that provides any number of game item containers.
+ * Component that provides a collection of game item containers.
  */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GAMEITEMS_API UGameItemContainerComponent : public UActorComponent,
-                                                  public IGameItemContainerInterface
+                                                  public IGameItemContainerInterface,
+                                                  public IGameItemCollectionInterface
 {
 	GENERATED_BODY()
 
@@ -104,6 +106,9 @@ public:
 	// IGameItemContainerInterface
 	virtual TArray<UGameItemContainer*> GetAllItemContainers() const override;
 	virtual UGameItemContainer* GetItemContainer(FGameplayTag ContainerId) const override;
+
+	// IGameItemCollectionInterface
+	virtual int32 GetTotalMatchingItemCount(const UGameItem* Item) const override;
 
 	/** Write all containers and items to a save game. */
 	UFUNCTION(BlueprintCallable)

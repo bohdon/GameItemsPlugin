@@ -107,7 +107,7 @@ TArray<UGameItem*> UGameItemSubsystem::MoveItem(UGameItemContainer* FromContaine
 		return TArray<UGameItem*>();
 	}
 
-	const FGameItemContainerAddPlan Plan = ToContainer->CheckAddItem(Item, TargetSlot);
+	const FGameItemContainerAddPlan Plan = ToContainer->CheckAddItem(Item, TargetSlot, FromContainer);
 	if (Plan.DeltaCount == 0)
 	{
 		// nothing to move

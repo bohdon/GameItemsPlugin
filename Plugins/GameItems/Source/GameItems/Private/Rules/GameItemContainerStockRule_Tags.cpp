@@ -12,32 +12,30 @@ UGameItemContainerStockRule_Tags::UGameItemContainerStockRule_Tags()
 {
 }
 
-FGameItemStockRules UGameItemContainerStockRule_Tags::GetStockRulesForItem(const UGameItem* Item) const
-{
-	const UGameItemDef* ItemDefCDO = Item ? Item->GetItemDefCDO() : nullptr;
-	if (!ItemDefCDO)
-	{
-		return FGameItemStockRules();
-	}
-
-	for (FGameplayTag ItemTag : ItemDefCDO->OwnedTags)
-	{
-		if (StockRules.Contains(ItemTag))
-		{
-			return StockRules[ItemTag];
-		}
-	}
-	return FGameItemStockRules();
-}
-
 int32 UGameItemContainerStockRule_Tags::GetItemMaxCount_Implementation(const UGameItem* Item) const
 {
-	const FGameItemStockRules ItemStockRules = GetStockRulesForItem(Item);
-	return ItemStockRules.bLimitCount ? ItemStockRules.MaxCount : -1;
+	return FindLimitForItem(Item, ContainerLimits).GetMaxCount(-1);
 }
 
 int32 UGameItemContainerStockRule_Tags::GetItemStackMaxCount_Implementation(const UGameItem* Item) const
 {
-	const FGameItemStockRules ItemStockRules = GetStockRulesForItem(Item);
-	return ItemStockRules.bLimitStackCount ? ItemStockRules.StackMaxCount : -1;
+	return FindLimitForItem(Item, StackLimits).GetMaxCount(-1);
+}
+
+FGameItemCountLimit UGameItemContainerStockRule_Tags::FindLimitForItem(const UGameItem* Item, const TMap<FGameplayTag, FGameItemCountLimit>& Limits)
+{
+	const UGameItemDef* ItemDefCDO = Item ? Item->GetItemDefCDO() : nullptr;
+	if (!ItemDefCDO)
+	{
+		return FGameItemCountLimit();
+	}
+
+	for (FGameplayTag ItemTag : ItemDefCDO->OwnedTags)
+	{
+		if (Limits.Contains(ItemTag))
+		{
+			return Limits[ItemTag];
+		}
+	}
+	return FGameItemCountLimit();
 }
