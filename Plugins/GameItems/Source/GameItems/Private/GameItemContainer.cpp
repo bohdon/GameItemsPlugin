@@ -195,10 +195,19 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 			break;
 		}
 
-		// if no specific slot was given, start at 0
 		if (NextTargetSlot < 0)
 		{
-			NextTargetSlot = 0;
+			// select a starting slot
+			if (GetContainerDefCDO()->bAutoStack && !MatchingItemsWithSpace.IsEmpty())
+			{
+				// start with the first matching item
+				NextTargetSlot = GetItemSlot(MatchingItemsWithSpace[0]);
+				check(NextTargetSlot != INDEX_NONE);
+			}
+			else
+			{
+				NextTargetSlot = 0;
+			}
 		}
 
 		// stack with existing items when auto stacking is enabled, or when there are no empty slots left
