@@ -22,8 +22,6 @@ class GAMEITEMS_API UGameItemStatics : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
-	static UGameItemSubsystem* GetItemSubsystemFromContextObject(const UObject* Object);
-
 	/** Return all game item containers from an actor. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	static TArray<UGameItemContainer*> GetAllItemContainersForActor(AActor* Actor);

@@ -13,6 +13,8 @@
 #include "GameItemsModule.h"
 #include "GameItemStatics.h"
 #include "Engine/Canvas.h"
+#include "Engine/Engine.h"
+#include "Engine/GameInstance.h"
 #include "GameFramework/HUD.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemSubsystem)
@@ -249,4 +251,10 @@ void UGameItemSubsystem::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebu
 
 		Container->DisplayDebug(Canvas, DisplayInfo, YL, YPos);
 	}
+}
+
+UGameItemSubsystem* UGameItemSubsystem::GetGameItemSubsystem(const UObject* WorldContextObject)
+{
+	const UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+	return World ? UGameInstance::GetSubsystem<UGameItemSubsystem>(World->GetGameInstance()) : nullptr;
 }

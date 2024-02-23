@@ -65,39 +65,13 @@ void UGameItemContainer::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(ThisClass, ItemList);
 }
 
-UGameItem* UGameItemContainer::CreateItem(TSubclassOf<UGameItemDef> ItemDef, int32 Count) const
+UObject* UGameItemContainer::GetItemOuter() const
 {
-	check(ItemDef);
-
-	AActor* OwningActor = GetOwner();
-	check(OwningActor->HasAuthority());
-
-	const UWorld* World = GetWorld();
-	if (!World)
+	if (AActor* OwningActor = GetTypedOuter<AActor>())
 	{
-		return nullptr;
+		return OwningActor;
 	}
-
-	UGameItemSubsystem* ItemSubsystem = UGameInstance::GetSubsystem<UGameItemSubsystem>(GetWorld()->GetGameInstance());
-	return ItemSubsystem->CreateItem(OwningActor, ItemDef, Count);
-}
-
-UGameItem* UGameItemContainer::DuplicateItem(UGameItem* Item) const
-{
-	check(Item != nullptr);
-
-	AActor* OwningActor = GetOwner();
-	check(OwningActor->HasAuthority());
-
-	const UWorld* World = GetWorld();
-	if (!World)
-	{
-		return nullptr;
-	}
-
-	UGameItemSubsystem* ItemSubsystem = World->GetGameInstance()->GetSubsystem<UGameItemSubsystem>();
-
-	return ItemSubsystem->DuplicateItem(OwningActor, Item);
+	return const_cast<UGameItemContainer*>(this);
 }
 
 void UGameItemContainer::SetContainerDef(TSubclassOf<UGameItemContainerDef> NewContainerDef)
@@ -144,31 +118,6 @@ FGameplayTagContainer UGameItemContainer::GetOwnedTags() const
 		Result.AppendTags(GetContainerDefCDO()->OwnedTags);
 	}
 	return Result;
-}
-
-bool UGameItemContainer::CanAddNewItem(TSubclassOf<UGameItemDef> ItemDef, int32 Count)
-{
-	// TODO: add stack count limits, etc
-	return true;
-}
-
-UGameItem* UGameItemContainer::AddNewItem(TSubclassOf<UGameItemDef> ItemDef, int32 Count)
-{
-	// TODO: move to subsystem, all item creation should go thru there, e.g. create-and-add-to-container
-	if (!ItemDef)
-	{
-		return nullptr;
-	}
-
-	UGameItem* NewItem = CreateItem(ItemDef, Count);
-	if (!NewItem)
-	{
-		return nullptr;
-	}
-
-	AddItem(NewItem);
-
-	return NewItem;
 }
 
 FGameItemContainerAddPlan UGameItemContainer::CheckAddItem(UGameItem* Item, int32 TargetSlot, UGameItemContainer* OldContainer) const
@@ -292,6 +241,9 @@ TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot
 {
 	FScopedSlotChanges SlotChangeScope(this);
 
+	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
+	check(ItemSubsystem);
+
 	FGameItemContainerAddPlan Plan = GetAddItemPlan(Item, TargetSlot);
 	check(Plan.TargetSlots.Num() == Plan.SlotDeltaCounts.Num());
 
@@ -315,7 +267,7 @@ TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot
 			UGameItem* NewItem = Item;
 			if (Result.Contains(Item))
 			{
-				NewItem = DuplicateItem(Item);
+				NewItem = ItemSubsystem->DuplicateItem(GetItemOuter(), Item);
 			}
 			NewItem->SetCount(SlotDeltaCount);
 
@@ -757,9 +709,10 @@ void UGameItemContainer::AddDefaultItems(bool bForce)
 		return;
 	}
 
+	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
 	for (const FGameItemDefStack& DefaultItem : GetContainerDefCDO()->DefaultItems)
 	{
-		AddNewItem(DefaultItem.ItemDef, DefaultItem.Count);
+		ItemSubsystem->CreateItemInContainer(this, DefaultItem.ItemDef, DefaultItem.Count);
 	}
 
 	for (const UGameItemSet* ItemSet : GetContainerDefCDO()->DefaultItemSets)
@@ -967,7 +920,7 @@ void UGameItemContainer::CommitSaveData(FGameItemContainerSaveData& ContainerDat
 
 void UGameItemContainer::LoadSaveData(const FGameItemContainerSaveData& ContainerData, TMap<FGuid, UGameItem*>& LoadedItems)
 {
-	UGameItemSubsystem* ItemSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGameItemSubsystem>();
+	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
 
 	RemoveAllItems();
 

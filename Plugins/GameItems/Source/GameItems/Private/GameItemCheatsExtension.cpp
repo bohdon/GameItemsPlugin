@@ -29,7 +29,7 @@ void UGameItemCheatsExtension::GiveItem(TSubclassOf<UGameItemDef> ItemDef, int32
 		return;
 	}
 
-	UGameItemSubsystem* ItemSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGameItemSubsystem>();
+	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
 
 	UGameItemContainer* Container = ItemSubsystem->GetDefaultContainerForActor(Actor);
 	if (!Container)

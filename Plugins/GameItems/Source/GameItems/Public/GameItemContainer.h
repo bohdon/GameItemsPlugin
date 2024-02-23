@@ -98,17 +98,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
 	FGameplayTagContainer GetOwnedTags() const;
 
-	/** Return true if a new item could be added to this container. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Meta = (DeprecatedFunction), Category = "GameItemContainer")
-	bool CanAddNewItem(TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
-
-	/**
-	 * Add one or more of a new item to this container.
-	 * @return The newly created item.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Meta = (DeprecatedFunction), Category = "GameItemContainer")
-	UGameItem* AddNewItem(TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
-
 	/**
 	 * Check if an item can be fully added to a container and whether it will be split when added.
 	 * @param Item The item to be added.
@@ -420,11 +409,8 @@ protected:
 	/** Set of slots that were changed during change operations. */
 	TArray<int32> ChangedSlots;
 
-	/** Create and return a new item instance using the GameItemSubsystem. */
-	UGameItem* CreateItem(TSubclassOf<UGameItemDef> ItemDef, int32 Count) const;
-
-	/** Duplicate and return a new item instance using the GameItemSubsystem. */
-	UGameItem* DuplicateItem(UGameItem* Item) const;
+	/** Return the object to use as the outer for new game items. */
+	virtual UObject* GetItemOuter() const;
 
 	/**
 	 * Return a plan representing how an item will be added to this container,

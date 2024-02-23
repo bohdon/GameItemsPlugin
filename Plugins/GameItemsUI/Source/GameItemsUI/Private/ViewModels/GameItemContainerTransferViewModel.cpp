@@ -33,7 +33,7 @@ void UGameItemContainerTransferViewModel::MoveAllItemsToA(bool bAllowPartial)
 {
 	if (AreContainersValid())
 	{
-		UGameItemSubsystem* ItemSubsystem = UGameInstance::GetSubsystem<UGameItemSubsystem>(GetWorld()->GetGameInstance());
+		UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
 		ItemSubsystem->MoveAllItems(ContainerB, ContainerA, bAllowPartial);
 	}
 }
@@ -42,7 +42,7 @@ void UGameItemContainerTransferViewModel::MoveAllItemsToB(bool bAllowPartial)
 {
 	if (AreContainersValid())
 	{
-		UGameItemSubsystem* ItemSubsystem = UGameInstance::GetSubsystem<UGameItemSubsystem>(GetWorld()->GetGameInstance());
+		UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
 		ItemSubsystem->MoveAllItems(ContainerA, ContainerB, bAllowPartial);
 	}
 }

@@ -105,4 +105,8 @@ public:
 
 protected:
 	void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& YL, float& YPos);
+
+public:
+	/** Return the game item subsystem given a world context object. */
+	static UGameItemSubsystem* GetGameItemSubsystem(const UObject* WorldContextObject);
 };

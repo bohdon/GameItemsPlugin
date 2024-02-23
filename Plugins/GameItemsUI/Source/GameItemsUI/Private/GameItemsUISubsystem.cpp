@@ -38,7 +38,7 @@ UGameItemContainerViewModel* UGameItemsUISubsystem::GetOrCreateContainerViewMode
 
 UGameItemContainerViewModel* UGameItemsUISubsystem::GetOrCreateContainerViewModelForActor(AActor* Actor, FGameplayTag ContainerId)
 {
-	const UGameItemSubsystem* ItemSubsystem = UGameInstance::GetSubsystem<UGameItemSubsystem>(GetWorld()->GetGameInstance());
+	const UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
 	UGameItemContainer* Container = ItemSubsystem->GetContainerForActor(Actor, ContainerId);
 	return GetOrCreateContainerViewModel(Container);
 }
@@ -138,7 +138,7 @@ void UGameItemsUISubsystem::MoveSwapOrStackItem(UGameItemSlotViewModel* FromSlot
 	else
 	{
 		// move from another container
-		UGameItemSubsystem* ItemsSubsystem = UGameInstance::GetSubsystem<UGameItemSubsystem>(GetWorld()->GetGameInstance());
+		UGameItemSubsystem* ItemsSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
 		ItemsSubsystem->MoveItem(FromSlot->GetContainer(), ToSlot->GetContainer(), FromSlot->GetItem(), ToSlot->GetSlot(), bAllowPartial);
 	}
 }

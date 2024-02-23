@@ -4,7 +4,6 @@
 #include "GameItemContainerProvider.h"
 
 #include "GameItemContainerInterface.h"
-#include "GameItemStatics.h"
 #include "GameItemSubsystem.h"
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/Pawn.h"
@@ -37,7 +36,7 @@ UGameItemContainer* UGameItemContainerProvider_Player::ProvideContainer_Implemen
 		return nullptr;
 	}
 
-	const UGameItemSubsystem* ItemSubsystem = UGameItemStatics::GetItemSubsystemFromContextObject(Player);
+	const UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(Player);
 	const IGameItemContainerInterface* ContainerInterface = ItemSubsystem->GetContainerInterfaceForActor(Player->GetPawn());
 	if (!ContainerInterface)
 	{

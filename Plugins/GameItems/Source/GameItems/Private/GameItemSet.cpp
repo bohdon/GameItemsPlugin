@@ -4,6 +4,7 @@
 #include "GameItemSet.h"
 
 #include "GameItemContainer.h"
+#include "GameItemSubsystem.h"
 
 
 void UGameItemSet::AddToContainer(UGameItemContainer* Container) const
@@ -13,8 +14,14 @@ void UGameItemSet::AddToContainer(UGameItemContainer* Container) const
 		return;
 	}
 
-	for (const FGameItemDefStack& DefaultItem : Items)
+	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(Container);
+	if (!ItemSubsystem)
 	{
-		Container->AddNewItem(DefaultItem.ItemDef, DefaultItem.Count);
+		return;
+	}
+
+	for (const FGameItemDefStack& Item : Items)
+	{
+		ItemSubsystem->CreateItemInContainer(Container, Item.ItemDef, Item.Count);
 	}
 }
