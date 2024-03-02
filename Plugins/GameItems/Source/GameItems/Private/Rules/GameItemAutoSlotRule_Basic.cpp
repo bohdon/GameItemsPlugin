@@ -17,6 +17,17 @@ UGameItemAutoSlotRule_Basic::UGameItemAutoSlotRule_Basic()
 {
 }
 
+bool UGameItemAutoSlotRule_Basic::CanAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
+{
+	const FGameplayTagContainer ItemTags = Item->GetOwnedTags();
+	if (!ItemTags.HasAll(RequireTags) || ItemTags.HasAny(IgnoreTags) || !(Query.IsEmpty() || Query.Matches(ItemTags)))
+	{
+		return false;
+	}
+
+	return Super::CanAutoSlot_Implementation(Item, ContextTags);
+}
+
 int32 UGameItemAutoSlotRule_Basic::GetAutoSlotPriorityForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
 	return CanAutoSlot(Item, ContextTags) ? Priority : 0;
