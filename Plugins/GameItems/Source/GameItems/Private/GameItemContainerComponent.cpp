@@ -5,6 +5,7 @@
 
 #include "GameItemContainer.h"
 #include "GameItemContainerDef.h"
+#include "GameItemDef.h"
 #include "GameItemSaveDataInterface.h"
 #include "GameItemSettings.h"
 #include "Engine/ActorChannel.h"
@@ -106,6 +107,26 @@ int32 UGameItemContainerComponent::GetTotalMatchingItemCount(const UGameItem* It
 		if (!Elem.Value->IsChild())
 		{
 			Result += Elem.Value->GetTotalMatchingItemCount(Item);
+		}
+	}
+	return Result;
+}
+
+int32 UGameItemContainerComponent::GetTotalMatchingItemCountByDef(TSubclassOf<UGameItemDef> ItemDef) const
+{
+	if (!ItemDef)
+	{
+		return 0;
+	}
+
+	// TODO: cache the counts for faster lookup
+	int32 Result = 0;
+	for (const auto& Elem : Containers)
+	{
+		// only parent containers contribute to collection count
+		if (!Elem.Value->IsChild())
+		{
+			Result += Elem.Value->GetTotalItemCountByDef(ItemDef);
 		}
 	}
 	return Result;

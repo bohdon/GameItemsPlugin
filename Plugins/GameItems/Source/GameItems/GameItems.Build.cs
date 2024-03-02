@@ -14,6 +14,7 @@ public class GameItems : ModuleRules
 			"DeveloperSettings",
 			"GameplayTags",
 			"NetCore",
+			"WorldConditions",
 		});
 
 

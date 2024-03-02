@@ -175,7 +175,7 @@ const UGameItemFragment* UGameItemSubsystem::FindFragment(TSubclassOf<UGameItemD
 	return ItemDefCDO->FindFragment(FragmentClass);
 }
 
-UGameItemContainerComponent* UGameItemSubsystem::GetContainerComponentForActor(AActor* Actor) const
+UGameItemContainerComponent* UGameItemSubsystem::GetContainerComponentForActor(const AActor* Actor) const
 {
 	if (!Actor)
 	{
@@ -189,7 +189,7 @@ UGameItemContainerComponent* UGameItemSubsystem::GetContainerComponentForActor(A
 	return Actor->FindComponentByClass<UGameItemContainerComponent>();
 }
 
-TArray<UGameItemContainer*> UGameItemSubsystem::GetAllContainersForActor(AActor* Actor) const
+TArray<UGameItemContainer*> UGameItemSubsystem::GetAllContainersForActor(const AActor* Actor) const
 {
 	if (const IGameItemContainerInterface* ContainerInterface = GetContainerInterfaceForActor(Actor))
 	{
@@ -198,7 +198,7 @@ TArray<UGameItemContainer*> UGameItemSubsystem::GetAllContainersForActor(AActor*
 	return TArray<UGameItemContainer*>();
 }
 
-UGameItemContainer* UGameItemSubsystem::GetContainerForActor(AActor* Actor, FGameplayTag ContainerId) const
+UGameItemContainer* UGameItemSubsystem::GetContainerForActor(const AActor* Actor, FGameplayTag ContainerId) const
 {
 	if (const IGameItemContainerInterface* ContainerInterface = GetContainerInterfaceForActor(Actor))
 	{
@@ -208,7 +208,7 @@ UGameItemContainer* UGameItemSubsystem::GetContainerForActor(AActor* Actor, FGam
 	return nullptr;
 }
 
-UGameItemContainer* UGameItemSubsystem::GetDefaultContainerForActor(AActor* Actor) const
+UGameItemContainer* UGameItemSubsystem::GetDefaultContainerForActor(const AActor* Actor) const
 {
 	if (const IGameItemContainerInterface* ContainerInterface = GetContainerInterfaceForActor(Actor))
 	{
@@ -217,9 +217,9 @@ UGameItemContainer* UGameItemSubsystem::GetDefaultContainerForActor(AActor* Acto
 	return nullptr;
 }
 
-IGameItemContainerInterface* UGameItemSubsystem::GetContainerInterfaceForActor(AActor* Actor) const
+const IGameItemContainerInterface* UGameItemSubsystem::GetContainerInterfaceForActor(const AActor* Actor) const
 {
-	if (IGameItemContainerInterface* ContainerInterface = Cast<IGameItemContainerInterface>(Actor))
+	if (const IGameItemContainerInterface* ContainerInterface = Cast<IGameItemContainerInterface>(Actor))
 	{
 		return ContainerInterface;
 	}

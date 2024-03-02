@@ -7,6 +7,7 @@
 #include "GameItemCollectionInterface.generated.h"
 
 class UGameItem;
+class UGameItemDef;
 
 
 UINTERFACE(Meta = (CannotImplementInterfaceInBlueprint))
@@ -28,4 +29,8 @@ public:
 	/** Return the total quantity of an item in the collection. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false)
 	virtual int32 GetTotalMatchingItemCount(const UGameItem* Item) const = 0;
+
+	/** Return the total quantity of an item by definition in the collection. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	virtual int32 GetTotalMatchingItemCountByDef(TSubclassOf<UGameItemDef> ItemDef) const = 0;
 };

@@ -109,6 +109,7 @@ public:
 
 	// IGameItemCollectionInterface
 	virtual int32 GetTotalMatchingItemCount(const UGameItem* Item) const override;
+	virtual int32 GetTotalMatchingItemCountByDef(TSubclassOf<UGameItemDef> ItemDef) const override;
 
 	/** Write all containers and items to a save game. */
 	UFUNCTION(BlueprintCallable)

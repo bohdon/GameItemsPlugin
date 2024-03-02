@@ -86,22 +86,22 @@ public:
 
 	/** Return a game item container component from an actor, using the IGameItemContainerComponentInterface if possible. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
-	UGameItemContainerComponent* GetContainerComponentForActor(AActor* Actor) const;
+	UGameItemContainerComponent* GetContainerComponentForActor(const AActor* Actor) const;
 
 	/** Return all game item containers from an actor, using the IGameItemContainerInterface if possible. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
-	TArray<UGameItemContainer*> GetAllContainersForActor(AActor* Actor) const;
+	TArray<UGameItemContainer*> GetAllContainersForActor(const AActor* Actor) const;
 
 	/** Return a game item container from an actor, using the IGameItemContainerInterface if possible. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
-	UGameItemContainer* GetContainerForActor(AActor* Actor, FGameplayTag ContainerId) const;
+	UGameItemContainer* GetContainerForActor(const AActor* Actor, FGameplayTag ContainerId) const;
 
 	/** Return the default container from an actor, using the IGameItemContainerInterface if possible. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
-	UGameItemContainer* GetDefaultContainerForActor(AActor* Actor) const;
+	UGameItemContainer* GetDefaultContainerForActor(const AActor* Actor) const;
 
 	/** Find a game item container interface from an actor. Attempts to cast the actor first, then search for a component. */
-	virtual IGameItemContainerInterface* GetContainerInterfaceForActor(AActor* Actor) const;
+	virtual const IGameItemContainerInterface* GetContainerInterfaceForActor(const AActor* Actor) const;
 
 protected:
 	void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& YL, float& YPos);

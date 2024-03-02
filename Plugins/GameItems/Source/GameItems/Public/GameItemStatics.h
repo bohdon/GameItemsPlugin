@@ -4,9 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "WorldConditionQuery.h"
+#include "GameFramework/Actor.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GameItemStatics.generated.h"
 
+class UGameItem;
 class UGameItemContainer;
 class UGameItemDef;
 class UGameItemFragment;
@@ -38,4 +41,13 @@ public:
 	/** Return an item container by id from an array of containers. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	static UGameItemContainer* GetItemContainerById(const TArray<UGameItemContainer*>& Containers, FGameplayTag ContainerId);
+	
+	UFUNCTION(BlueprintCallable)
+	static bool IsEquipmentConditionMet(UGameItem* Item);
+
+	UFUNCTION(BlueprintCallable)
+	static bool IsDropConditionMet(TSubclassOf<UGameItemDef> ItemDef, AActor* TargetActor);
+
+protected:
+	static bool EvaluateCondition(const UObject* Owner, const FWorldConditionQueryDefinition& Condition, const FWorldConditionContextData& ContextData);
 };
