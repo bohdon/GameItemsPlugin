@@ -25,6 +25,6 @@ public:
 	TSubclassOf<UGameEquipmentDef> EquipmentDef;
 
 	/** Conditions that must be met for the equipment to be applied. */
-	UPROPERTY(EditAnywhere, Category = "DropRules")
+	UPROPERTY(EditAnywhere, Category = "Equipment")
 	FWorldConditionQueryDefinition Condition;
 };

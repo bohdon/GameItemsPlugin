@@ -32,7 +32,7 @@ void AItemsDemoCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 void AItemsDemoCharacter::InputMove(const FInputActionValue& InputActionValue)
 {
 	const FVector2D Input = InputActionValue.Get<FVector2D>();
-	const FVector WorldInput = GetActorRotation().RotateVector(FVector(Input, 0.f));
+	const FVector WorldInput = GetControlRotation().RotateVector(FVector(Input, 0.f)).GetSafeNormal2D();
 	GetCharacterMovement()->AddInputVector(WorldInput);
 }
 

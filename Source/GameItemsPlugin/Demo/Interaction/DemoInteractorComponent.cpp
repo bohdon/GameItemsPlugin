@@ -107,7 +107,7 @@ UDemoInteractionComponent* UDemoInteractorComponent::GetBestInteraction() const
 
 	const FTransform AimTransform = GetAimTransform();
 	const FVector AimDir = AimTransform.GetRotation().Vector();
-	const FVector AimLocation = AimTransform.GetLocation();
+	const FVector AimLocation = GetComponentLocation();
 
 	UDemoInteractionComponent* BestInteraction = nullptr;
 	float BestAngle = 180.f;
