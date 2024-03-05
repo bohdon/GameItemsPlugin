@@ -813,6 +813,11 @@ void UGameItemContainer::UnregisterChild(UGameItemContainer* ChildContainer)
 
 int32 UGameItemContainer::GetAutoSlotPriorityForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const
 {
+	if (!Item)
+	{
+		return 0;
+	}
+
 	int32 Priority = 0;
 	for (const UGameItemContainerRule* Rule : Rules)
 	{
@@ -842,6 +847,11 @@ bool UGameItemContainer::CanAutoSlot(UGameItem* Item, FGameplayTagContainer Cont
 
 TArray<UGameItem*> UGameItemContainer::TryAutoSlot(UGameItem* Item, FGameplayTagContainer ContextTags)
 {
+	if (!Item)
+	{
+		return TArray<UGameItem*>();
+	}
+
 	for (const UGameItemContainerRule* Rule : Rules)
 	{
 		if (const UGameItemAutoSlotRule* AutoSlotRule = Cast<UGameItemAutoSlotRule>(Rule))

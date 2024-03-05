@@ -3,7 +3,11 @@
 
 #include "Equipment/GameEquipment.h"
 
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/World.h"
 #include "Equipment/GameEquipmentDef.h"
+#include "GameFramework/Actor.h"
+#include "GameFramework/Character.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -59,20 +63,73 @@ AActor* UGameEquipment::GetSpawnedActorOfClass(TSubclassOf<AActor> ActorClass) c
 
 void UGameEquipment::SpawnEquipmentActors()
 {
+	const UGameEquipmentDef* EquipmentCDO = GetEquipmentDefCDO();
+	if (!EquipmentCDO)
+	{
+		return;
+	}
+
+	USceneComponent* AttachTarget = GetTargetAttachComponent();
+	check(AttachTarget);
+
+	AActor* OwningActor = AttachTarget->GetOwner();
+
+	for (const FGameEquipmentActorSpawnInfo& SpawnInfo : EquipmentCDO->ActorsToSpawn)
+	{
+		if (!SpawnInfo.ActorClass)
+		{
+			continue;
+		}
+
+		AActor* NewActor = GetWorld()->SpawnActorDeferred<AActor>(SpawnInfo.ActorClass, FTransform::Identity, OwningActor);
+		NewActor->FinishSpawning(FTransform::Identity, true);
+		NewActor->SetActorRelativeTransform(SpawnInfo.AttachTransform);
+		NewActor->AttachToComponent(AttachTarget, FAttachmentTransformRules::KeepRelativeTransform, SpawnInfo.AttachSocket);
+
+		SpawnedActors.Add(NewActor);
+	}
 }
 
 void UGameEquipment::DestroyEquipmentActors()
 {
+	for (AActor* Actor : SpawnedActors)
+	{
+		if (Actor)
+		{
+			Actor->Destroy();
+		}
+	}
+
+	SpawnedActors.Empty();
 }
 
 void UGameEquipment::OnEquipped()
 {
+	SpawnEquipmentActors();
+
 	OnEquipped_BP();
 }
 
 void UGameEquipment::OnUnequipped()
 {
+	DestroyEquipmentActors();
+
 	OnUnequipped_BP();
+}
+
+USceneComponent* UGameEquipment::GetTargetAttachComponent() const
+{
+	AActor* OwningActor = GetOwner();
+	if (!OwningActor)
+	{
+		return nullptr;
+	}
+
+	if (const ACharacter* Char = Cast<ACharacter>(OwningActor))
+	{
+		return Char->GetMesh();
+	}
+	return OwningActor->GetRootComponent();
 }
 
 void UGameEquipment::OnRep_Instigator()

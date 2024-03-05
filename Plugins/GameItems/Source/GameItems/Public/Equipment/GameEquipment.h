@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Templates/SubclassOf.h"
 #include "UObject/Object.h"
 #include "GameEquipment.generated.h"
 
@@ -18,7 +19,7 @@ class GAMEITEMS_API UGameEquipment : public UObject
 	GENERATED_BODY()
 
 public:
-	UGameEquipment(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	UGameEquipment(const FObjectInitializer& ObjectInitializer);
 
 	virtual bool IsSupportedForNetworking() const override { return true; }
 	virtual UWorld* GetWorld() const override final;
@@ -62,6 +63,9 @@ public:
 
 	/** Called when the equipment is removed from an actor. */
 	virtual void OnUnequipped();
+
+	/** Return the component that should be used as the attach parent for spawned actors. */
+	virtual USceneComponent* GetTargetAttachComponent() const;
 
 	/** Spawn all actors for this equipment. */
 	virtual void SpawnEquipmentActors();
