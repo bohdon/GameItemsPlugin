@@ -293,6 +293,24 @@ TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot
 	return Result;
 }
 
+TArray<UGameItem*> UGameItemContainer::AddItems(TArray<UGameItem*> Items, int32 TargetSlot)
+{
+	if (Items.IsEmpty())
+	{
+		return TArray<UGameItem*>();
+	}
+
+	FScopedSlotChanges SlotChangeScope(this);
+
+	TArray<UGameItem*> Result;
+	for (UGameItem* Item : Items)
+	{
+		TArray<UGameItem*> AddResult = AddItem(Item, TargetSlot);
+		Result.Append(AddResult);
+	}
+	return Result;
+}
+
 void UGameItemContainer::RemoveItem(UGameItem* Item)
 {
 	if (!Item)
@@ -304,6 +322,20 @@ void UGameItemContainer::RemoveItem(UGameItem* Item)
 	if (Index != INDEX_NONE)
 	{
 		RemoveItemAt(Index);
+	}
+}
+
+void UGameItemContainer::RemoveItems(TArray<UGameItem*> Items)
+{
+	if (Items.IsEmpty())
+	{
+		return;
+	}
+
+	FScopedSlotChanges SlotChangeScope(this);
+	for (UGameItem* Item : Items)
+	{
+		RemoveItem(Item);
 	}
 }
 

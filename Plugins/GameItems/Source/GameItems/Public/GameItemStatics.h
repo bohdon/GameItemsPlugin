@@ -3,8 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameItemTypes.h"
 #include "GameplayTagContainer.h"
 #include "WorldConditionQuery.h"
+#include "DropTable/GameItemDropTableRow.h"
 #include "GameFramework/Actor.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GameItemStatics.generated.h"
@@ -41,12 +43,19 @@ public:
 	/** Return an item container by id from an array of containers. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	static UGameItemContainer* GetItemContainerById(const TArray<UGameItemContainer*>& Containers, FGameplayTag ContainerId);
-	
+
 	UFUNCTION(BlueprintCallable)
 	static bool IsEquipmentConditionMet(UGameItem* Item);
 
 	UFUNCTION(BlueprintCallable)
 	static bool IsDropConditionMet(TSubclassOf<UGameItemDef> ItemDef, AActor* TargetActor);
+
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
+	static void SelectItemsFromDropTableRow(const FGameItemDropTableRow& DropTableRow, TArray<FGameItemDefStack>& OutItems);
+
+	/** Return a random index for an array, given an array (of matching size) of relative probabilities, or -1 if the array is empty. */
+	UFUNCTION(BlueprintPure, Category="GameItems|Utilities")
+	static int32 GetWeightedRandomArrayIndex(const TArray<float>& Probabilities);
 
 protected:
 	static bool EvaluateCondition(const UObject* Owner, const FWorldConditionQueryDefinition& Condition, const FWorldConditionContextData& ContextData);

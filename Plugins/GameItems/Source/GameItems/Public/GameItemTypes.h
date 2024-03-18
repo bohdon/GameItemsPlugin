@@ -54,6 +54,11 @@ struct GAMEITEMS_API FGameItemDefStack
 	{
 	}
 
+	FGameItemDefStack(const TSubclassOf<UGameItemDef>& InItemDef, const int32& InCount)
+		: ItemDef(InItemDef), Count(InCount)
+	{
+	}
+
 	/** The item definition */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UGameItemDef> ItemDef = nullptr;

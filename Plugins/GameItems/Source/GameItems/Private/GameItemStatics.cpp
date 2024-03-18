@@ -7,7 +7,9 @@
 #include "GameItemDef.h"
 #include "GameItemSubsystem.h"
 #include "WorldConditionContext.h"
+#include "Algo/Accumulate.h"
 #include "Conditions/GameItemConditionSchema.h"
+#include "DropTable/GameItemDropContent.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "Equipment/GameItemFragment_Equipment.h"
@@ -79,6 +81,42 @@ bool UGameItemStatics::IsDropConditionMet(TSubclassOf<UGameItemDef> ItemDef, AAc
 	ContextData.SetContextData(DefaultSchema->GetTargetActorRef(), TargetActor);
 
 	return EvaluateCondition(ItemDefCDO, DropRulesFrag->Condition, ContextData);
+}
+
+void UGameItemStatics::SelectItemsFromDropTableRow(const FGameItemDropTableRow& DropTableRow, TArray<FGameItemDefStack>& OutItems)
+{
+	for (int32 Idx = 0; Idx < DropTableRow.Count; ++Idx)
+	{
+		for (const TInstancedStruct<FGameItemDropContent>& ContentEntry : DropTableRow.Content)
+		{
+			const FGameItemDropContent* ContentPtr = ContentEntry.GetPtr<FGameItemDropContent>();
+			ContentPtr->CheckAndSelectItems(OutItems);
+		}
+	}
+}
+
+int32 UGameItemStatics::GetWeightedRandomArrayIndex(const TArray<float>& Probabilities)
+{
+	if (Probabilities.IsEmpty())
+	{
+		return INDEX_NONE;
+	}
+
+	const float Total = Algo::Accumulate(Probabilities, 0.f);
+	const float Value = FMath::FRand() * Total;
+
+	float Current = 0.f;
+	for (int32 Idx = 0; Idx < Probabilities.Num(); ++Idx)
+	{
+		Current += Probabilities[Idx];
+		if (Value <= Current)
+		{
+			return Idx;
+		}
+	}
+
+	// return the last index
+	return Probabilities.Num() - 1;
 }
 
 bool UGameItemStatics::EvaluateCondition(const UObject* Owner, const FWorldConditionQueryDefinition& Condition, const FWorldConditionContextData& ContextData)

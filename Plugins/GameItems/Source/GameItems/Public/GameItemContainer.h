@@ -117,9 +117,17 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
 	TArray<UGameItem*> AddItem(UGameItem* Item, int32 TargetSlot = -1);
 
+	/** Add multiple items to this container. */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
+	TArray<UGameItem*> AddItems(TArray<UGameItem*> Items, int32 TargetSlot = -1);
+
 	/** Remove an item from this container. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
 	void RemoveItem(UGameItem* Item);
+
+	/** Remove multiple items from this container. */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
+	void RemoveItems(TArray<UGameItem*> Items);
 
 	/** Remove an item from a specific slot of this container. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")

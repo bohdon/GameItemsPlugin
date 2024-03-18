@@ -12,7 +12,10 @@
 #include "GameItemDef.h"
 #include "GameItemsModule.h"
 #include "GameItemStatics.h"
+#include "PropertyEditorModule.h"
+#include "DropTable/GameItemDropTableRow.h"
 #include "Engine/Canvas.h"
+#include "Engine/DataTable.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "GameFramework/HUD.h"
@@ -162,6 +165,35 @@ TArray<UGameItem*> UGameItemSubsystem::MoveAllItems(UGameItemContainer* FromCont
 		return MoveItems(FromContainer, ToContainer, Items, bAllowPartial);
 	}
 	return TArray<UGameItem*>();
+}
+
+TArray<FGameItemDefStack> UGameItemSubsystem::SelectItemsFromDropTable(FDataTableRowHandle DropTableEntry)
+{
+	static FString ContextString(TEXT("UGameItemSubsystem::SelectItemsFromDropTable"));
+	const FGameItemDropTableRow* Row = DropTableEntry.GetRow<FGameItemDropTableRow>(ContextString);
+	if (!Row)
+	{
+		return TArray<FGameItemDefStack>();
+	}
+
+	TArray<FGameItemDefStack> Result;
+	UGameItemStatics::SelectItemsFromDropTableRow(*Row, Result);
+	return Result;
+}
+
+TArray<UGameItem*> UGameItemSubsystem::CreateItemsFromDropTable(UObject* Outer, FDataTableRowHandle DropTableEntry)
+{
+	TArray<FGameItemDefStack> Stacks = SelectItemsFromDropTable(DropTableEntry);
+
+	TArray<UGameItem*> Result;
+	for (const FGameItemDefStack& Stack : Stacks)
+	{
+		if (UGameItem* NewItem = CreateItem(Outer, Stack.ItemDef, Stack.Count))
+		{
+			Result.Add(NewItem);
+		}
+	}
+	return Result;
 }
 
 const UGameItemFragment* UGameItemSubsystem::FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass) const
