@@ -600,6 +600,11 @@ int32 UGameItemContainer::GetNumItems() const
 	return Total;
 }
 
+bool UGameItemContainer::IsEmpty() const
+{
+	return GetNumItems() == 0;
+}
+
 int32 UGameItemContainer::GetNumSlots() const
 {
 	return GetContainerDefCDO()->bLimitSlots ? GetContainerDefCDO()->SlotCount : GetNumItems();
