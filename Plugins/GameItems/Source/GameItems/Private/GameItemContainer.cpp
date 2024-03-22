@@ -766,6 +766,15 @@ void UGameItemContainer::AddDefaultItems(bool bForce)
 		ItemSet->AddToContainer(this);
 	}
 
+	if (!GetContainerDefCDO()->DefaultDropContent.IsNull())
+	{
+		FGameItemDropContext Context;
+		Context.TargetActor = GetOwner();
+
+		const TArray<UGameItem*> NewItems = ItemSubsystem->CreateItemsFromDropTable(this, Context, GetContainerDefCDO()->DefaultDropContent);
+		AddItems(NewItems);
+	}
+
 	bHasDefaultItems = true;
 }
 

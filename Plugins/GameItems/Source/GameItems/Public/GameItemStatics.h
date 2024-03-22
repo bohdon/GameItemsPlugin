@@ -51,12 +51,12 @@ public:
 	static bool IsDropConditionMet(TSubclassOf<UGameItemDef> ItemDef, AActor* TargetActor);
 
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
-	static void SelectItemsFromDropTableRow(const FGameItemDropTableRow& DropTableRow, TArray<FGameItemDefStack>& OutItems);
+	static void SelectItemsFromDropTableRow(const FGameItemDropContext& Context, const FGameItemDropTableRow& DropTableRow,
+	                                        TArray<FGameItemDefStack>& OutItems);
 
 	/** Return a random index for an array, given an array (of matching size) of relative probabilities, or -1 if the array is empty. */
 	UFUNCTION(BlueprintPure, Category="GameItems|Utilities")
 	static int32 GetWeightedRandomArrayIndex(const TArray<float>& Probabilities);
 
-protected:
-	static bool EvaluateCondition(const UObject* Owner, const FWorldConditionQueryDefinition& Condition, const FWorldConditionContextData& ContextData);
+	static bool EvaluateWorldCondition(const UObject* Owner, const FWorldConditionQueryDefinition& Condition, const FWorldConditionContextData& ContextData);
 };

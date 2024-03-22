@@ -62,7 +62,7 @@ bool UGameItemStatics::IsEquipmentConditionMet(UGameItem* Item)
 	FWorldConditionContextData ContextData(*DefaultSchema);
 	ContextData.SetContextData(DefaultSchema->GetTargetItemRef(), Item);
 
-	return EvaluateCondition(ItemDefCDO, EquipFrag->Condition, ContextData);
+	return EvaluateWorldCondition(ItemDefCDO, EquipFrag->Condition, ContextData);
 }
 
 bool UGameItemStatics::IsDropConditionMet(TSubclassOf<UGameItemDef> ItemDef, AActor* TargetActor)
@@ -80,18 +80,15 @@ bool UGameItemStatics::IsDropConditionMet(TSubclassOf<UGameItemDef> ItemDef, AAc
 	FWorldConditionContextData ContextData(*DefaultSchema);
 	ContextData.SetContextData(DefaultSchema->GetTargetActorRef(), TargetActor);
 
-	return EvaluateCondition(ItemDefCDO, DropRulesFrag->Condition, ContextData);
+	return EvaluateWorldCondition(ItemDefCDO, DropRulesFrag->Condition, ContextData);
 }
 
-void UGameItemStatics::SelectItemsFromDropTableRow(const FGameItemDropTableRow& DropTableRow, TArray<FGameItemDefStack>& OutItems)
+void UGameItemStatics::SelectItemsFromDropTableRow(const FGameItemDropContext& Context, const FGameItemDropTableRow& DropTableRow,
+                                                   TArray<FGameItemDefStack>& OutItems)
 {
-	for (int32 Idx = 0; Idx < DropTableRow.Count; ++Idx)
+	if (const FGameItemDropContent* ContentPtr = DropTableRow.Content.GetPtr<FGameItemDropContent>())
 	{
-		for (const TInstancedStruct<FGameItemDropContent>& ContentEntry : DropTableRow.Content)
-		{
-			const FGameItemDropContent* ContentPtr = ContentEntry.GetPtr<FGameItemDropContent>();
-			ContentPtr->CheckAndSelectItems(OutItems);
-		}
+		ContentPtr->CheckAndSelectItems(Context, OutItems);
 	}
 }
 
@@ -119,7 +116,8 @@ int32 UGameItemStatics::GetWeightedRandomArrayIndex(const TArray<float>& Probabi
 	return Probabilities.Num() - 1;
 }
 
-bool UGameItemStatics::EvaluateCondition(const UObject* Owner, const FWorldConditionQueryDefinition& Condition, const FWorldConditionContextData& ContextData)
+bool UGameItemStatics::EvaluateWorldCondition(const UObject* Owner, const FWorldConditionQueryDefinition& Condition,
+                                              const FWorldConditionContextData& ContextData)
 {
 	FWorldConditionQueryState QueryState;
 	QueryState.Initialize(*Owner, Condition);

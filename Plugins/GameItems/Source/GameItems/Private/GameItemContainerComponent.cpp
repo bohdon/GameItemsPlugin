@@ -320,5 +320,6 @@ void UGameItemContainerComponent::AddContainer(UGameItemContainer* Container)
 
 	AddReplicatedSubObject(Container);
 
+	// add default items after loading save game and gameplay begins
 	Container->AddDefaultItems();
 }

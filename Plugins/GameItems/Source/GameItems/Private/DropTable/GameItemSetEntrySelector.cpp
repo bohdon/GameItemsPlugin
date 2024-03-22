@@ -3,61 +3,128 @@
 
 #include "DropTable/GameItemSetEntrySelector.h"
 
+#include "GameItemDef.h"
 #include "GameItemSet.h"
+#include "GameItemsModule.h"
 #include "GameItemStatics.h"
+#include "Fragments/GameItemFragment_DropRules.h"
+#include "Fragments/GameItemFragment_EconValue.h"
 
 
 // UGameItemSetEntrySelector
 // -------------------------
 
-FGameItemDefStack UGameItemSetEntrySelector::SelectEntry(const UGameItemSet* ItemSet) const
+void UGameItemSetEntrySelector::SelectItems_Implementation(const FGameItemDropContext& Context, const UGameItemSet* ItemSet,
+                                                           TArray<FGameItemDefStack>& OutItems) const
 {
-	return FGameItemDefStack();
 }
 
-bool UGameItemSetEntrySelector::CanSelectEntry_Implementation(const UGameItemSet* ItemSet, const FGameItemDefStack& Entry) const
+bool UGameItemSetEntrySelector::CanSelectItem_Implementation(const FGameItemDropContext& Context, const UGameItemSet* ItemSet,
+                                                             const FGameItemDefStack& Entry) const
 {
+	if (!Entry.ItemDef)
+	{
+		return false;
+	}
+
+	if (bUseDropRules)
+	{
+		const UGameItemDef* ItemDefCDO = GetDefault<UGameItemDef>(Entry.ItemDef);
+		if (const UGameItemFragment_DropRules* DropRulesFrag = ItemDefCDO->FindFragment<UGameItemFragment_DropRules>())
+		{
+			if (!DropRulesFrag->IsConditionMet(Context))
+			{
+				return false;
+			}
+		}
+	}
+
 	return true;
 }
 
-float UGameItemSetEntrySelector::GetEntryProbability_Implementation(const UGameItemSet* ItemSet, const FGameItemDefStack& Entry) const
+float UGameItemSetEntrySelector::GetItemProbability_Implementation(const FGameItemDropContext& Context,
+                                                                   const UGameItemSet* ItemSet, const FGameItemDefStack& Entry) const
 {
+	check(Entry.ItemDef);
+
+	if (bUseDropRules)
+	{
+		const UGameItemDef* ItemDefCDO = GetDefault<UGameItemDef>(Entry.ItemDef);
+		if (const UGameItemFragment_DropRules* DropRulesFrag = ItemDefCDO->FindFragment<UGameItemFragment_DropRules>())
+		{
+			return DropRulesFrag->GetProbability(Context);
+		}
+	}
+
 	return 1.f;
 }
 
-void UGameItemSetEntrySelector::GetFilteredAndWeightedItems(const UGameItemSet* ItemSet,
-                                                            TArray<FGameItemDefStack>& OutFilteredItems,
-                                                            TArray<float>& OutProbabilities) const
+void UGameItemSetEntrySelector::GetFilteredAndWeightedItems(const FGameItemDropContext& Context, const UGameItemSet* ItemSet,
+                                                            TArray<FGameItemDefStack>& OutFilteredItems, TArray<float>& OutProbabilities) const
 {
 	OutFilteredItems.Reset();
 	OutFilteredItems = ItemSet->Items.FilterByPredicate([&](const FGameItemDefStack& Entry)
 	{
-		return CanSelectEntry(ItemSet, Entry);
+		return Entry.ItemDef && CanSelectItem(Context, ItemSet, Entry);
 	});
 
 	OutProbabilities.Reset(OutFilteredItems.Num());
 	Algo::Transform(OutFilteredItems, OutProbabilities, [&](const FGameItemDefStack& Entry)
 	{
-		return GetEntryProbability(ItemSet, Entry);
+		return GetItemProbability(Context, ItemSet, Entry);
 	});
+}
+
+
+// UGameItemSetEntrySelector_All
+// -----------------------------
+
+void UGameItemSetEntrySelector_All::SelectItems_Implementation(const FGameItemDropContext& Context, const UGameItemSet* ItemSet,
+                                                               TArray<FGameItemDefStack>& OutItems) const
+{
+	check(ItemSet);
+	OutItems.Append(ItemSet->Items);
 }
 
 
 // UGameItemSetEntrySelector_Random
 // --------------------------------
-FGameItemDefStack UGameItemSetEntrySelector_Random::SelectEntry(const UGameItemSet* ItemSet) const
+
+void UGameItemSetEntrySelector_Random::SelectItems_Implementation(const FGameItemDropContext& Context, const UGameItemSet* ItemSet,
+                                                                  TArray<FGameItemDefStack>& OutItems) const
 {
+	check(ItemSet);
 	TArray<FGameItemDefStack> FilteredItems;
 	TArray<float> Probabilities;
-	GetFilteredAndWeightedItems(ItemSet, FilteredItems, Probabilities);
+	GetFilteredAndWeightedItems(Context, ItemSet, FilteredItems, Probabilities);
 
 	if (FilteredItems.IsEmpty())
 	{
-		return FGameItemDefStack();
+		return;
 	}
 
 	const int32 RandIdx = UGameItemStatics::GetWeightedRandomArrayIndex(Probabilities);
 	check(RandIdx != INDEX_NONE);
 
-	return FilteredItems[RandIdx];
+	FGameItemDefStack Item = FilteredItems[RandIdx];
+	if (!Item.ItemDef)
+	{
+		UE_LOG(LogGameItems, Error, TEXT("Selected entry with null ItemDef from item set: %s[%d]"), *ItemSet->GetName(), RandIdx);
+		return;
+	}
+
+	if (bUseEconValue)
+	{
+		const UGameItemDef* ItemDefCDO = GetDefault<UGameItemDef>(Item.ItemDef);
+		if (const UGameItemFragment_EconValue* EconValueFrag = ItemDefCDO->FindFragment<UGameItemFragment_EconValue>())
+		{
+			if (const FGameItemDropParams_EconValue* EconParams = Context.Params.GetPtr<FGameItemDropParams_EconValue>())
+			{
+				const float Value = FMath::Max(FMath::FRandRange(EconParams->EconValueMin, EconParams->EconValueMax), 0.f);
+				Item.Count = EconValueFrag->GetCountForValue(Value);
+			}
+		}
+	}
+
+	OutItems.Add(Item);
 }

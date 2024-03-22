@@ -167,7 +167,7 @@ TArray<UGameItem*> UGameItemSubsystem::MoveAllItems(UGameItemContainer* FromCont
 	return TArray<UGameItem*>();
 }
 
-TArray<FGameItemDefStack> UGameItemSubsystem::SelectItemsFromDropTable(FDataTableRowHandle DropTableEntry)
+TArray<FGameItemDefStack> UGameItemSubsystem::SelectItemsFromDropTable(const FGameItemDropContext& Context, FDataTableRowHandle DropTableEntry)
 {
 	static FString ContextString(TEXT("UGameItemSubsystem::SelectItemsFromDropTable"));
 	const FGameItemDropTableRow* Row = DropTableEntry.GetRow<FGameItemDropTableRow>(ContextString);
@@ -177,13 +177,13 @@ TArray<FGameItemDefStack> UGameItemSubsystem::SelectItemsFromDropTable(FDataTabl
 	}
 
 	TArray<FGameItemDefStack> Result;
-	UGameItemStatics::SelectItemsFromDropTableRow(*Row, Result);
+	UGameItemStatics::SelectItemsFromDropTableRow(Context, *Row, Result);
 	return Result;
 }
 
-TArray<UGameItem*> UGameItemSubsystem::CreateItemsFromDropTable(UObject* Outer, FDataTableRowHandle DropTableEntry)
+TArray<UGameItem*> UGameItemSubsystem::CreateItemsFromDropTable(UObject* Outer, const FGameItemDropContext& Context, FDataTableRowHandle DropTableEntry)
 {
-	TArray<FGameItemDefStack> Stacks = SelectItemsFromDropTable(DropTableEntry);
+	TArray<FGameItemDefStack> Stacks = SelectItemsFromDropTable(Context, DropTableEntry);
 
 	TArray<UGameItem*> Result;
 	for (const FGameItemDefStack& Stack : Stacks)

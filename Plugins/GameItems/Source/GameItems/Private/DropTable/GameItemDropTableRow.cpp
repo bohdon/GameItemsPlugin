@@ -8,12 +8,9 @@
 
 void FGameItemDropTableRow::OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName)
 {
-	// notify content structs when data has changed
-	for (TInstancedStruct<FGameItemDropContent>& Entry : Content)
+	// notify content when data has changed
+	if (FGameItemDropContent* ContentPtr = Content.GetMutablePtr<FGameItemDropContent>())
 	{
-		if (FGameItemDropContent* EntryContent = Entry.GetMutablePtr<FGameItemDropContent>())
-		{
-			EntryContent->OnDataChanged();
-		}
+		ContentPtr->OnDataChanged();
 	}
 }

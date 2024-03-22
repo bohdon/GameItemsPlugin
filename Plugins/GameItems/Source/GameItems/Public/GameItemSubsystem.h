@@ -6,6 +6,7 @@
 #include "DisplayDebugHelpers.h"
 #include "GameItemTypes.h"
 #include "GameplayTagContainer.h"
+#include "DropTable/GameItemDropContext.h"
 #include "Engine/DataTable.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "GameItemSubsystem.generated.h"
@@ -84,14 +85,14 @@ public:
 	 * @return The item definitions and quantities that were selected.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
-	TArray<FGameItemDefStack> SelectItemsFromDropTable(FDataTableRowHandle DropTableEntry);
+	TArray<FGameItemDefStack> SelectItemsFromDropTable(const FGameItemDropContext& Context, FDataTableRowHandle DropTableEntry);
 
 	/**
 	 * Select and create new game items from a drop table.
 	 * @return The newly created game items.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
-	TArray<UGameItem*> CreateItemsFromDropTable(UObject* Outer, FDataTableRowHandle DropTableEntry);
+	TArray<UGameItem*> CreateItemsFromDropTable(UObject* Outer, const FGameItemDropContext& Context, FDataTableRowHandle DropTableEntry);
 
 	/**
 	 * Find a return an item fragment by class.

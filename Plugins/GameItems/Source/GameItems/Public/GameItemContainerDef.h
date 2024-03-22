@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameItemTypes.h"
+#include "Engine/DataTable.h"
 #include "UObject/Object.h"
 #include "UObject/ObjectSaveContext.h"
 #include "GameItemContainerDef.generated.h"
@@ -51,6 +52,10 @@ public:
 	/** The item sets that should be in this container by default. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
 	TArray<TObjectPtr<UGameItemSet>> DefaultItemSets;
+
+	/** The item drop table row to use for filling this container up with starting items. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (RowType = "/Script/GameItems.GameItemDropTableRow"), Category = "GameItemContainer")
+	FDataTableRowHandle DefaultDropContent;
 
 	/** Rules and limitations specific to this container. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "GameItemContainer")

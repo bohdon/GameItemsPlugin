@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameItemDropContext.h"
 #include "GameItemTypes.h"
 #include "UObject/Object.h"
 #include "GameItemSetEntrySelector.generated.h"
@@ -11,7 +12,7 @@ class UGameItemSet;
 
 
 /**
- * Handles the filtering and selection of an entry from an item set.
+ * Handles the filtering and selection of entries from an item set.
  */
 UCLASS(BlueprintType, Blueprintable, Abstract, Const)
 class GAMEITEMS_API UGameItemSetEntrySelector : public UObject
@@ -19,19 +20,39 @@ class GAMEITEMS_API UGameItemSetEntrySelector : public UObject
 	GENERATED_BODY()
 
 public:
-	/** Select an entry from a game item set. */
-	virtual FGameItemDefStack SelectEntry(const UGameItemSet* ItemSet) const;
+	/** Use the DropRules item fragments when available to calculate item probabilities and conditions. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	bool bUseDropRules = true;
 
-	/** Return true if an entry passes all conditions and can be selected. */
+	/** Select one or more items from a game item set. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	bool CanSelectEntry(const UGameItemSet* ItemSet, const FGameItemDefStack& Entry) const;
+	void SelectItems(const FGameItemDropContext& Context, const UGameItemSet* ItemSet, TArray<FGameItemDefStack>& OutItems) const;
 
-	/** Return the relative probability to use for selecting an entry. */
+	/** Return true if an item passes all conditions and can be selected. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	float GetEntryProbability(const UGameItemSet* ItemSet, const FGameItemDefStack& Entry) const;
+	bool CanSelectItem(const FGameItemDropContext& Context, const UGameItemSet* ItemSet, const FGameItemDefStack& Entry) const;
+
+	/** Return the relative probability to use for selecting an item in the set. */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	float GetItemProbability(const FGameItemDropContext& Context, const UGameItemSet* ItemSet, const FGameItemDefStack& Entry) const;
 
 protected:
-	virtual void GetFilteredAndWeightedItems(const UGameItemSet* ItemSet, TArray<FGameItemDefStack>& OutFilteredItems, TArray<float>& OutProbabilities) const;
+	virtual void GetFilteredAndWeightedItems(const FGameItemDropContext& Context, const UGameItemSet* ItemSet,
+	                                         TArray<FGameItemDefStack>& OutFilteredItems, TArray<float>& OutProbabilities) const;
+};
+
+
+/**
+ * Selects all items from the set.
+ */
+UCLASS(BlueprintType, DisplayName = "All")
+class UGameItemSetEntrySelector_All : public UGameItemSetEntrySelector
+{
+	GENERATED_BODY()
+
+public:
+	virtual void SelectItems_Implementation(const FGameItemDropContext& Context, const UGameItemSet* ItemSet,
+	                                        TArray<FGameItemDefStack>& OutItems) const override;
 };
 
 
@@ -44,5 +65,10 @@ class UGameItemSetEntrySelector_Random : public UGameItemSetEntrySelector
 	GENERATED_BODY()
 
 public:
-	virtual FGameItemDefStack SelectEntry(const UGameItemSet* ItemSet) const override;
+	/** Use the EconValue item fragments when available, as well as the drop context's target value to calculate item quantities. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	bool bUseEconValue = true;
+
+	virtual void SelectItems_Implementation(const FGameItemDropContext& Context, const UGameItemSet* ItemSet,
+	                                        TArray<FGameItemDefStack>& OutItems) const override;
 };

@@ -10,54 +10,87 @@
 #include "DropTable/GameItemSetEntrySelector.h"
 
 
-// FGameItemDropProbability
-// ------------------------
-
-void FGameItemDropProbability::UpdateDerivedValue()
-{
-	if (bUseOdds)
-	{
-		Probability = 1.f / Odds;
-	}
-	else
-	{
-		Odds = 1.f / Probability;
-	}
-}
-
-bool FGameItemDropProbability::RandomCheck() const
-{
-	const float Threshold = bUseOdds ? 1.f / Odds : Probability;
-	const float Value = FMath::FRand();
-	return Value <= Threshold;
-}
-
-
 // FGameItemDropContent
 // --------------------
 
-void FGameItemDropContent::CheckAndSelectItems(TArray<FGameItemDefStack>& OutItems) const
+bool FGameItemDropContent::ShouldGiveContent() const
 {
-	if (Probability.RandomCheck())
+	return true;
+}
+
+void FGameItemDropContent::CheckAndSelectItems(const FGameItemDropContext& Context, TArray<FGameItemDefStack>& OutItems) const
+{
+	if (ShouldGiveContent())
 	{
-		SelectItems(OutItems);
+		SelectItems(Context, OutItems);
 	}
 }
 
-void FGameItemDropContent::SelectItems(TArray<FGameItemDefStack>& OutItems) const
+void FGameItemDropContent::SelectItems(const FGameItemDropContext& Context, TArray<FGameItemDefStack>& OutItems) const
 {
 }
 
 void FGameItemDropContent::OnDataChanged()
 {
-	Probability.UpdateDerivedValue();
+}
+
+
+// FGameItemDropChancedContent
+// ---------------------------
+
+bool FGameItemDropChancedContent::ShouldGiveContent() const
+{
+	const float Value = FMath::FRand();
+	return Value <= Chance;
+}
+
+
+// FGameItemDropContent_Combine
+// ----------------------------
+
+void FGameItemDropContent_Combine::SelectItems(const FGameItemDropContext& Context, TArray<FGameItemDefStack>& OutItems) const
+{
+	for (const TInstancedStruct<FGameItemDropContent>& Entry : Contents)
+	{
+		if (const FGameItemDropContent* ContentPtr = Entry.GetPtr<FGameItemDropContent>())
+		{
+			ContentPtr->CheckAndSelectItems(Context, OutItems);
+		}
+	}
+}
+
+
+// FGameItemDropContent_Select
+// ---------------------------
+
+void FGameItemDropContent_Select::SelectItems(const FGameItemDropContext& Context, TArray<FGameItemDefStack>& OutItems) const
+{
+	if (WeightedContents.IsEmpty())
+	{
+		return;
+	}
+
+	TArray<float> Probabilities;
+	Algo::Transform(WeightedContents, Probabilities, [](const FWeightedGameItemDropContent& Content)
+	{
+		return Content.Probability;
+	});
+
+	const int32 Idx = UGameItemStatics::GetWeightedRandomArrayIndex(Probabilities);
+	check(Idx != INDEX_NONE);
+
+	const FWeightedGameItemDropContent& WeightedContent = WeightedContents[Idx];
+	if (const FGameItemDropContent* ContentPtr = WeightedContent.Content.GetPtr<FGameItemDropContent>())
+	{
+		ContentPtr->CheckAndSelectItems(Context, OutItems);
+	}
 }
 
 
 // FGameItemDropContent_Item
 // -------------------------
 
-void FGameItemDropContent_Item::SelectItems(TArray<FGameItemDefStack>& OutItems) const
+void FGameItemDropContent_Item::SelectItems(const FGameItemDropContext& Context, TArray<FGameItemDefStack>& OutItems) const
 {
 	if (TSubclassOf<UGameItemDef> ItemDefClass = ItemDef.LoadSynchronous())
 	{
@@ -69,19 +102,7 @@ void FGameItemDropContent_Item::SelectItems(TArray<FGameItemDefStack>& OutItems)
 // FGameItemDropContent_ItemSet
 // ----------------------------
 
-void FGameItemDropContent_ItemSet::SelectItems(TArray<FGameItemDefStack>& OutItems) const
-{
-	if (!ItemSet.IsNull())
-	{
-		OutItems.Append(ItemSet.LoadSynchronous()->Items);
-	}
-}
-
-
-// FGameItemDropContent_ItemSetEntry
-// ---------------------------------
-
-void FGameItemDropContent_ItemSetEntry::SelectItems(TArray<FGameItemDefStack>& OutItems) const
+void FGameItemDropContent_ItemSet::SelectItems(const FGameItemDropContext& Context, TArray<FGameItemDefStack>& OutItems) const
 {
 	const UGameItemSet* ItemSetPtr = ItemSet.LoadSynchronous();
 	if (!ItemSetPtr || ItemSetPtr->Items.IsEmpty())
@@ -94,15 +115,21 @@ void FGameItemDropContent_ItemSetEntry::SelectItems(TArray<FGameItemDefStack>& O
 		return;
 	}
 
+	FGameItemDropContext SubContext = Context;
+	if (Params.IsValid())
+	{
+		// override parent params
+		SubContext.Params = Params;
+	}
+
 	const UGameItemSetEntrySelector* SelectorCDO = GetDefault<UGameItemSetEntrySelector>(SelectorClass);
-	const FGameItemDefStack SelectedItem = SelectorCDO->SelectEntry(ItemSetPtr);
-	OutItems.Add(SelectedItem);
+	SelectorCDO->SelectItems(SubContext, ItemSetPtr, OutItems);
 }
 
 // FGameItemDropContent_DropTableEntry
 // -----------------------------------
 
-void FGameItemDropContent_DropTableEntry::SelectItems(TArray<FGameItemDefStack>& OutItems) const
+void FGameItemDropContent_DropTableEntry::SelectItems(const FGameItemDropContext& Context, TArray<FGameItemDefStack>& OutItems) const
 {
 	static FString ContextString(TEXT("FGameItemDropContent_DropTableEntry::SelectItems"));
 	if (DropTableRow.IsNull())
@@ -116,5 +143,12 @@ void FGameItemDropContent_DropTableEntry::SelectItems(TArray<FGameItemDefStack>&
 		return;
 	}
 
-	UGameItemStatics::SelectItemsFromDropTableRow(*Row, OutItems);
+	FGameItemDropContext SubContext = Context;
+	if (Params.IsValid())
+	{
+		// override parent params
+		SubContext.Params = Params;
+	}
+
+	UGameItemStatics::SelectItemsFromDropTableRow(SubContext, *Row, OutItems);
 }
