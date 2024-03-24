@@ -3,11 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameItemContainerComponent.h"
 #include "GameItemTypes.h"
 #include "GameplayTagContainer.h"
 #include "WorldConditionQuery.h"
 #include "DropTable/GameItemDropTableRow.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/PlayerState.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GameItemStatics.generated.h"
 
@@ -27,6 +29,10 @@ class GAMEITEMS_API UGameItemStatics : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
+	/** Return the GameItemContainerComponent for an actor, using IGameItemContainerComponentInterface where possible. */
+	UFUNCTION(BlueprintPure, Category = "GameItems")
+	static UGameItemContainerComponent* GetItemContainerComponentForActor(AActor* Actor);
+
 	/** Return all game item containers from an actor. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	static TArray<UGameItemContainer*> GetAllItemContainersForActor(AActor* Actor);

@@ -16,6 +16,12 @@
 #include "Fragments/GameItemFragment_DropRules.h"
 
 
+UGameItemContainerComponent* UGameItemStatics::GetItemContainerComponentForActor(AActor* Actor)
+{
+	const UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(Actor);
+	return ItemSubsystem ? ItemSubsystem->GetContainerComponentForActor(Actor) : nullptr;
+}
+
 TArray<UGameItemContainer*> UGameItemStatics::GetAllItemContainersForActor(AActor* Actor)
 {
 	const UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(Actor);
