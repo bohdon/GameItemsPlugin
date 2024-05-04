@@ -5,7 +5,7 @@ An Unreal plugin with classes and tools for creating gameplay items, inventories
 ## Features
 
 - `UGameItemDef`, a blueprintable game item definition, extensible via modular `UGameItemFragment` objects which allow
-  compositing item functionality, e.g. UI data, what equipment to grant, what stats to define, etc.
+  compositing item functionality, e.g. UI data, what equipment to grant, what stats to define, etc. (just like Lyra)
 - `UObject` based `UGameItem` instances which support replication, per-item change events, a 'stack count' and
   open-ended set of gameplay tag numerical stats.
 - A highly versatile `UGameItemContainer`, which can represent anything from inventories to single equip slots
