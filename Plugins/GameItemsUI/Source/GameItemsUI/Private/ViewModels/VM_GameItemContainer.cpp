@@ -1,13 +1,13 @@
 ﻿// Copyright Bohdon Sayre, All Rights Reserved.
 
 
-#include "ViewModels/GameItemContainerViewModel.h"
+#include "ViewModels/VM_GameItemContainer.h"
 
 #include "GameItemContainer.h"
-#include "ViewModels/GameItemSlotViewModel.h"
+#include "ViewModels/VM_GameItemSlot.h"
 
 
-void UGameItemContainerViewModel::SetContainer(UGameItemContainer* NewContainer)
+void UVM_GameItemContainer::SetContainer(UGameItemContainer* NewContainer)
 {
 	if (Container != NewContainer)
 	{
@@ -23,9 +23,9 @@ void UGameItemContainerViewModel::SetContainer(UGameItemContainer* NewContainer)
 
 		if (Container)
 		{
-			Container->OnItemAddedEvent.AddUObject(this, &UGameItemContainerViewModel::OnItemAdded);
-			Container->OnItemRemovedEvent.AddUObject(this, &UGameItemContainerViewModel::OnItemRemoved);
-			Container->OnNumSlotsChangedEvent.AddUObject(this, &UGameItemContainerViewModel::OnNumSlotsChanged);
+			Container->OnItemAddedEvent.AddUObject(this, &UVM_GameItemContainer::OnItemAdded);
+			Container->OnItemRemovedEvent.AddUObject(this, &UVM_GameItemContainer::OnItemRemoved);
+			Container->OnNumSlotsChangedEvent.AddUObject(this, &UVM_GameItemContainer::OnNumSlotsChanged);
 		}
 
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(Container);
@@ -35,19 +35,19 @@ void UGameItemContainerViewModel::SetContainer(UGameItemContainer* NewContainer)
 	}
 }
 
-int32 UGameItemContainerViewModel::GetNumSlots() const
+int32 UVM_GameItemContainer::GetNumSlots() const
 {
 	return Container ? Container->GetNumSlots() : 0;
 }
 
-TArray<UGameItem*> UGameItemContainerViewModel::GetItems() const
+TArray<UGameItem*> UVM_GameItemContainer::GetItems() const
 {
 	return Container ? Container->GetAllItems() : TArray<UGameItem*>();
 }
 
-TArray<UGameItemSlotViewModel*> UGameItemContainerViewModel::GetSlotViewModels() const
+TArray<UVM_GameItemSlot*> UVM_GameItemContainer::GetSlotViewModels() const
 {
-	UGameItemContainerViewModel* MutableThis = const_cast<UGameItemContainerViewModel*>(this);
+	UVM_GameItemContainer* MutableThis = const_cast<UVM_GameItemContainer*>(this);
 
 	const int32 OldNumSlots = SlotViewModels.Num();
 	const int32 NumSlots = GetNumSlots();
@@ -58,7 +58,7 @@ TArray<UGameItemSlotViewModel*> UGameItemContainerViewModel::GetSlotViewModels()
 		// create any new models
 		for (int32 Slot = OldNumSlots; Slot < NumSlots; ++Slot)
 		{
-			UGameItemSlotViewModel* SlotViewModel = NewObject<UGameItemSlotViewModel>(MutableThis);
+			UVM_GameItemSlot* SlotViewModel = NewObject<UVM_GameItemSlot>(MutableThis);
 			SlotViewModel->SetContainerAndSlot(Container, Slot);
 			MutableThis->SlotViewModels[Slot] = SlotViewModel;
 		}
@@ -67,17 +67,17 @@ TArray<UGameItemSlotViewModel*> UGameItemContainerViewModel::GetSlotViewModels()
 	return SlotViewModels;
 }
 
-void UGameItemContainerViewModel::OnItemAdded(UGameItem* Item)
+void UVM_GameItemContainer::OnItemAdded(UGameItem* Item)
 {
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetItems);
 }
 
-void UGameItemContainerViewModel::OnItemRemoved(UGameItem* Item)
+void UVM_GameItemContainer::OnItemRemoved(UGameItem* Item)
 {
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetItems);
 }
 
-void UGameItemContainerViewModel::OnNumSlotsChanged(int32 NewNumSlots, int32 OldNumSlots)
+void UVM_GameItemContainer::OnNumSlotsChanged(int32 NewNumSlots, int32 OldNumSlots)
 {
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetNumSlots);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetSlotViewModels);

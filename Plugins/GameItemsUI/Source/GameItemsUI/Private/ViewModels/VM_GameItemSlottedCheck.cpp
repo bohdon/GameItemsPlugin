@@ -1,13 +1,13 @@
 ﻿// Copyright Bohdon Sayre, All Rights Reserved.
 
 
-#include "ViewModels/GameItemSlottedCheckViewModel.h"
+#include "ViewModels/VM_GameItemSlottedCheck.h"
 
 #include "GameItem.h"
 #include "GameItemDef.h"
 
 
-void UGameItemSlottedCheckViewModel::SetContainerTags(FGameplayTagContainer NewContainerTags)
+void UVM_GameItemSlottedCheck::SetContainerTags(FGameplayTagContainer NewContainerTags)
 {
 	if (UE_MVVM_SET_PROPERTY_VALUE(ContainerTags, NewContainerTags))
 	{
@@ -15,7 +15,7 @@ void UGameItemSlottedCheckViewModel::SetContainerTags(FGameplayTagContainer NewC
 	}
 }
 
-void UGameItemSlottedCheckViewModel::SetItem(UGameItem* NewItem)
+void UVM_GameItemSlottedCheck::SetItem(UGameItem* NewItem)
 {
 	if (NewItem)
 	{
@@ -38,8 +38,8 @@ void UGameItemSlottedCheckViewModel::SetItem(UGameItem* NewItem)
 
 		if (Item)
 		{
-			Item->OnSlottedEvent.AddUObject(this, &UGameItemSlottedCheckViewModel::OnSlotted);
-			Item->OnUnslottedEvent.AddUObject(this, &UGameItemSlottedCheckViewModel::OnUnslotted);
+			Item->OnSlottedEvent.AddUObject(this, &UVM_GameItemSlottedCheck::OnSlotted);
+			Item->OnUnslottedEvent.AddUObject(this, &UVM_GameItemSlottedCheck::OnUnslotted);
 		}
 
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(Item);
@@ -47,7 +47,7 @@ void UGameItemSlottedCheckViewModel::SetItem(UGameItem* NewItem)
 	}
 }
 
-bool UGameItemSlottedCheckViewModel::IsSlotted() const
+bool UVM_GameItemSlottedCheck::IsSlotted() const
 {
 	if (!Item)
 	{
@@ -65,7 +65,7 @@ bool UGameItemSlottedCheckViewModel::IsSlotted() const
 	return false;
 }
 
-void UGameItemSlottedCheckViewModel::OnSlotted(const UGameItemContainer* Container, int32 NewSlot, int32 OldSlot)
+void UVM_GameItemSlottedCheck::OnSlotted(const UGameItemContainer* Container, int32 NewSlot, int32 OldSlot)
 {
 	if (Container->GetOwnedTags().HasAny(ContainerTags))
 	{
@@ -73,7 +73,7 @@ void UGameItemSlottedCheckViewModel::OnSlotted(const UGameItemContainer* Contain
 	}
 }
 
-void UGameItemSlottedCheckViewModel::OnUnslotted(const UGameItemContainer* Container, int32 OldSlot)
+void UVM_GameItemSlottedCheck::OnUnslotted(const UGameItemContainer* Container, int32 OldSlot)
 {
 	if (Container->GetOwnedTags().HasAny(ContainerTags))
 	{

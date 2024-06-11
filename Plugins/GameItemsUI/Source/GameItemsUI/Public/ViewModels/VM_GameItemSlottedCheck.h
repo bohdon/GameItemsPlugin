@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameItemContainer.h"
 #include "MVVMViewModelBase.h"
-#include "GameItemSlottedCheckViewModel.generated.h"
+#include "VM_GameItemSlottedCheck.generated.h"
 
 class UGameItem;
 
@@ -15,7 +15,7 @@ class UGameItem;
  * This is most commonly used to check if an item is 'equipped'.
  */
 UCLASS()
-class GAMEITEMSUI_API UGameItemSlottedCheckViewModel : public UMVVMViewModelBase
+class GAMEITEMSUI_API UVM_GameItemSlottedCheck : public UMVVMViewModelBase
 {
 	GENERATED_BODY()
 

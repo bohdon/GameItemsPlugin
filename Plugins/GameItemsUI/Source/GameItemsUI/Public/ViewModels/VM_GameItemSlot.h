@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameItemContainer.h"
 #include "MVVMViewModelBase.h"
-#include "GameItemSlotViewModel.generated.h"
+#include "VM_GameItemSlot.generated.h"
 
 class UGameItem;
 class UGameItemContainer;
@@ -15,12 +15,12 @@ class UGameItemContainer;
  * A view-model for a specific slot in a game item container.
  */
 UCLASS()
-class GAMEITEMSUI_API UGameItemSlotViewModel : public UMVVMViewModelBase
+class GAMEITEMSUI_API UVM_GameItemSlot : public UMVVMViewModelBase
 {
 	GENERATED_BODY()
 
 public:
-	UGameItemSlotViewModel();
+	UVM_GameItemSlot();
 
 	/** Set the container and slot to use, and update the item accordingly. */
 	UFUNCTION(BlueprintCallable)
@@ -69,5 +69,5 @@ protected:
 public:
 	/** Create an slot view model for each slot in a container, which can be provided to a list view. */
 	UFUNCTION(BlueprintCallable, Meta = (DefaultToSelf = "Outer"))
-	static TArray<UGameItemSlotViewModel*> CreateSlotViewModelsForContainer(UObject* Outer, UGameItemContainer* InContainer);
+	static TArray<UVM_GameItemSlot*> CreateSlotViewModelsForContainer(UObject* Outer, UGameItemContainer* InContainer);
 };

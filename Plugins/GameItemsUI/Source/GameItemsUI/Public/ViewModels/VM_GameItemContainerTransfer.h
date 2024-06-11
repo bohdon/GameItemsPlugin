@@ -4,17 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "MVVMViewModelBase.h"
-#include "GameItemContainerTransferViewModel.generated.h"
+#include "VM_GameItemContainerTransfer.generated.h"
 
 class UGameItemContainer;
-class UGameItemSlotViewModel;
+class UVM_GameItemSlot;
 
 
 /**
  * A view model to help with common transactions between two containers.
  */
 UCLASS()
-class GAMEITEMSUI_API UGameItemContainerTransferViewModel : public UMVVMViewModelBase
+class GAMEITEMSUI_API UVM_GameItemContainerTransfer : public UMVVMViewModelBase
 {
 	GENERATED_BODY()
 
@@ -32,7 +32,7 @@ public:
 
 	/** Move an item from one container to the other. */
 	UFUNCTION(BlueprintCallable)
-	virtual void MoveItem(UGameItemSlotViewModel* SlotViewModel, bool bAllowPartial = true);
+	virtual void MoveItem(UVM_GameItemSlot* SlotViewModel, bool bAllowPartial = true);
 
 	/** Move all items from container A to B. */
 	UFUNCTION(BlueprintCallable)

@@ -1,7 +1,7 @@
 ﻿// Copyright Bohdon Sayre, All Rights Reserved.
 
 
-#include "ViewModels/GameItemSlotViewModel.h"
+#include "ViewModels/VM_GameItemSlot.h"
 
 #include "GameItemContainer.h"
 #include "GameItemContainerDef.h"
@@ -10,20 +10,20 @@
 #include "Engine/World.h"
 
 
-UGameItemSlotViewModel::UGameItemSlotViewModel()
+UVM_GameItemSlot::UVM_GameItemSlot()
 	: Container(nullptr),
 	  Slot(INDEX_NONE),
 	  Item(nullptr)
 {
 }
 
-UWorld* UGameItemSlotViewModel::GetWorld() const
+UWorld* UVM_GameItemSlot::GetWorld() const
 {
 	const UObject* Outer = GetOuter();
 	return Outer ? Outer->GetWorld() : nullptr;
 }
 
-void UGameItemSlotViewModel::SetContainerAndSlot(UGameItemContainer* NewContainer, int32 NewSlot)
+void UVM_GameItemSlot::SetContainerAndSlot(UGameItemContainer* NewContainer, int32 NewSlot)
 {
 	if (Container != NewContainer || Slot != NewSlot)
 	{
@@ -39,9 +39,9 @@ void UGameItemSlotViewModel::SetContainerAndSlot(UGameItemContainer* NewContaine
 
 		if (Container)
 		{
-			Container->OnItemSlotChangedEvent.AddUObject(this, &UGameItemSlotViewModel::OnItemSlotChanged);
-			Container->OnItemSlotsChangedEvent.AddUObject(this, &UGameItemSlotViewModel::OnItemSlotsChanged);
-			Container->OnNumSlotsChangedEvent.AddUObject(this, &UGameItemSlotViewModel::OnNumSlotsChanged);
+			Container->OnItemSlotChangedEvent.AddUObject(this, &UVM_GameItemSlot::OnItemSlotChanged);
+			Container->OnItemSlotsChangedEvent.AddUObject(this, &UVM_GameItemSlot::OnItemSlotsChanged);
+			Container->OnNumSlotsChangedEvent.AddUObject(this, &UVM_GameItemSlot::OnNumSlotsChanged);
 		}
 
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(Container);
@@ -51,17 +51,17 @@ void UGameItemSlotViewModel::SetContainerAndSlot(UGameItemContainer* NewContaine
 	}
 }
 
-bool UGameItemSlotViewModel::HasItem() const
+bool UVM_GameItemSlot::HasItem() const
 {
 	return Item != nullptr;
 }
 
-bool UGameItemSlotViewModel::IsValidSlot() const
+bool UVM_GameItemSlot::IsValidSlot() const
 {
 	return Container && Container->IsValidSlot(Slot);
 }
 
-TArray<UGameItem*> UGameItemSlotViewModel::MoveItem(UGameItemContainer* ToContainer, bool bAllowPartial)
+TArray<UGameItem*> UVM_GameItemSlot::MoveItem(UGameItemContainer* ToContainer, bool bAllowPartial)
 {
 	if (!Container || !Item)
 	{
@@ -72,7 +72,7 @@ TArray<UGameItem*> UGameItemSlotViewModel::MoveItem(UGameItemContainer* ToContai
 	return ItemSubsystem->MoveItem(Container, ToContainer, Item, -1, bAllowPartial);
 }
 
-void UGameItemSlotViewModel::UpdateItem()
+void UVM_GameItemSlot::UpdateItem()
 {
 	UGameItem* NewItem = nullptr;
 	if (Container && Slot != INDEX_NONE)
@@ -89,7 +89,7 @@ void UGameItemSlotViewModel::UpdateItem()
 	}
 }
 
-void UGameItemSlotViewModel::OnItemSlotChanged(int32 InSlot)
+void UVM_GameItemSlot::OnItemSlotChanged(int32 InSlot)
 {
 	if (Slot == InSlot)
 	{
@@ -97,7 +97,7 @@ void UGameItemSlotViewModel::OnItemSlotChanged(int32 InSlot)
 	}
 }
 
-void UGameItemSlotViewModel::OnItemSlotsChanged(int32 StartSlot, int32 EndSlot)
+void UVM_GameItemSlot::OnItemSlotsChanged(int32 StartSlot, int32 EndSlot)
 {
 	if (StartSlot <= Slot && Slot <= EndSlot)
 	{
@@ -105,7 +105,7 @@ void UGameItemSlotViewModel::OnItemSlotsChanged(int32 StartSlot, int32 EndSlot)
 	}
 }
 
-void UGameItemSlotViewModel::OnNumSlotsChanged(int32 NewNumSlots, int32 OldNumSlots)
+void UVM_GameItemSlot::OnNumSlotsChanged(int32 NewNumSlots, int32 OldNumSlots)
 {
 	if (Slot >= NewNumSlots)
 	{
@@ -122,18 +122,18 @@ void UGameItemSlotViewModel::OnNumSlotsChanged(int32 NewNumSlots, int32 OldNumSl
 	}
 }
 
-TArray<UGameItemSlotViewModel*> UGameItemSlotViewModel::CreateSlotViewModelsForContainer(UObject* Outer, UGameItemContainer* InContainer)
+TArray<UVM_GameItemSlot*> UVM_GameItemSlot::CreateSlotViewModelsForContainer(UObject* Outer, UGameItemContainer* InContainer)
 {
-	TArray<UGameItemSlotViewModel*> Result;
+	TArray<UVM_GameItemSlot*> Result;
 	if (!Outer || !InContainer)
 	{
-		return TArray<UGameItemSlotViewModel*>();
+		return TArray<UVM_GameItemSlot*>();
 	}
 
 	const int32 NumSlots = InContainer->GetNumSlots();
 	for (int32 Idx = 0; Idx < NumSlots; ++Idx)
 	{
-		UGameItemSlotViewModel* NewViewModel = NewObject<UGameItemSlotViewModel>(Outer, NAME_None, RF_Transient);
+		UVM_GameItemSlot* NewViewModel = NewObject<UVM_GameItemSlot>(Outer, NAME_None, RF_Transient);
 		NewViewModel->SetContainerAndSlot(InContainer, Idx);
 		Result.Add(NewViewModel);
 	}

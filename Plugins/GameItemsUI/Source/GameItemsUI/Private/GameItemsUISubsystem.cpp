@@ -7,19 +7,19 @@
 #include "GameItemSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
-#include "ViewModels/GameItemSlotViewModel.h"
-#include "ViewModels/GameItemContainerViewModel.h"
-#include "ViewModels/GameItemViewModel.h"
+#include "ViewModels/VM_GameItemSlot.h"
+#include "ViewModels/VM_GameItemContainer.h"
+#include "ViewModels/VM_GameItem.h"
 
 
-UGameItemContainerViewModel* UGameItemsUISubsystem::GetOrCreateContainerViewModel(UGameItemContainer* Container)
+UVM_GameItemContainer* UGameItemsUISubsystem::GetOrCreateContainerViewModel(UGameItemContainer* Container)
 {
 	if (!Container)
 	{
 		return nullptr;
 	}
 
-	UGameItemContainerViewModel** ContainerViewModel = ContainerViewModels.FindByPredicate([Container](UGameItemContainerViewModel* ViewModel)
+	UVM_GameItemContainer** ContainerViewModel = ContainerViewModels.FindByPredicate([Container](UVM_GameItemContainer* ViewModel)
 	{
 		return ViewModel && ViewModel->GetContainer() == Container;
 	});
@@ -30,13 +30,13 @@ UGameItemContainerViewModel* UGameItemsUISubsystem::GetOrCreateContainerViewMode
 	}
 
 	// create a new view model
-	UGameItemContainerViewModel* NewViewModel = CreateContainerViewModel(Container);
+	UVM_GameItemContainer* NewViewModel = CreateContainerViewModel(Container);
 	check(NewViewModel);
 	ContainerViewModels.Add(NewViewModel);
 	return NewViewModel;
 }
 
-UGameItemContainerViewModel* UGameItemsUISubsystem::GetOrCreateContainerViewModelForActor(AActor* Actor, FGameplayTag ContainerId)
+UVM_GameItemContainer* UGameItemsUISubsystem::GetOrCreateContainerViewModelForActor(AActor* Actor, FGameplayTag ContainerId)
 {
 	const UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
 	UGameItemContainer* Container = ItemSubsystem->GetContainerForActor(Actor, ContainerId);
@@ -49,11 +49,11 @@ UGameItem* UGameItemsUISubsystem::GetItemFromObject(UObject* ItemObject) const
 	{
 		return GameItem;
 	}
-	else if (const UGameItemViewModel* ItemViewModel = Cast<UGameItemViewModel>(ItemObject))
+	else if (const UVM_GameItem* ItemViewModel = Cast<UVM_GameItem>(ItemObject))
 	{
 		return ItemViewModel->GetItem();
 	}
-	else if (const UGameItemSlotViewModel* SlotViewModel = Cast<UGameItemSlotViewModel>(ItemObject))
+	else if (const UVM_GameItemSlot* SlotViewModel = Cast<UVM_GameItemSlot>(ItemObject))
 	{
 		return SlotViewModel->GetItem();
 	}
@@ -62,7 +62,7 @@ UGameItem* UGameItemsUISubsystem::GetItemFromObject(UObject* ItemObject) const
 
 void UGameItemsUISubsystem::GetContainerAndItem(UObject* ViewModelObject, bool& bSuccess, UGameItemContainer*& Container, UGameItem*& Item) const
 {
-	if (const UGameItemSlotViewModel* SlotViewModel = Cast<UGameItemSlotViewModel>(ViewModelObject))
+	if (const UVM_GameItemSlot* SlotViewModel = Cast<UVM_GameItemSlot>(ViewModelObject))
 	{
 		Container = SlotViewModel->GetContainer();
 		Item = SlotViewModel->GetItem();
@@ -90,7 +90,7 @@ UGameItemContainer* UGameItemsUISubsystem::GetContainerFromProvider(TSubclassOf<
 	return nullptr;
 }
 
-void UGameItemsUISubsystem::MoveSwapOrStackItem(UGameItemSlotViewModel* FromSlot, UGameItemSlotViewModel* ToSlot, bool bAllowPartial) const
+void UGameItemsUISubsystem::MoveSwapOrStackItem(UVM_GameItemSlot* FromSlot, UVM_GameItemSlot* ToSlot, bool bAllowPartial) const
 {
 	if (!FromSlot || !FromSlot->GetContainer() || !FromSlot->GetItem() || !ToSlot || !ToSlot->GetContainer())
 	{
@@ -143,10 +143,10 @@ void UGameItemsUISubsystem::MoveSwapOrStackItem(UGameItemSlotViewModel* FromSlot
 	}
 }
 
-UGameItemContainerViewModel* UGameItemsUISubsystem::CreateContainerViewModel(UGameItemContainer* Container)
+UVM_GameItemContainer* UGameItemsUISubsystem::CreateContainerViewModel(UGameItemContainer* Container)
 {
 	check(Container);
-	UGameItemContainerViewModel* NewViewModel = NewObject<UGameItemContainerViewModel>(this);
+	UVM_GameItemContainer* NewViewModel = NewObject<UVM_GameItemContainer>(this);
 	NewViewModel->SetContainer(Container);
 	return NewViewModel;
 }

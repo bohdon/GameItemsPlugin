@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "MVVMViewModelBase.h"
-#include "GameItemContainerViewModel.generated.h"
+#include "VM_GameItemContainer.generated.h"
 
 class UGameItem;
-class UGameItemSlotViewModel;
+class UVM_GameItemSlot;
 class UGameItemContainer;
 
 
@@ -15,7 +15,7 @@ class UGameItemContainer;
  * A view model for a game item container.
  */
 UCLASS()
-class GAMEITEMSUI_API UGameItemContainerViewModel : public UMVVMViewModelBase
+class GAMEITEMSUI_API UVM_GameItemContainer : public UMVVMViewModelBase
 {
 	GENERATED_BODY()
 
@@ -36,7 +36,7 @@ public:
 
 	/** Return a slot view model for each slot in the container. Designed for use with list views. */
 	UFUNCTION(BlueprintPure, FieldNotify)
-	TArray<UGameItemSlotViewModel*> GetSlotViewModels() const;
+	TArray<UVM_GameItemSlot*> GetSlotViewModels() const;
 
 protected:
 	/** The owning container. */
@@ -45,7 +45,7 @@ protected:
 
 	/** The cached view models for each slot. */
 	UPROPERTY(Transient)
-	TArray<UGameItemSlotViewModel*> SlotViewModels;
+	TArray<UVM_GameItemSlot*> SlotViewModels;
 
 	void OnItemAdded(UGameItem* Item);
 	void OnItemRemoved(UGameItem* Item);

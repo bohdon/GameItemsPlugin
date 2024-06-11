@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MVVMViewModelBase.h"
-#include "GameItemViewModel.generated.h"
+#include "VM_GameItem.generated.h"
 
 class UGameItem;
 
@@ -13,12 +13,12 @@ class UGameItem;
  * A view-model for a UGameItem.
  */
 UCLASS()
-class GAMEITEMSUI_API UGameItemViewModel : public UMVVMViewModelBase
+class GAMEITEMSUI_API UVM_GameItem : public UMVVMViewModelBase
 {
 	GENERATED_BODY()
 
 public:
-	UGameItemViewModel();
+	UVM_GameItem();
 
 	/** Set the game item for this view model .*/
 	void SetItem(UGameItem* NewItem);

@@ -8,7 +8,7 @@
 #include "View/MVVMViewModelContextResolver.h"
 #include "GameItemViewModelResolver.generated.h"
 
-class UGameItemContainerViewModel;
+class UVM_GameItemContainer;
 class UGameItemContainer;
 class UGameItemContainerProvider;
 
@@ -23,7 +23,7 @@ class GAMEITEMSUI_API UGameItemViewModelResolverBase : public UMVVMViewModelCont
 
 public:
 	/** Get or create a view model for the relevant container. */
-	virtual UGameItemContainerViewModel* GetItemContainerViewModel(const UUserWidget* UserWidget, const UMVVMView* View) const;
+	virtual UVM_GameItemContainer* GetItemContainerViewModel(const UUserWidget* UserWidget, const UMVVMView* View) const;
 
 	/** Return the relevant game item container. */
 	virtual UGameItemContainer* GetItemContainer(const UUserWidget* UserWidget, const UMVVMView* View) const;
@@ -35,12 +35,12 @@ public:
  * Implement custom provider classes to retrieve containers from different actors in the world.
  */
 UCLASS()
-class GAMEITEMSUI_API UGameItemContainerViewModelResolver : public UGameItemViewModelResolverBase
+class GAMEITEMSUI_API UVMR_GameItemContainer : public UGameItemViewModelResolverBase
 {
 	GENERATED_BODY()
 
 public:
-	UGameItemContainerViewModelResolver();
+	UVMR_GameItemContainer();
 
 	/** The item container provider to use. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ViewModelResolver")
@@ -60,12 +60,12 @@ public:
  * Implement custom provider classes to retrieve containers from different actors in the world.
  */
 UCLASS()
-class GAMEITEMSUI_API UGameItemSlotViewModelResolver : public UGameItemViewModelResolverBase
+class GAMEITEMSUI_API UVMR_GameItemSlot : public UGameItemViewModelResolverBase
 {
 	GENERATED_BODY()
 
 public:
-	UGameItemSlotViewModelResolver();
+	UVMR_GameItemSlot();
 
 	/** The item container provider to use. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ViewModelResolver")

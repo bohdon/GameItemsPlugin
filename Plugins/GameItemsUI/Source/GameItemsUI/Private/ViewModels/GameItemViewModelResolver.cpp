@@ -7,14 +7,14 @@
 #include "GameItemSettings.h"
 #include "GameItemsUISubsystem.h"
 #include "Blueprint/UserWidget.h"
-#include "ViewModels/GameItemContainerViewModel.h"
-#include "ViewModels/GameItemSlotViewModel.h"
+#include "ViewModels/VM_GameItemContainer.h"
+#include "ViewModels/VM_GameItemSlot.h"
 
 
 // UGameItemViewModelResolverBase
 // ------------------------------
 
-UGameItemContainerViewModel* UGameItemViewModelResolverBase::GetItemContainerViewModel(const UUserWidget* UserWidget, const UMVVMView* View) const
+UVM_GameItemContainer* UGameItemViewModelResolverBase::GetItemContainerViewModel(const UUserWidget* UserWidget, const UMVVMView* View) const
 {
 	// get container from provider
 	UGameItemContainer* Container = GetItemContainer(UserWidget, View);
@@ -37,18 +37,18 @@ UGameItemContainer* UGameItemViewModelResolverBase::GetItemContainer(const UUser
 // UGameItemContainerViewModelResolver
 // -----------------------------------
 
-UGameItemContainerViewModelResolver::UGameItemContainerViewModelResolver()
+UVMR_GameItemContainer::UVMR_GameItemContainer()
 {
 	ContainerId = UGameItemSettings::GetDefaultContainerId();
 }
 
-UObject* UGameItemContainerViewModelResolver::CreateInstance(const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View) const
+UObject* UVMR_GameItemContainer::CreateInstance(const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View) const
 {
 	// return a UGameItemContainerViewModel
 	return GetItemContainerViewModel(UserWidget, View);
 }
 
-UGameItemContainer* UGameItemContainerViewModelResolver::GetItemContainer(const UUserWidget* UserWidget, const UMVVMView* View) const
+UGameItemContainer* UVMR_GameItemContainer::GetItemContainer(const UUserWidget* UserWidget, const UMVVMView* View) const
 {
 	UGameItemsUISubsystem* ItemsUISubsystem = UserWidget->GetWorld()->GetSubsystem<UGameItemsUISubsystem>();
 	const FGameItemViewContext Context(UserWidget);
@@ -59,22 +59,22 @@ UGameItemContainer* UGameItemContainerViewModelResolver::GetItemContainer(const 
 // UGameItemSlotViewModelResolver
 // ------------------------------
 
-UGameItemSlotViewModelResolver::UGameItemSlotViewModelResolver()
+UVMR_GameItemSlot::UVMR_GameItemSlot()
 {
 	Slot = 0;
 }
 
-UObject* UGameItemSlotViewModelResolver::CreateInstance(const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View) const
+UObject* UVMR_GameItemSlot::CreateInstance(const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View) const
 {
 	// get container view model
-	const UGameItemContainerViewModel* ContainerViewModel = GetItemContainerViewModel(UserWidget, View);
+	const UVM_GameItemContainer* ContainerViewModel = GetItemContainerViewModel(UserWidget, View);
 	if (!ContainerViewModel)
 	{
 		return nullptr;
 	}
 
 	// get slot view model from container view model
-	TArray<UGameItemSlotViewModel*> SlotViewModels = ContainerViewModel->GetSlotViewModels();
+	TArray<UVM_GameItemSlot*> SlotViewModels = ContainerViewModel->GetSlotViewModels();
 	if (!SlotViewModels.IsValidIndex(Slot))
 	{
 		return nullptr;
@@ -82,7 +82,7 @@ UObject* UGameItemSlotViewModelResolver::CreateInstance(const UClass* ExpectedTy
 	return SlotViewModels[Slot];
 }
 
-UGameItemContainer* UGameItemSlotViewModelResolver::GetItemContainer(const UUserWidget* UserWidget, const UMVVMView* View) const
+UGameItemContainer* UVMR_GameItemSlot::GetItemContainer(const UUserWidget* UserWidget, const UMVVMView* View) const
 {
 	UGameItemsUISubsystem* ItemsUISubsystem = UserWidget->GetWorld()->GetSubsystem<UGameItemsUISubsystem>();
 	const FGameItemViewContext Context(UserWidget);

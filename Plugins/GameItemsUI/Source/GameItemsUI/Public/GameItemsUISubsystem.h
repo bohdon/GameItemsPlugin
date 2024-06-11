@@ -12,8 +12,8 @@
 class UGameItem;
 class UGameItemContainer;
 class UGameItemContainerProvider;
-class UGameItemContainerViewModel;
-class UGameItemSlotViewModel;
+class UVM_GameItemContainer;
+class UVM_GameItemSlot;
 
 
 /**
@@ -27,11 +27,11 @@ class GAMEITEMSUI_API UGameItemsUISubsystem : public UWorldSubsystem
 public:
 	/** Get a view model for an item container, reusing an existing one if it already exists. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems|UI")
-	UGameItemContainerViewModel* GetOrCreateContainerViewModel(UGameItemContainer* Container);
+	UVM_GameItemContainer* GetOrCreateContainerViewModel(UGameItemContainer* Container);
 
 	/** Get a view model for an item container, reusing an existing one if it already exists. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems|UI")
-	UGameItemContainerViewModel* GetOrCreateContainerViewModelForActor(AActor* Actor, FGameplayTag ContainerId);
+	UVM_GameItemContainer* GetOrCreateContainerViewModelForActor(AActor* Actor, FGameplayTag ContainerId);
 
 	/** Retrieve a game item from an object, supports several game item view models, or a game item itself. */
 	UFUNCTION(BlueprintPure, Category = "GameItems|UI")
@@ -48,12 +48,12 @@ public:
 
 	/** Move an item from one slot to another, swapping or stacking as needed. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false)
-	void MoveSwapOrStackItem(UGameItemSlotViewModel* FromSlot, UGameItemSlotViewModel* ToSlot, bool bAllowPartial = true) const;
+	void MoveSwapOrStackItem(UVM_GameItemSlot* FromSlot, UVM_GameItemSlot* ToSlot, bool bAllowPartial = true) const;
 
 protected:
 	/** All container view models that have been created. */
 	UPROPERTY(Transient)
-	TArray<UGameItemContainerViewModel*> ContainerViewModels;
+	TArray<UVM_GameItemContainer*> ContainerViewModels;
 
-	UGameItemContainerViewModel* CreateContainerViewModel(UGameItemContainer* Container);
+	UVM_GameItemContainer* CreateContainerViewModel(UGameItemContainer* Container);
 };

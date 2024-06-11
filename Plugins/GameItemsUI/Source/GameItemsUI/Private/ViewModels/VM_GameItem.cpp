@@ -1,17 +1,17 @@
 ﻿// Copyright Bohdon Sayre, All Rights Reserved.
 
 
-#include "ViewModels/GameItemViewModel.h"
+#include "ViewModels/VM_GameItem.h"
 
 #include "GameItem.h"
 #include "GameItemDef.h"
 
 
-UGameItemViewModel::UGameItemViewModel()
+UVM_GameItem::UVM_GameItem()
 {
 }
 
-void UGameItemViewModel::SetItem(UGameItem* NewItem)
+void UVM_GameItem::SetItem(UGameItem* NewItem)
 {
 	if (NewItem)
 	{
@@ -33,7 +33,7 @@ void UGameItemViewModel::SetItem(UGameItem* NewItem)
 
 		if (Item)
 		{
-			Item->OnCountChangedEvent.AddUObject(this, &UGameItemViewModel::OnCountChanged);
+			Item->OnCountChangedEvent.AddUObject(this, &UVM_GameItem::OnCountChanged);
 		}
 
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(Item);
@@ -43,22 +43,22 @@ void UGameItemViewModel::SetItem(UGameItem* NewItem)
 	}
 }
 
-int32 UGameItemViewModel::GetCount() const
+int32 UVM_GameItem::GetCount() const
 {
 	return Item ? Item->GetCount() : 0;
 }
 
-bool UGameItemViewModel::HasMultiple() const
+bool UVM_GameItem::HasMultiple() const
 {
 	return GetCount() > 1;
 }
 
-FText UGameItemViewModel::GetDisplayName() const
+FText UVM_GameItem::GetDisplayName() const
 {
 	return Item ? Item->GetItemDefCDO()->DisplayName : FText::GetEmpty();
 }
 
-void UGameItemViewModel::OnCountChanged(int32 NewCount, int32 OldCount)
+void UVM_GameItem::OnCountChanged(int32 NewCount, int32 OldCount)
 {
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetCount);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(HasMultiple);
