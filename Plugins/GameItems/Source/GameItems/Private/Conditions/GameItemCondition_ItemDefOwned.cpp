@@ -8,14 +8,17 @@
 #include "GameItemSubsystem.h"
 #include "WorldConditionContext.h"
 #include "Conditions/GameItemConditionSchema.h"
+#include "GameFramework/Actor.h"
 
 #define LOCTEXT_NAMESPACE "GameItems"
 
 
+#if WITH_EDITOR
 FText FGameItemCondition_ItemDefOwned::GetDescription() const
 {
 	return FText::Format(LOCTEXT("ItemOwnedConditionDesc", "Owns {0}"), FText::FromString(GetNameSafe(ItemDef)));
 }
+#endif
 
 bool FGameItemCondition_ItemDefOwned::Initialize(const UWorldConditionSchema& Schema)
 {

@@ -7,6 +7,7 @@
 #include "Engine/ActorChannel.h"
 #include "Equipment/GameEquipment.h"
 #include "Equipment/GameEquipmentDef.h"
+#include "GameFramework/Actor.h"
 #include "Net/UnrealNetwork.h"
 
 

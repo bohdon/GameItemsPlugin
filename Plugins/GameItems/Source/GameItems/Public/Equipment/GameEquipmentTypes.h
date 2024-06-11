@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Net/Serialization/FastArraySerializer.h"
-#include "UObject/Object.h"
+#include "Templates/SubclassOf.h"
 #include "GameEquipmentTypes.generated.h"
 
 class UGameEquipmentComponent;

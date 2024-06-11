@@ -9,6 +9,7 @@
 
 class UGameItemDef;
 
+
 /**
  * A condition that is true when the target actor owns any of an item by definition.
  */

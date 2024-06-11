@@ -15,13 +15,14 @@ void FGameItemsModule::StartupModule()
 {
 #if ALLOW_CONSOLE
 	UConsole::RegisterConsoleAutoCompleteEntries.AddStatic(&FGameItemsModule::PopulateAutoCompleteEntries);
-#endif // ALLOW_CONSOLE
+#endif
 }
 
 void FGameItemsModule::ShutdownModule()
 {
 }
 
+#if ALLOW_CONSOLE
 void FGameItemsModule::PopulateAutoCompleteEntries(TArray<FAutoCompleteCommand>& AutoCompleteList)
 {
 	const UConsoleSettings* ConsoleSettings = GetDefault<UConsoleSettings>();
@@ -33,6 +34,7 @@ void FGameItemsModule::PopulateAutoCompleteEntries(TArray<FAutoCompleteCommand>&
 	AutoCompleteCommand.Desc = TEXT("Toggles display of game item debug info");
 	AutoCompleteCommand.Color = ConsoleSettings->AutoCompleteCommandColor;
 }
+#endif
 
 #undef LOCTEXT_NAMESPACE
 

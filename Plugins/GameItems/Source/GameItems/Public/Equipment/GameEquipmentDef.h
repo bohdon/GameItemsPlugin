@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameEquipmentTypes.h"
+#include "Templates/SubclassOf.h"
 #include "UObject/Object.h"
 #include "GameEquipmentDef.generated.h"
 

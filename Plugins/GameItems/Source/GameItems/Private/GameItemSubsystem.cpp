@@ -12,7 +12,6 @@
 #include "GameItemDef.h"
 #include "GameItemsModule.h"
 #include "GameItemStatics.h"
-#include "PropertyEditorModule.h"
 #include "DropTable/GameItemDropTableRow.h"
 #include "Engine/Canvas.h"
 #include "Engine/DataTable.h"

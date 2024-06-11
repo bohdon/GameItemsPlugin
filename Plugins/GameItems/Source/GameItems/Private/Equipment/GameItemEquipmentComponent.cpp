@@ -13,6 +13,7 @@
 #include "Equipment/GameEquipment.h"
 #include "Equipment/GameEquipmentDef.h"
 #include "Equipment/GameItemFragment_Equipment.h"
+#include "GameFramework/Actor.h"
 
 
 UGameItemEquipmentComponent::UGameItemEquipmentComponent(const FObjectInitializer& ObjectInitializer)

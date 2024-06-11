@@ -37,7 +37,7 @@ struct GAMEITEMS_API FGameItemCountLimit
 	int32 MaxCount = 1;
 
 	/** Return the max count, or default value if not limited. */
-	FORCEINLINE int32 GetMaxCount(int32 Default = MAX_int32) const;
+	int32 GetMaxCount(int32 Default = MAX_int32) const;
 };
 
 

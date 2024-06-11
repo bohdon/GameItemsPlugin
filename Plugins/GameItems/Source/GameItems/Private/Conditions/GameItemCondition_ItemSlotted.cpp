@@ -11,10 +11,12 @@
 #define LOCTEXT_NAMESPACE "GameItems"
 
 
+#if WITH_EDITOR
 FText FGameItemCondition_ItemSlotted::GetDescription() const
 {
 	return FText::Format(LOCTEXT("ItemSlottedConditionDesc", "Slotted in {0}"), FText::FromString(ContainerTags.ToStringSimple()));
 }
+#endif
 
 bool FGameItemCondition_ItemSlotted::Initialize(const UWorldConditionSchema& Schema)
 {

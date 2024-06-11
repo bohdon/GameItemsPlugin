@@ -6,9 +6,6 @@ public class GameplayAbilityItems : ModuleRules
 {
 	public GameplayAbilityItems(ReadOnlyTargetRules Target) : base(Target)
 	{
-		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-
-
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"Core",

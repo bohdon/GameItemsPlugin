@@ -45,6 +45,7 @@ ipch/*
 *.xcodeproj
 *.xcworkspace
 *.sln
+*.sln.DotSettings.user
 *.suo
 *.opensdf
 *.sdf
