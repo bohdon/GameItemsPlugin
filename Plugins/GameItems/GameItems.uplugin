@@ -24,10 +24,6 @@
 		{
 			"Name": "WorldConditions",
 			"Enabled": true
-		},
-		{
-			"Name": "StructUtils",
-			"Enabled": true
 		}
 	]
 }

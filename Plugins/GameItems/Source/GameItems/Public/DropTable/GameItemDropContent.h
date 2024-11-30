@@ -6,7 +6,7 @@
 #include "GameItemDropContext.h"
 #include "GameItemSetEntrySelector.h"
 #include "GameItemTypes.h"
-#include "InstancedStruct.h"
+#include "StructUtils/InstancedStruct.h"
 #include "Engine/DataTable.h"
 #include "Templates/SubclassOf.h"
 #include "GameItemDropContent.generated.h"
@@ -68,7 +68,7 @@ struct FGameItemDropContent_Combine : public FGameItemDropChancedContent
 	GENERATED_BODY()
 
 	/** The list of content to combine. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (BaseStruct = "/Script/GameItems.GameItemDropContent", ExcludeBaseStruct, ShowTreeView))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (ExcludeBaseStruct, ShowTreeView))
 	TArray<TInstancedStruct<FGameItemDropContent>> Contents;
 
 	virtual void SelectItems(const FGameItemDropContext& Context, TArray<FGameItemDefStack>& OutItems) const override;

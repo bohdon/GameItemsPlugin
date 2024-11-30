@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameItemDropParams.h"
-#include "InstancedStruct.h"
+#include "StructUtils/InstancedStruct.h"
 #include "GameItemDropContext.generated.h"
 
 
