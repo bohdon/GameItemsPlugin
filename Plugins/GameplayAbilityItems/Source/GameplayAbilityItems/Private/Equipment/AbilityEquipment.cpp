@@ -69,6 +69,6 @@ void UAbilityEquipment::RemoveAbilitySets()
 {
 	if (UAbilitySystemComponent* AbilitySystem = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()))
 	{
-		UExtendedAbilitySet::RemoveFromAbilitySystem(AbilitySystem, AbilitySetHandles);
+		AbilitySetHandles.AbilitySet->RemoveFromAbilitySystem(AbilitySystem, AbilitySetHandles);
 	}
 }
