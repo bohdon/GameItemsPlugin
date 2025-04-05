@@ -48,20 +48,28 @@ int32 UAbilityEquipment::GetItemLevel() const
 void UAbilityEquipment::GiveAbilitySets()
 {
 	const UAbilityEquipmentDef* AbilityEquipDef = GetEquipmentDefCDO<UAbilityEquipmentDef>();
-	UAbilitySystemComponent* AbilitySystem = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
-
-	if (AbilityEquipDef && AbilitySystem)
+	if (!AbilityEquipDef)
 	{
-		for (const UExtendedAbilitySet* AbilitySet : AbilityEquipDef->AbilitySets)
-		{
-			if (!AbilitySet)
-			{
-				UE_LOG(LogGameItems, Error, TEXT("%s has invalid AbilitySet"), *GetNameSafe(AbilityEquipDef));
-				continue;
-			}
+		UE_LOG(LogGameItems, Error, TEXT("%s is not a UAbilityEquipmentDef"), *GetEquipmentDef()->GetName());
+		return;
+	}
 
-			AbilitySetHandles = AbilitySet->GiveToAbilitySystem(AbilitySystem, Instigator, bUseItemLevel ? GetItemLevel() : -1);
+	UAbilitySystemComponent* AbilitySystem = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+	if (!AbilitySystem)
+	{
+		UE_LOG(LogGameItems, Error, TEXT("No AbilitySystem found for %s"), *GetNameSafe(GetOwner()));
+		return;
+	}
+
+	for (const UExtendedAbilitySet* AbilitySet : AbilityEquipDef->AbilitySets)
+	{
+		if (!AbilitySet)
+		{
+			UE_LOG(LogGameItems, Error, TEXT("%s has invalid AbilitySet"), *GetNameSafe(AbilityEquipDef));
+			continue;
 		}
+
+		AbilitySetHandles = AbilitySet->GiveToAbilitySystem(AbilitySystem, Instigator, bUseItemLevel ? GetItemLevel() : -1);
 	}
 }
 
@@ -69,6 +77,9 @@ void UAbilityEquipment::RemoveAbilitySets()
 {
 	if (UAbilitySystemComponent* AbilitySystem = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()))
 	{
-		AbilitySetHandles.AbilitySet->RemoveFromAbilitySystem(AbilitySystem, AbilitySetHandles);
+		if (AbilitySetHandles.AbilitySet)
+		{
+			AbilitySetHandles.AbilitySet->RemoveFromAbilitySystem(AbilitySystem, AbilitySetHandles);
+		}
 	}
 }
