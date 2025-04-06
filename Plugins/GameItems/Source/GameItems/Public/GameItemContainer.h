@@ -79,19 +79,19 @@ public:
 	FText DisplayName;
 
 	/** Set the definition for this container. Cannot be changed once set. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
 	void SetContainerDef(TSubclassOf<UGameItemContainerDef> NewContainerDef);
 
 	/** Set the item collection that this container belongs to. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
 	void SetCollection(TScriptInterface<IGameItemCollectionInterface> NewCollection);
 
 	/** Set the item collection that this container belongs to. */
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	virtual TScriptInterface<IGameItemCollectionInterface> GetCollection() const { return Collection; }
 
 	/** Return the CDO of the container definition. */
-	UFUNCTION(BlueprintPure, DisplayName = "GetContainerDef")
+	UFUNCTION(BlueprintPure, DisplayName = "GetContainerDef", Category = "GameItemContainer")
 	FORCEINLINE const UGameItemContainerDef* GetContainerDefCDO() const;
 
 	/** Get all tags that this container has. */
@@ -283,14 +283,14 @@ public:
 	 * Add the default items defined for this container.
 	 * @param bForce If true, add the items even if they had previously been added.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
 	virtual void AddDefaultItems(bool bForce = false);
 
 	/** Return all rules applied to this container. */
 	const TArray<UGameItemContainerRule*>& GetRules() const { return Rules; }
 
 	/** Return a rule by class. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Meta = (DeterminesOutputType = "RuleClass"))
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Meta = (DeterminesOutputType = "RuleClass"), Category = "GameItemContainer")
 	UGameItemContainerRule* GetRule(TSubclassOf<UGameItemContainerRule> RuleClass) const;
 
 	template <class T>
@@ -333,22 +333,22 @@ public:
 	void UnregisterChild(UGameItemContainer* ChildContainer);
 
 	/** Return the priority of this container when selecting the 'best' container for auto-slotting an item. */
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	virtual int32 GetAutoSlotPriorityForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const;
 
 	/** Return true if this container has rules allowing it to auto-slot an item. */
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	virtual bool CanAutoSlot(UGameItem* Item, FGameplayTagContainer ContextTags) const;
 
 	/**
 	 * Add an item to this container, automatically selecting the best slot for it based on rules,
 	 * and potentially replacing existing items, or cancelling if desired.
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
 	virtual TArray<UGameItem*> TryAutoSlot(UGameItem* Item, FGameplayTagContainer ContextTags);
 
 	/** Return the child container with the highest auto-slot priority for an item. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
 	UGameItemContainer* FindAutoSlotChildContainerForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const;
 
 	/** Return the owning actor of this container. */
@@ -467,6 +467,7 @@ private:
 
 public:
 	/** Return a readable name for this container object for debugging. */
+	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	virtual FString GetReadableName() const;
 
 	/** Display debug info about this component. */
