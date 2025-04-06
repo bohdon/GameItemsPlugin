@@ -37,7 +37,7 @@ private:
 	FGameItemTagStackContainer TagStats;
 
 public:
-	TSubclassOf<UGameItemDef> GetItemDef() const { return ItemDef; }
+	FORCEINLINE TSubclassOf<UGameItemDef> GetItemDef() const { return ItemDef; }
 
 	/** Return the class default object for this item's definition. */
 	UFUNCTION(BlueprintPure, DisplayName = "GetItemDef")
@@ -49,7 +49,7 @@ public:
 	UFUNCTION(BlueprintPure)
 	const FGameplayTagContainer& GetOwnedTags() const;
 
-	int32 GetCount() const { return Count; }
+	FORCEINLINE int32 GetCount() const { return Count; }
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItem")
 	void SetCount(int32 NewCount);

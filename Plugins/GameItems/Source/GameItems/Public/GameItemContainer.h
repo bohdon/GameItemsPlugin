@@ -133,6 +133,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
 	UGameItem* RemoveItemAt(int32 Slot);
 
+	/**
+	 * Remove a quantity of an item by definition. Subtracts from each stack in order, and removes items when empty.
+	 * Returns the number of items removed.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
+	int32 RemoveItemsByDef(TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
+
 	/** Remove all items from this container. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
 	void RemoveAllItems();
@@ -145,7 +152,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
 	void StackItems(int32 FromSlot, int32 ToSlot, bool bAllowPartial = true);
 
-	/** Return all items in the container. */
+	/** Return all items in the container, may include null entries for empty slots. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
 	TArray<UGameItem*> GetAllItems() const;
 
@@ -160,6 +167,10 @@ public:
 	/** Return the first stack of an item by definition. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
 	UGameItem* FindFirstItemByDef(TSubclassOf<UGameItemDef> ItemDef) const;
+
+	/** Return all items by definition. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
+	TArray<UGameItem*> FindItemsByDef(TSubclassOf<UGameItemDef> ItemDef) const;
 
 	/**
 	 * Return the first stack of an item that matches another item.
@@ -455,6 +466,9 @@ private:
 	FGameItemList ItemList;
 
 public:
+	/** Return a readable name for this container object for debugging. */
+	virtual FString GetReadableName() const;
+
 	/** Display debug info about this component. */
 	virtual void DisplayDebug(class UCanvas* Canvas, const class FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) const;
 };

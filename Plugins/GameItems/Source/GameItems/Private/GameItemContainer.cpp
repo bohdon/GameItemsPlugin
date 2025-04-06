@@ -20,6 +20,7 @@
 #include "Rules/GameItemAutoSlotRule.h"
 #include "Rules/GameItemContainerLink.h"
 #include "Rules/GameItemContainerRule.h"
+#include "Serialization/MappedName.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
@@ -362,6 +363,38 @@ UGameItem* UGameItemContainer::RemoveItemAt(int32 Slot)
 	return RemovedItem;
 }
 
+int32 UGameItemContainer::RemoveItemsByDef(TSubclassOf<UGameItemDef> ItemDef, int32 Count)
+{
+	if (!ItemDef)
+	{
+		return 0;
+	}
+	Count = FMath::Max(Count, 0);
+
+	int32 NumRemoved = 0;
+	TArray<UGameItem*> Items = FindItemsByDef(ItemDef);
+	for (UGameItem* Item : Items)
+	{
+		const int32 NumToRemove = Count - NumRemoved;
+		if (NumToRemove == 0)
+		{
+			break;
+		}
+
+		NumRemoved += FMath::Min(Item->GetCount(), NumToRemove);
+		const int32 NewCount = Item->GetCount() - NumRemoved;
+		if (NewCount > 0)
+		{
+			Item->SetCount(NewCount);
+		}
+		else
+		{
+			RemoveItem(Item);
+		}
+	}
+	return NumRemoved;
+}
+
 void UGameItemContainer::RemoveAllItems()
 {
 	// gather items that will be removed, and record which slot they were in
@@ -478,6 +511,10 @@ UGameItem* UGameItemContainer::GetFirstItem() const
 
 UGameItem* UGameItemContainer::FindFirstItemByDef(TSubclassOf<UGameItemDef> ItemDef) const
 {
+	if (!ItemDef)
+	{
+		return nullptr;
+	}
 	for (const FGameItemListEntry& Entry : ItemList.Entries)
 	{
 		UGameItem* EntryItem = Entry.GetItem();
@@ -487,6 +524,24 @@ UGameItem* UGameItemContainer::FindFirstItemByDef(TSubclassOf<UGameItemDef> Item
 		}
 	}
 	return nullptr;
+}
+
+TArray<UGameItem*> UGameItemContainer::FindItemsByDef(TSubclassOf<UGameItemDef> ItemDef) const
+{
+	TArray<UGameItem*> Result;
+	if (!ItemDef)
+	{
+		return Result;
+	}
+	for (const FGameItemListEntry& Entry : ItemList.Entries)
+	{
+		UGameItem* EntryItem = Entry.GetItem();
+		if (IsValid(EntryItem) && EntryItem->GetItemDef() == ItemDef)
+		{
+			Result.Add(EntryItem);
+		}
+	}
+	return Result;
 }
 
 UGameItem* UGameItemContainer::FindFirstMatchingItem(const UGameItem* Item) const
@@ -531,6 +586,11 @@ bool UGameItemContainer::Contains(const UGameItem* Item) const
 
 int32 UGameItemContainer::GetTotalItemCountByDef(TSubclassOf<UGameItemDef> ItemDef) const
 {
+	if (!ItemDef)
+	{
+		return 0;
+	}
+
 	int32 Total = 0;
 	for (const FGameItemListEntry& Entry : ItemList.Entries)
 	{
@@ -1196,6 +1256,20 @@ void UGameItemContainer::OnListChanged(FGameItemListEntry& Entry, int32 NewCount
 {
 	// re-broadcast the change from this component
 	// TODO
+}
+
+FString UGameItemContainer::GetReadableName() const
+{
+	if (const UActorComponent* CompOuter = Cast<UActorComponent>(GetOuter()))
+	{
+		return FString::Printf(TEXT("%s/%s"), *CompOuter->GetReadableName(), *ContainerId.ToString());
+	}
+	if (const UObject* ObjectOuter = Cast<AActor>(GetOuter()))
+	{
+		return FString::Printf(TEXT("%s/%s"), *ObjectOuter->GetName(), *ContainerId.ToString());
+	}
+	// no outer
+	return ContainerId.ToString();
 }
 
 void UGameItemContainer::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) const
