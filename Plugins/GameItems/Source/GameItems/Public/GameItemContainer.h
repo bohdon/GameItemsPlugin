@@ -190,6 +190,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	int32 GetItemSlot(const UGameItem* Item) const;
 
+	/**
+	 * Set the item in a slot by removing any existing item first, then adding.
+	 * Doesn't verify first if the item can be added before removing.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
+	TArray<UGameItem*> SetItemAt(UGameItem* Item, int32 Slot);
+
 	/** Return true if an item exists in the container. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	bool Contains(const UGameItem* Item) const;

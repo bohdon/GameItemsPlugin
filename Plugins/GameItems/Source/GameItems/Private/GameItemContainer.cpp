@@ -577,6 +577,16 @@ int32 UGameItemContainer::GetItemSlot(const UGameItem* Item) const
 	});
 }
 
+TArray<UGameItem*> UGameItemContainer::SetItemAt(UGameItem* Item, int32 Slot)
+{
+	if (GetItemAt(Slot) != Item)
+	{
+		RemoveItemAt(Slot);
+		return AddItem(Item, Slot);
+	}
+	return TArray<UGameItem*>();
+}
+
 bool UGameItemContainer::Contains(const UGameItem* Item) const
 {
 	return GetItemSlot(Item) != INDEX_NONE;
