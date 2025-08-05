@@ -16,15 +16,15 @@ class UGameItemContainerRule_TagRequirements : public UGameItemContainerRule
 
 public:
 	/** Items must have all of these tags to be permitted in the container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Requirements")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Requirements", meta = (GameplayTagFilter="GameItemTagsCategory"))
 	FGameplayTagContainer RequireTags;
 
 	/** Items cannot have any of these tags to be permitted in the container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Requirements")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Requirements", meta = (GameplayTagFilter="GameItemTagsCategory"))
 	FGameplayTagContainer IgnoreTags;
 
 	/** Items must match this query to be permitted in the container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Requirements")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Requirements", meta = (GameplayTagFilter="GameItemTagsCategory"))
 	FGameplayTagQuery Query;
 
 	virtual bool CanContainItem_Implementation(const UGameItem* Item) const override;

@@ -19,7 +19,7 @@ public:
 	UGameItemContainerLink_AutoSlot();
 
 	/** Items must match this query to be auto-slotted. If empty, all compatible items are auto-slotted. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Auto Slot")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Auto Slot", meta = (GameplayTagFilter="GameItemTagsCategory"))
 	FGameplayTagQuery ItemQuery;
 
 	/** Context tags to pass when auto-slotting the item. */

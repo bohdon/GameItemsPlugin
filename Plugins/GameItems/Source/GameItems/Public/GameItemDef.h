@@ -21,7 +21,7 @@ class GAMEITEMS_API UGameItemDef : public UObject
 
 public:
 	/** The tags that this item has. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItem")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItem", meta = (GameplayTagFilter="GameItemTagsCategory"))
 	FGameplayTagContainer OwnedTags;
 
 	/** The user-facing display name. */

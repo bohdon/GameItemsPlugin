@@ -17,7 +17,7 @@ struct FGameItemCondition_ItemSlotted : public FGameItemConditionBase
 	GENERATED_BODY()
 
 	/** The condition will be true if the item is slotted in a container with any of these tags. */
-	UPROPERTY(EditAnywhere, Category = "Default")
+	UPROPERTY(EditAnywhere, Category = "Default", meta = (GameplayTagFilter = "GameItemContainerTagsCategory"))
 	FGameplayTagContainer ContainerTags;
 
 protected:

@@ -31,15 +31,15 @@ public:
 	TArray<FDirectoryPath> SearchDirectories;
 
 	/** Items must have all of these tags to be included. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Auto Fill")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Auto Fill", meta = (GameplayTagFilter="GameItemTagsCategory"))
 	FGameplayTagContainer RequireTags;
 
 	/** Items must have none of these tags to be included. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Auto Fill")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Auto Fill", meta = (GameplayTagFilter="GameItemTagsCategory"))
 	FGameplayTagContainer IgnoreTags;
 
 	/** Items must match this tag query to be included. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Auto Fill")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Auto Fill", meta = (GameplayTagFilter="GameItemTagsCategory"))
 	FGameplayTagQuery TagQuery;
 
 	/** Items must have this item fragment to be included. */

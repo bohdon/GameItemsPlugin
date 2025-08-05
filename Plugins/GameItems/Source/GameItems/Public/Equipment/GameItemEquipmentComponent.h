@@ -33,7 +33,7 @@ struct FGameItemEquipmentConditionState
 
 
 /**
- * Handles applying equipment that is granted from items.
+ * A UGameEquipmentComponent that handles applying equipment granted by items.
  */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GAMEITEMS_API UGameItemEquipmentComponent : public UGameEquipmentComponent
@@ -43,8 +43,8 @@ class GAMEITEMS_API UGameItemEquipmentComponent : public UGameEquipmentComponent
 public:
 	UGameItemEquipmentComponent(const FObjectInitializer& ObjectInitializer);
 
-	/** Container Ids to find and add during initialization. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	/** Container Ids to find and add as sources during initialization. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (GameplayTagFilter = "GameItemContainerIdTagsCategory"))
 	FGameplayTagContainer StartupContainerIds;
 
 	/** Return all equipment that was granted by an item. */

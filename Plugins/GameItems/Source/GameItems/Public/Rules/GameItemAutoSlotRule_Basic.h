@@ -41,15 +41,15 @@ public:
 	bool bReplaceByDefault;
 
 	/** Items must have all of these tags to be auto slotted. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Requirements")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Requirements", meta = (GameplayTagFilter="GameItemTagsCategory"))
 	FGameplayTagContainer RequireTags;
 
 	/** Items cannot have any of these tags to be auto slotted. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Requirements")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Requirements", meta = (GameplayTagFilter="GameItemTagsCategory"))
 	FGameplayTagContainer IgnoreTags;
 
 	/** Items must match this query to be auto slotted. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Requirements")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Requirements", meta = (GameplayTagFilter="GameItemTagsCategory"))
 	FGameplayTagQuery Query;
 
 	virtual bool CanAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;

@@ -41,17 +41,17 @@ struct FGameItemContainerLinkSpec
 {
 	GENERATED_BODY()
 
-	/** Apply this link to all containers matching this query. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ContainerLink")
-	FGameplayTagQuery ContainerQuery;
-
-	/** The linked container id. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ContainerLink", meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
-	FGameplayTag LinkedContainerId;
-
 	/** The container link class to create for each matching container. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ContainerLink")
 	TSubclassOf<UGameItemContainerLink> ContainerLinkClass;
+
+	/** The container to link with. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ContainerLink", meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
+	FGameplayTag LinkedContainerId;
+
+	/** Apply this link to all containers matching this query. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ContainerLink", meta = (GameplayTagFilter="GameItemContainerTagsCategory"))
+	FGameplayTagQuery ContainerQuery;
 };
 
 
@@ -90,7 +90,7 @@ public:
 	bool bIsPlayerCollection;
 
 	/** Return true if an item is slotted in a container with any of the given tags. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, meta = (GameplayTagFilter = "GameItemContainerTagsCategory"))
 	bool IsItemSlotted(UGameItem* Item, FGameplayTagContainer ContainerTags) const;
 
 	/**
