@@ -5,6 +5,7 @@
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
+#include "Equipment/GameEquipmentComponent.h"
 #include "Equipment/GameEquipmentDef.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Character.h"
@@ -27,7 +28,7 @@ void UGameEquipment::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 UWorld* UGameEquipment::GetWorld() const
 {
-	if (const AActor* Owner = GetOwner())
+	if (const AActor* Owner = GetOwningActor())
 	{
 		return Owner->GetWorld();
 	}
@@ -44,9 +45,14 @@ const UGameEquipmentDef* UGameEquipment::GetEquipmentDefCDO() const
 	return GetDefault<UGameEquipmentDef>(EquipmentDef);
 }
 
-AActor* UGameEquipment::GetOwner() const
+UGameEquipmentComponent* UGameEquipment::GetOwner() const
 {
-	return Cast<AActor>(GetOuter());
+	return GetTypedOuter<UGameEquipmentComponent>();
+}
+
+AActor* UGameEquipment::GetOwningActor() const
+{
+	return GetTypedOuter<AActor>();
 }
 
 AActor* UGameEquipment::GetSpawnedActorOfClass(TSubclassOf<AActor> ActorClass) const
@@ -119,7 +125,7 @@ void UGameEquipment::OnUnequipped()
 
 USceneComponent* UGameEquipment::GetTargetAttachComponent() const
 {
-	AActor* OwningActor = GetOwner();
+	AActor* OwningActor = GetOwningActor();
 	if (!OwningActor)
 	{
 		return nullptr;

@@ -7,6 +7,7 @@
 #include "UObject/Object.h"
 #include "GameEquipment.generated.h"
 
+class UGameEquipmentComponent;
 class UGameEquipmentDef;
 
 
@@ -40,9 +41,13 @@ public:
 		return Cast<T>(GetEquipmentDefCDO());
 	}
 
+	/** Return the owning equipment component. */
+	UFUNCTION(BlueprintPure, Category = "Equipment")
+	virtual UGameEquipmentComponent* GetOwner() const;
+
 	/** Return the owning Actor of this equipment. */
 	UFUNCTION(BlueprintPure, Category = "Equipment")
-	virtual AActor* GetOwner() const;
+	virtual AActor* GetOwningActor() const;
 
 	/** Return the instigator responsible for applying this equipment. */
 	UObject* GetInstigator() const { return Instigator; }

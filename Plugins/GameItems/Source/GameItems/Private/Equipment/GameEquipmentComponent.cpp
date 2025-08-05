@@ -79,7 +79,7 @@ UGameEquipment* UGameEquipmentComponent::ApplyEquipment(TSubclassOf<UGameEquipme
 		return nullptr;
 	}
 
-	UGameEquipment* NewEquipment = NewObject<UGameEquipment>(GetOwner(), EquipmentDefCDO->EquipmentClass);
+	UGameEquipment* NewEquipment = NewObject<UGameEquipment>(this, EquipmentDefCDO->EquipmentClass);
 	NewEquipment->SetEquipmentDef(EquipmentDef);
 	NewEquipment->SetInstigator(Instigator);
 	NewEquipment->OnEquipped();
