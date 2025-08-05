@@ -26,7 +26,7 @@ bool UGameItemFragment_DropRules::IsConditionMet(const FGameItemDropContext& Con
 	// setup condition context
 	const UGameItemConditionSchema* DefaultSchema = GetDefault<UGameItemConditionSchema>();
 	FWorldConditionContextData ContextData(*DefaultSchema);
-	ContextData.SetContextData(DefaultSchema->GetTargetActorRef(), Context.TargetActor);
+	ContextData.SetContextData<UObject>(DefaultSchema->GetTargetActorRef(), Context.TargetActor);
 
 	return UGameItemStatics::EvaluateWorldCondition(this, Condition, ContextData);
 }

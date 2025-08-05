@@ -18,7 +18,7 @@ struct GAMEITEMS_API FGameItemDropContext
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	AActor* TargetActor;
+	TObjectPtr<AActor> TargetActor;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TInstancedStruct<FGameItemDropParams> Params;

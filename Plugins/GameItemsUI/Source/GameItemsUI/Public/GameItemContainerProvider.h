@@ -20,7 +20,7 @@ struct FGameItemViewContext
 
 	/** The user widget requesting the container. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	const UUserWidget* UserWidget;
+	TObjectPtr<const UUserWidget> UserWidget;
 
 	/** Additional context tags. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
