@@ -7,11 +7,13 @@
 #include "GameItem.h"
 #include "GameItemsModule.h"
 #include "Equipment/AbilityEquipmentDef.h"
+#include "Equipment/GameEquipmentComponent.h"
+#include "Equipment/GameEquipmentDef.h"
 
 
 UAbilityEquipment::UAbilityEquipment(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer),
-	  bUseItemLevel(false)
+	: Super(ObjectInitializer)
+	, bUseItemLevel(false)
 {
 }
 
@@ -50,14 +52,16 @@ void UAbilityEquipment::GiveAbilitySets()
 	const UAbilityEquipmentDef* AbilityEquipDef = GetEquipmentDefCDO<UAbilityEquipmentDef>();
 	if (!AbilityEquipDef)
 	{
-		UE_LOG(LogGameItems, Error, TEXT("%s is not a UAbilityEquipmentDef"), *GetEquipmentDef()->GetName());
+		UE_LOG(LogGameItems, Error, TEXT("[%s] %s must be a UAbilityEquipmentDef"),
+		       *GetOwningActor()->GetActorNameOrLabel(), *GetEquipmentDef()->GetName());
 		return;
 	}
 
-	UAbilitySystemComponent* AbilitySystem = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+	UAbilitySystemComponent* AbilitySystem = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwningActor());
 	if (!AbilitySystem)
 	{
-		UE_LOG(LogGameItems, Error, TEXT("No AbilitySystem found for %s"), *GetNameSafe(GetOwner()));
+		UE_LOG(LogGameItems, Error, TEXT("[%s] No AbilitySystem found"),
+		       *GetOwner()->GetReadableName());
 		return;
 	}
 
@@ -65,7 +69,8 @@ void UAbilityEquipment::GiveAbilitySets()
 	{
 		if (!AbilitySet)
 		{
-			UE_LOG(LogGameItems, Error, TEXT("%s has invalid AbilitySet"), *GetNameSafe(AbilityEquipDef));
+			UE_LOG(LogGameItems, Error, TEXT("[%s] %s has invalid AbilitySet"),
+			       *GetOwner()->GetReadableName(), *GetNameSafe(AbilityEquipDef));
 			continue;
 		}
 
@@ -75,11 +80,11 @@ void UAbilityEquipment::GiveAbilitySets()
 
 void UAbilityEquipment::RemoveAbilitySets()
 {
-	if (UAbilitySystemComponent* AbilitySystem = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()))
+	if (UAbilitySystemComponent* AbilitySystem = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwningActor()))
 	{
 		if (AbilitySetHandles.AbilitySet)
 		{
-			AbilitySetHandles.AbilitySet->RemoveFromAbilitySystem(AbilitySystem, AbilitySetHandles);
+			AbilitySetHandles.AbilitySet->RemoveFromAbilitySystem(AbilitySystem, AbilitySetHandles, bEndImmediately, bKeepAttributeSets);
 		}
 	}
 }

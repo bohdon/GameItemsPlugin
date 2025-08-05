@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ExtendedAbilitySet.h"
+#include "GameplayTagContainer.h"
 #include "Equipment/GameEquipment.h"
 #include "AbilityEquipment.generated.h"
 
@@ -26,6 +27,14 @@ public:
 	/** The stat tag that represents the item level to use. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (EditCondition = "bUseItemLevel"))
 	FGameplayTag ItemLevelTag;
+
+	/** End abilities immediately when this equipment is removed. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bEndImmediately = true;
+
+	/** Keep attribute sets when this equipment is removed. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bKeepAttributeSets = false;
 
 	virtual void OnEquipped() override;
 	virtual void OnUnequipped() override;
