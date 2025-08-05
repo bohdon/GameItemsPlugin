@@ -52,9 +52,7 @@ void FGameItemContainerAddPlan::UpdateDerivedValues(int32 ItemCount)
 // ------------------
 
 UGameItemContainer::UGameItemContainer(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer),
-	  ActiveChangeOperations(0),
-	  NumSlotsPreChange(INDEX_NONE)
+	: Super(ObjectInitializer)
 {
 	ItemList.OnListChangedEvent.AddUObject(this, &UGameItemContainer::OnListChanged);
 }
@@ -808,7 +806,7 @@ int32 UGameItemContainer::GetRemainingCollectionSpaceForItem(const UGameItem* It
 	return FMath::Max(GetItemCollectionMaxCount(Item) - GetCollectionMatchingItemCount(Item), 0);
 }
 
-void UGameItemContainer::AddDefaultItems(bool bForce)
+void UGameItemContainer::CreateDefaultItems(bool bForce)
 {
 	if (bHasDefaultItems && !bForce)
 	{
@@ -818,6 +816,13 @@ void UGameItemContainer::AddDefaultItems(bool bForce)
 	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
 	for (const FGameItemDefStack& DefaultItem : GetContainerDefCDO()->DefaultItems)
 	{
+		if (!DefaultItem.ItemDef)
+		{
+			continue;
+		}
+
+		UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Creating default item: %s (x%d)"),
+		       *GetReadableName(), *DefaultItem.ItemDef->GetName(), DefaultItem.Count);
 		ItemSubsystem->CreateItemInContainer(this, DefaultItem.ItemDef, DefaultItem.Count);
 	}
 
@@ -828,6 +833,8 @@ void UGameItemContainer::AddDefaultItems(bool bForce)
 			continue;
 		}
 
+		UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Creating default items from set: %s"),
+		       *GetReadableName(), *ItemSet->GetName());
 		ItemSet->AddToContainer(this);
 	}
 
@@ -836,6 +843,8 @@ void UGameItemContainer::AddDefaultItems(bool bForce)
 		FGameItemDropContext Context;
 		Context.TargetActor = GetOwner();
 
+		UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Creating default items from drop content: %s"),
+		       *GetReadableName(), *GetContainerDefCDO()->DefaultDropContent.ToDebugString());
 		const TArray<UGameItem*> NewItems = ItemSubsystem->CreateItemsFromDropTable(this, Context, GetContainerDefCDO()->DefaultDropContent);
 		AddItems(NewItems);
 	}
@@ -1107,7 +1116,8 @@ void UGameItemContainer::OnItemAdded(UGameItem* Item, int32 Slot)
 {
 	check(Item);
 
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s OnItemAdded [%d] %s"), *GetName(), Slot, *GetNameSafe(Item));
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] OnItemAdded [Slot %d] %s"),
+	       *GetReadableName(), Slot, *Item->ToDebugString());
 	OnItemAddedEvent.Broadcast(Item);
 	Item->OnSlottedEvent.Broadcast(this, Slot, INDEX_NONE);
 
@@ -1121,7 +1131,8 @@ void UGameItemContainer::OnItemRemoved(UGameItem* Item, int32 Slot)
 {
 	check(Item);
 
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s OnItemRemoved [%d] %s"), *GetName(), Slot, *GetNameSafe(Item));
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] OnItemRemoved [Slot %d] %s"),
+	       *GetReadableName(), Slot, *Item->ToDebugString());
 	OnItemRemovedEvent.Broadcast(Item);
 	Item->OnUnslottedEvent.Broadcast(this, Slot);
 
@@ -1160,7 +1171,8 @@ void UGameItemContainer::BroadcastSlotChanges()
 		}
 
 		FSlotRange(int32 Slot)
-			: Start(Slot), End(Slot)
+			: Start(Slot)
+			, End(Slot)
 		{
 		}
 
@@ -1182,12 +1194,14 @@ void UGameItemContainer::BroadcastSlotChanges()
 	{
 		if (Range.Start == Range.End)
 		{
-			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s OnItemSlotChanged %d"), *GetName(), Range.Start);
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] OnItemSlotChanged [Slot %d]"),
+			       *GetReadableName(), Range.Start);
 			OnItemSlotChangedEvent.Broadcast(Range.Start);
 		}
 		else
 		{
-			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s OnItemSlotsChanged %d - %d"), *GetName(), Range.Start, Range.End);
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] OnItemSlotsChanged [Slot %d..%d]"),
+			       *GetReadableName(), Range.Start, Range.End);
 			OnItemSlotsChangedEvent.Broadcast(Range.Start, Range.End);
 		}
 	};
@@ -1225,7 +1239,8 @@ void UGameItemContainer::BroadcastSlotChanges()
 		const int32 NewNumSlots = GetNumSlots();
 		if (NumSlotsPreChange != NewNumSlots)
 		{
-			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s OnNumSlotsChanged %d -> %d"), *GetName(), NumSlotsPreChange, NewNumSlots);
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] OnNumSlotsChanged %d -> %d"),
+			       *GetReadableName(), NumSlotsPreChange, NewNumSlots);
 			OnNumSlotsChangedEvent.Broadcast(NewNumSlots, NumSlotsPreChange);
 		}
 	}

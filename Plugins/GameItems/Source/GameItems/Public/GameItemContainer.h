@@ -280,11 +280,11 @@ public:
 	virtual int32 GetRemainingCollectionSpaceForItem(const UGameItem* Item) const;
 
 	/**
-	 * Add the default items defined for this container.
+	 * Create and add the default items defined for this container.
 	 * @param bForce If true, add the items even if they had previously been added.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
-	virtual void AddDefaultItems(bool bForce = false);
+	virtual void CreateDefaultItems(bool bForce = false);
 
 	/** Return all rules applied to this container. */
 	const TArray<UGameItemContainerRule*>& GetRules() const { return Rules; }
@@ -400,7 +400,7 @@ protected:
 	TScriptInterface<IGameItemCollectionInterface> Collection;
 
 	/** Have the default items already been added to this container? */
-	bool bHasDefaultItems;
+	bool bHasDefaultItems = false;
 
 	/** Used to track slot changes and broadcast after several operations are completed. */
 	struct FScopedSlotChanges
@@ -424,10 +424,10 @@ protected:
 	};
 
 	/** Number of open change operations. */
-	int32 ActiveChangeOperations;
+	int32 ActiveChangeOperations = 0;
 
 	/** Number of slots in the container before any change operations. */
-	int32 NumSlotsPreChange;
+	int32 NumSlotsPreChange = INDEX_NONE;
 
 	/** Set of slots that were changed during change operations. */
 	TArray<int32> ChangedSlots;

@@ -8,7 +8,7 @@
 #include "GameItemDef.h"
 #include "GameItemSaveDataInterface.h"
 #include "GameItemSettings.h"
-#include "Engine/ActorChannel.h"
+#include "GameItemsModule.h"
 #include "Engine/World.h"
 #include "GameFramework/SaveGame.h"
 #include "Rules/GameItemContainerLink.h"
@@ -17,10 +17,7 @@
 
 
 UGameItemContainerComponent::UGameItemContainerComponent(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer),
-	  bEnableSaveGame(false),
-	  SaveCollectionId(NAME_None),
-	  bIsPlayerCollection(false)
+	: Super(ObjectInitializer)
 {
 	bWantsInitializeComponent = true;
 	SetIsReplicatedByDefault(true);
@@ -42,6 +39,7 @@ void UGameItemContainerComponent::InitializeComponent()
 	if (GetOwner()->HasAuthority())
 	{
 		CreateStartupContainers();
+		CreateDefaultItems();
 	}
 }
 
@@ -212,13 +210,22 @@ void UGameItemContainerComponent::CreateStartupContainers()
 {
 	check(GetOwner()->HasAuthority());
 
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Creating startup containers..."), *GetReadableName());
 	for (const FGameItemContainerSpec& ContainerSpec : StartupContainers)
 	{
-		UGameItemContainer* Container = CreateContainer(ContainerSpec.ContainerId, ContainerSpec.ContainerDef);
-		if (Container)
+		if (UGameItemContainer* Container = CreateContainer(ContainerSpec.ContainerId, ContainerSpec.ContainerDef))
 		{
 			Container->DisplayName = ContainerSpec.DisplayName;
 		}
+	}
+}
+
+void UGameItemContainerComponent::CreateDefaultItems()
+{
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Creating default items..."), *GetReadableName());
+	for (auto& Elem : Containers)
+	{
+		Elem.Value->CreateDefaultItems();
 	}
 }
 
@@ -262,12 +269,16 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag Co
 	if (Containers.Contains(ContainerId))
 	{
 		// already exists, or invalid id
+		UE_LOG(LogGameItems, Warning, TEXT("[%s] Container already exists with id: %s"),
+		       *GetReadableName(), *ContainerId.ToString());
 		return nullptr;
 	}
 
 	if (!ContainerDef)
 	{
 		// must provide a container def
+		UE_LOG(LogGameItems, Warning, TEXT("[%s] Attempted to create container with null ContainerDef: %s"),
+		       *GetReadableName(), *ContainerId.ToString());
 		return nullptr;
 	}
 
@@ -286,6 +297,9 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag Co
 	NewContainer->SetCollection(this);
 	NewContainer->SetContainerDef(ContainerDef);
 
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Created container: %s (%s)"),
+	       *GetReadableName(), *ContainerId.ToString(), *ContainerDef->GetName());
+
 	// add link rules
 	for (const FGameItemContainerLinkSpec& LinkSpec : ContainerLinks)
 	{
@@ -295,11 +309,12 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag Co
 		}
 		if (LinkSpec.ContainerQuery.Matches(NewContainer->GetOwnedTags()))
 		{
-			UGameItemContainerLink* NewLink = NewContainer->AddRule<UGameItemContainerLink>(LinkSpec.ContainerLinkClass);
-			if (NewLink)
+			if (UGameItemContainerLink* NewLink = NewContainer->AddRule<UGameItemContainerLink>(LinkSpec.ContainerLinkClass))
 			{
 				// just set the container id, then resolve this (and any other links) later
 				NewLink->LinkedContainerId = LinkSpec.LinkedContainerId;
+				UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Linked %s to %s (%s)"),
+				       *GetReadableName(), *ContainerId.ToString(), *LinkSpec.LinkedContainerId.ToString(), *LinkSpec.ContainerLinkClass->GetName());
 			}
 		}
 	}
@@ -319,7 +334,4 @@ void UGameItemContainerComponent::AddContainer(UGameItemContainer* Container)
 	Containers.Add(Container->ContainerId, Container);
 
 	AddReplicatedSubObject(Container);
-
-	// add default items after loading save game and gameplay begins
-	Container->AddDefaultItems();
 }

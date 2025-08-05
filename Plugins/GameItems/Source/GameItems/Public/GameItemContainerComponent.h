@@ -79,7 +79,7 @@ public:
 
 	/** Whether this container collection should be saved. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveGame")
-	bool bEnableSaveGame;
+	bool bEnableSaveGame = false;
 
 	/** The id of this container collection for save games. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (EditCondition = "bEnableSaveGame"), Category = "SaveGame")
@@ -87,7 +87,7 @@ public:
 
 	/** Should this game item collection be saved to player save data? */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Meta = (EditCondition = "bEnableSaveGame"), Category = "SaveGame")
-	bool bIsPlayerCollection;
+	bool bIsPlayerCollection = false;
 
 	/** Return true if an item is slotted in a container with any of the given tags. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, meta = (GameplayTagFilter = "GameItemContainerTagsCategory"))
@@ -126,6 +126,9 @@ protected:
 
 	/** Create all startup containers. */
 	void CreateStartupContainers();
+
+	/** Create and add the default items for all containers. */
+	void CreateDefaultItems();
 
 	/** Update all container link rules to assign any containers that aren't set yet. */
 	void ResolveContainerLinks();

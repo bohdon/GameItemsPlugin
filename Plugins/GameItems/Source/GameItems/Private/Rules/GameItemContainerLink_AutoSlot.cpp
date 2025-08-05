@@ -4,6 +4,7 @@
 #include "Rules/GameItemContainerLink_AutoSlot.h"
 
 #include "GameItemContainer.h"
+#include "GameItemsModule.h"
 #include "Rules/GameItemAutoSlotRule_Basic.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemContainerLink_AutoSlot)
@@ -33,6 +34,8 @@ void UGameItemContainerLink_AutoSlot::OnLinkedItemAdded(UGameItem* Item)
 {
 	if (Container->CanAutoSlot(Item, ContextTags) && (ItemQuery.IsEmpty() || ItemQuery.Matches(Item->GetOwnedTags())))
 	{
+		UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Auto-slotting item from link: %s (%s)"),
+			*Container->GetReadableName(), *Item->ToDebugString(), *LinkedContainerId.ToString());
 		Container->TryAutoSlot(Item, ContextTags);
 	}
 }
