@@ -47,7 +47,7 @@ public:
 	TSubclassOf<UGameItemContainerProvider> Provider;
 
 	/** The container id. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ViewModelResolver")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ViewModelResolver", meta = (GameplayTagFilter = "GameItemContainerIdTagsCategory"))
 	FGameplayTag ContainerId;
 
 	virtual UObject* CreateInstance(const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View) const override;
@@ -72,7 +72,7 @@ public:
 	TSubclassOf<UGameItemContainerProvider> Provider;
 
 	/** The container id. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ViewModelResolver")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ViewModelResolver", meta = (GameplayTagFilter = "GameItemContainerIdTagsCategory"))
 	FGameplayTag ContainerId;
 
 	/** The slot in the container to retrieve. */

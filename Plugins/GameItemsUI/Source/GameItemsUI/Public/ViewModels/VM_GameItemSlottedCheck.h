@@ -36,7 +36,7 @@ public:
 
 protected:
 	/** If the item is slotted to a container with any of these tags, consider it equipped. */
-	UPROPERTY(BlueprintReadWrite, Setter, Getter, FieldNotify, Meta = (AllowPrivateAccess))
+	UPROPERTY(BlueprintReadWrite, Setter, Getter, FieldNotify, Meta = (AllowPrivateAccess, GameplayTagFilter = "GameItemContainerTagsCategory"))
 	FGameplayTagContainer ContainerTags;
 
 	/** The game item. */

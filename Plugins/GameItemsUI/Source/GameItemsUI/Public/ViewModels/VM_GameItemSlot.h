@@ -67,7 +67,7 @@ protected:
 	void OnNumSlotsChanged(int32 NewNumSlots, int32 OldNumSlots);
 
 public:
-	/** Create an slot view model for each slot in a container, which can be provided to a list view. */
+	/** Create a slot view model for each slot in a container, which can be provided to a list view. */
 	UFUNCTION(BlueprintCallable, Meta = (DefaultToSelf = "Outer"))
 	static TArray<UVM_GameItemSlot*> CreateSlotViewModelsForContainer(UObject* Outer, UGameItemContainer* InContainer);
 };

@@ -43,6 +43,13 @@ UVM_GameItemContainer* UGameItemsUISubsystem::GetOrCreateContainerViewModelForAc
 	return GetOrCreateContainerViewModel(Container);
 }
 
+UVM_GameItemSlot* UGameItemsUISubsystem::CreateSlotViewModelForContainer(UObject* Outer, UGameItemContainer* InContainer, int32 Slot)
+{
+	UVM_GameItemSlot* NewViewModel = NewObject<UVM_GameItemSlot>(Outer, NAME_None, RF_Transient);
+	NewViewModel->SetContainerAndSlot(InContainer, Slot);
+	return NewViewModel;
+}
+
 UGameItem* UGameItemsUISubsystem::GetItemFromObject(UObject* ItemObject) const
 {
 	if (UGameItem* GameItem = Cast<UGameItem>(ItemObject))
