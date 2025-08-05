@@ -38,7 +38,7 @@ public:
 	static TArray<UGameItemContainer*> GetAllItemContainersForActor(AActor* Actor);
 
 	/** Return a game item container from an actor. */
-	UFUNCTION(BlueprintCallable, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems", meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
 	static UGameItemContainer* GetItemContainerForActor(AActor* Actor, FGameplayTag ContainerId);
 
 	/** Find and return an item fragment by class. */
@@ -47,7 +47,7 @@ public:
 	                                                     TSubclassOf<UGameItemFragment> FragmentClass);
 
 	/** Return an item container by id from an array of containers. */
-	UFUNCTION(BlueprintCallable, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems", meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
 	static UGameItemContainer* GetItemContainerById(const TArray<UGameItemContainer*>& Containers, FGameplayTag ContainerId);
 
 	UFUNCTION(BlueprintCallable)

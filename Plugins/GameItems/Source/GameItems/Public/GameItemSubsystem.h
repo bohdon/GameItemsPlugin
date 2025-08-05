@@ -110,7 +110,7 @@ public:
 	TArray<UGameItemContainer*> GetAllContainersForActor(const AActor* Actor) const;
 
 	/** Return a game item container from an actor, using the IGameItemContainerInterface if possible. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems", meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
 	UGameItemContainer* GetContainerForActor(const AActor* Actor, FGameplayTag ContainerId) const;
 
 	/** Return the default container from an actor, using the IGameItemContainerInterface if possible. */

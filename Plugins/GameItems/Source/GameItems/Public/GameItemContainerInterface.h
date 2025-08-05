@@ -34,7 +34,7 @@ public:
 	virtual TArray<FGameplayTag> GetAllItemContainerIds() const;
 
 	/** Return an item container by tag id. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
 	virtual UGameItemContainer* GetItemContainer(FGameplayTag ContainerId) const;
 
 	/** Return the default item container. */

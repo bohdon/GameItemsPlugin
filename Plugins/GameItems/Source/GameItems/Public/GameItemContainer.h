@@ -71,11 +71,11 @@ public:
 	UGameItemContainer(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	/** The unique tag identifying this container amongst others. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
 	FGameplayTag ContainerId;
 
 	/** The user-facing display name of this container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
 	FText DisplayName;
 
 	/** Set the definition for this container. Cannot be changed once set. */

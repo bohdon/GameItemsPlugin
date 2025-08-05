@@ -22,7 +22,7 @@ struct FGameItemContainerSpec
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
 	FGameplayTag ContainerId;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -46,7 +46,7 @@ struct FGameItemContainerLinkSpec
 	FGameplayTagQuery ContainerQuery;
 
 	/** The linked container id. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ContainerLink")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ContainerLink", meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
 	FGameplayTag LinkedContainerId;
 
 	/** The container link class to create for each matching container. */
@@ -59,9 +59,10 @@ struct FGameItemContainerLinkSpec
  * Component that provides a collection of game item containers.
  */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GAMEITEMS_API UGameItemContainerComponent : public UActorComponent,
-                                                  public IGameItemContainerInterface,
-                                                  public IGameItemCollectionInterface
+class GAMEITEMS_API UGameItemContainerComponent
+	: public UActorComponent,
+	  public IGameItemContainerInterface,
+	  public IGameItemCollectionInterface
 {
 	GENERATED_BODY()
 
@@ -96,7 +97,7 @@ public:
 	 * Create a new item container.
 	 * @return The new container, or null if a container already exists with the same id.
 	 */
-	UFUNCTION(BlueprintCallable, Meta = (DeterminesOutputType = "ContainerClass"))
+	UFUNCTION(BlueprintCallable, Meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
 	UGameItemContainer* CreateContainer(FGameplayTag ContainerId, TSubclassOf<UGameItemContainerDef> ContainerDef = nullptr);
 
 	virtual void InitializeComponent() override;
