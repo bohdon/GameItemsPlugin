@@ -47,6 +47,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (GameplayTagFilter = "GameItemContainerIdTagsCategory"))
 	FGameplayTagContainer StartupContainerIds;
 
+	/**
+	 * Automatically find and add startup containers on BeginPlay.
+	 * Disable this if the item containers won't be ready until later, and call AddStartupItemContainers when they are.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (GameplayTagFilter = "GameItemContainerIdTagsCategory"))
+	bool bAutoAddStartupContainers = true;
+
 	/** Return all equipment that was granted by an item. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Equipment")
 	TArray<UGameEquipment*> FindAllEquipmentFromItem(UGameItem* Item) const;
@@ -61,6 +68,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ReapplyAllItemEquipment();
+
+	/** Find and add all startup item containers by id. */
+	UFUNCTION(BlueprintCallable)
+	void AddStartupItemContainers();
 
 	/** Return the equipment fragment for an item, or null if it has one or the fragment is invalid. */
 	virtual const UGameItemFragment_Equipment* GetItemEquipmentFragment(UGameItem* Item) const;

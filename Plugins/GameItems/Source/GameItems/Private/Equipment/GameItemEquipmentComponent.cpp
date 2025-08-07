@@ -81,6 +81,18 @@ void UGameItemEquipmentComponent::ReapplyAllItemEquipment()
 	}
 }
 
+void UGameItemEquipmentComponent::AddStartupItemContainers()
+{
+	const UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
+	for (const FGameplayTag ContainerId : StartupContainerIds)
+	{
+		if (UGameItemContainer* Container = ItemSubsystem->GetContainerForActor(GetOwner(), ContainerId))
+		{
+			AddItemContainer(Container);
+		}
+	}
+}
+
 const UGameItemFragment_Equipment* UGameItemEquipmentComponent::GetItemEquipmentFragment(UGameItem* Item) const
 {
 	if (Item)
@@ -102,13 +114,9 @@ void UGameItemEquipmentComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	const UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
-	for (const FGameplayTag ContainerId : StartupContainerIds)
+	if (bAutoAddStartupContainers)
 	{
-		if (UGameItemContainer* Container = ItemSubsystem->GetContainerForActor(GetOwner(), ContainerId))
-		{
-			AddItemContainer(Container);
-		}
+		AddStartupItemContainers();
 	}
 }
 
