@@ -3,18 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameItemContainerComponent.h"
 #include "GameItemTypes.h"
 #include "GameplayTagContainer.h"
 #include "WorldConditionQuery.h"
 #include "DropTable/GameItemDropTableRow.h"
-#include "GameFramework/Actor.h"
-#include "GameFramework/PlayerState.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GameItemStatics.generated.h"
 
+class AActor;
 class UGameItem;
 class UGameItemContainer;
+class UGameItemContainerComponent;
 class UGameItemDef;
 class UGameItemFragment;
 class UGameItemSubsystem;
@@ -46,6 +45,12 @@ public:
 	static const UGameItemFragment* FindGameItemFragment(const UObject* WorldContextObject, TSubclassOf<UGameItemDef> ItemDef,
 	                                                     TSubclassOf<UGameItemFragment> FragmentClass);
 
+	/** Find and return an item fragment by class from a game item. */
+	UFUNCTION(BlueprintCallable, Meta = (WorldContext = "WorldContextObject", DeterminesOutputType = "FragmentClass"),
+		Category = "GameItems", DisplayName = "Find Fragment (Item)")
+	static const UGameItemFragment* FindGameItemFragmentFromItem(const UObject* WorldContextObject, UGameItem* Item,
+	                                                             TSubclassOf<UGameItemFragment> FragmentClass);
+
 	/** Return an item container by id from an array of containers. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems", meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
 	static UGameItemContainer* GetItemContainerById(const TArray<UGameItemContainer*>& Containers, FGameplayTag ContainerId);
@@ -64,5 +69,6 @@ public:
 	UFUNCTION(BlueprintPure, Category="GameItems|Utilities")
 	static int32 GetWeightedRandomArrayIndex(const TArray<float>& Probabilities);
 
-	static bool EvaluateWorldCondition(const UObject* Owner, const FWorldConditionQueryDefinition& Condition, const FWorldConditionContextData& ContextData);
+	static bool EvaluateWorldCondition(const UObject* Owner, const FWorldConditionQueryDefinition& Condition,
+	                                   const FWorldConditionContextData& ContextData);
 };

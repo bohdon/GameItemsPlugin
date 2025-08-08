@@ -4,6 +4,7 @@
 #include "GameItemStatics.h"
 
 #include "GameItemContainer.h"
+#include "GameItemContainerComponent.h"
 #include "GameItemDef.h"
 #include "GameItemSubsystem.h"
 #include "WorldConditionContext.h"
@@ -14,6 +15,7 @@
 #include "Engine/GameInstance.h"
 #include "Equipment/GameItemFragment_Equipment.h"
 #include "Fragments/GameItemFragment_DropRules.h"
+#include "GameFramework/Actor.h"
 
 
 UGameItemContainerComponent* UGameItemStatics::GetItemContainerComponentForActor(AActor* Actor)
@@ -39,6 +41,12 @@ const UGameItemFragment* UGameItemStatics::FindGameItemFragment(const UObject* W
 {
 	const UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(WorldContextObject);
 	return ItemSubsystem ? ItemSubsystem->FindFragment(ItemDef, FragmentClass) : nullptr;
+}
+
+const UGameItemFragment* UGameItemStatics::FindGameItemFragmentFromItem(const UObject* WorldContextObject, UGameItem* Item,
+                                                                        TSubclassOf<UGameItemFragment> FragmentClass)
+{
+	return FindGameItemFragment(WorldContextObject, Item ? Item->GetItemDef() : nullptr, FragmentClass);
 }
 
 UGameItemContainer* UGameItemStatics::GetItemContainerById(const TArray<UGameItemContainer*>& Containers, FGameplayTag ContainerId)
