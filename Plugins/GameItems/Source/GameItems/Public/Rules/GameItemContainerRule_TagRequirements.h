@@ -28,4 +28,5 @@ public:
 	FGameplayTagQuery Query;
 
 	virtual bool CanContainItem_Implementation(const UGameItem* Item) const override;
+	virtual bool CanContainItemByDef_Implementation(TSubclassOf<UGameItemDef> ItemDef) const override;
 };

@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Templates/SubclassOf.h"
 #include "UObject/Interface.h"
 #include "GameItemContainerInterface.generated.h"
 
 class UGameItemContainer;
+class UGameItemDef;
 
 
 UINTERFACE(Meta = (CannotImplementInterfaceInBlueprint))
@@ -40,4 +42,8 @@ public:
 	/** Return the default item container. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false)
 	virtual UGameItemContainer* GetDefaultItemContainer() const;
+
+	/** Return default container that should hold a specific item. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	virtual UGameItemContainer* GetDefaultContainerForItem(TSubclassOf<UGameItemDef> ItemDef) const;
 };

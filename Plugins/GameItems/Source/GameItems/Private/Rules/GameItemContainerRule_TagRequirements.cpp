@@ -11,6 +11,11 @@
 
 bool UGameItemContainerRule_TagRequirements::CanContainItem_Implementation(const UGameItem* Item) const
 {
-	const FGameplayTagContainer ItemTags = Item->GetItemDefCDO()->OwnedTags;
+	return CanContainItemByDef_Implementation(Item->GetItemDef());
+}
+
+bool UGameItemContainerRule_TagRequirements::CanContainItemByDef_Implementation(TSubclassOf<UGameItemDef> ItemDef) const
+{
+	const FGameplayTagContainer& ItemTags = GetDefault<UGameItemDef>(ItemDef)->OwnedTags;
 	return ItemTags.HasAll(RequireTags) && !ItemTags.HasAny(IgnoreTags) && (Query.IsEmpty() || Query.Matches(ItemTags));
 }

@@ -38,6 +38,11 @@ bool UGameItemContainerRule::CanContainItem_Implementation(const UGameItem* Item
 	return true;
 }
 
+bool UGameItemContainerRule::CanContainItemByDef_Implementation(TSubclassOf<UGameItemDef> ItemDef) const
+{
+	return true;
+}
+
 int32 UGameItemContainerRule::GetItemMaxCount_Implementation(const UGameItem* Item) const
 {
 	return -1;

@@ -4,7 +4,10 @@
 #include "GameItemSet.h"
 
 #include "GameItemContainer.h"
+#include "GameItemContainerComponent.h"
+#include "GameItemContainerInterface.h"
 #include "GameItemDef.h"
+#include "GameItemsModule.h"
 #include "GameItemSubsystem.h"
 #include "AssetRegistry/AssetData.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -111,23 +114,53 @@ bool UGameItemSetAutoFill::ShouldIncludeItem_Implementation(TSubclassOf<UGameIte
 // UGameItemSet
 // ------------
 
-void UGameItemSet::AddToContainer(UGameItemContainer* Container) const
+TArray<UGameItem*> UGameItemSet::AddToContainer(UGameItemContainer* Container) const
 {
 	if (!Container)
 	{
-		return;
+		return TArray<UGameItem*>();
 	}
 
 	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(Container);
 	if (!ItemSubsystem)
 	{
-		return;
+		return TArray<UGameItem*>();
 	}
 
+	TArray<UGameItem*> Result;
 	for (const FGameItemDefStack& Item : Items)
 	{
-		ItemSubsystem->CreateItemInContainer(Container, Item.ItemDef, Item.Count);
+		Result.Append(ItemSubsystem->CreateItemInContainer(Container, Item.ItemDef, Item.Count));
 	}
+	return Result;
+}
+
+TArray<UGameItem*> UGameItemSet::AddToDefaultContainers(TScriptInterface<IGameItemContainerInterface> ContainerInterface) const
+{
+	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(ContainerInterface.GetObject());
+	if (!ItemSubsystem)
+	{
+		return TArray<UGameItem*>();
+	}
+
+	TArray<UGameItem*> Result;
+	for (const FGameItemDefStack& Item : Items)
+	{
+		if (UGameItemContainer* Container = ContainerInterface->GetDefaultContainerForItem(Item.ItemDef))
+		{
+			Result.Append(ItemSubsystem->CreateItemInContainer(Container, Item.ItemDef, Item.Count));
+		}
+#if !NO_LOGGING
+		else if (UE_LOG_ACTIVE(LogGameItems, Verbose))
+		{
+			const UGameItemContainerComponent* ContainerComp = Cast<UGameItemContainerComponent>(ContainerInterface.GetObject());
+			const FString ContainerName = ContainerComp ? ContainerComp->GetReadableName() : ContainerInterface.GetObject()->GetPathName();
+			UE_LOG(LogGameItems, Verbose, TEXT("[%s] Couldn't add %s to %s, no matching container found"),
+			       *GetName(), *Item.ItemDef->GetName(), *ContainerName);
+		}
+#endif
+	}
+	return Result;
 }
 
 

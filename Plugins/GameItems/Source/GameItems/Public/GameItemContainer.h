@@ -266,6 +266,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	virtual bool CanContainItem(const UGameItem* Item) const;
 
+	/** Return true if the container is ever allowed to contain an item by definition. */
+	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
+	virtual bool CanContainItemByDef(TSubclassOf<UGameItemDef> ItemDef) const;
+
 	/** Return the maximum total number of an item allowed in this container (for all stacks combined). */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	virtual int32 GetItemMaxCount(const UGameItem* Item) const;

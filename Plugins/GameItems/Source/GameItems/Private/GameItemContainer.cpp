@@ -728,13 +728,7 @@ bool UGameItemContainer::IsSlotEmpty(int32 Slot) const
 
 bool UGameItemContainer::CanContainItem(const UGameItem* Item) const
 {
-	if (!Item)
-	{
-		return false;
-	}
-
-	const UGameItemDef* ItemDefCDO = Item->GetItemDefCDO();
-	if (!ItemDefCDO)
+	if (!Item || !Item->GetItemDef())
 	{
 		return false;
 	}
@@ -742,6 +736,23 @@ bool UGameItemContainer::CanContainItem(const UGameItem* Item) const
 	for (const UGameItemContainerRule* Rule : Rules)
 	{
 		if (!Rule->CanContainItem(Item))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool UGameItemContainer::CanContainItemByDef(TSubclassOf<UGameItemDef> ItemDef) const
+{
+	if (!ItemDef)
+	{
+		return false;
+	}
+
+	for (const UGameItemContainerRule* Rule : Rules)
+	{
+		if (!Rule->CanContainItemByDef(ItemDef))
 		{
 			return false;
 		}

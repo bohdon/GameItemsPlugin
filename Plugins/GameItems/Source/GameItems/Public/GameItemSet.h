@@ -8,6 +8,7 @@
 #include "UObject/ObjectSaveContext.h"
 #include "GameItemSet.generated.h"
 
+class IGameItemContainerInterface;
 class UGameItemFragment;
 class UGameItemSet;
 
@@ -77,8 +78,12 @@ public:
 	TArray<FGameItemDefStack> Items;
 
 	/** Add all items in this set to a container. */
-	UFUNCTION(BlueprintCallable, Category = "GameItems")
-	virtual void AddToContainer(UGameItemContainer* Container) const;
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
+	virtual TArray<UGameItem*> AddToContainer(UGameItemContainer* Container) const;
+
+	/** Add each item in the set to a container, determined by finding the default container to use for each item. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
+	virtual TArray<UGameItem*> AddToDefaultContainers(TScriptInterface<IGameItemContainerInterface> ContainerInterface) const;
 
 #if WITH_EDITOR
 

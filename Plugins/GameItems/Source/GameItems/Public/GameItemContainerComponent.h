@@ -90,7 +90,7 @@ public:
 	bool bIsPlayerCollection = false;
 
 	/** Return true if an item is slotted in a container with any of the given tags. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, meta = (GameplayTagFilter = "GameItemContainerTagsCategory"))
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems", meta = (GameplayTagFilter = "GameItemContainerTagsCategory"))
 	bool IsItemSlotted(UGameItem* Item, FGameplayTagContainer ContainerTags) const;
 
 	/**
@@ -99,6 +99,10 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
 	UGameItemContainer* CreateContainer(FGameplayTag ContainerId, TSubclassOf<UGameItemContainerDef> ContainerDef = nullptr);
+
+	/** Create and add the default items for any newly created containers. */
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
+	void CreateDefaultItems(bool bForce = false);
 
 	virtual void InitializeComponent() override;
 	virtual void ReadyForReplication() override;
@@ -113,11 +117,11 @@ public:
 	virtual int32 GetTotalMatchingItemCountByDef(TSubclassOf<UGameItemDef> ItemDef) const override;
 
 	/** Write all containers and items to a save game. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void CommitSaveGame(USaveGame* SaveGame);
 
 	/** Load all containers and items from a save game. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void LoadSaveGame(USaveGame* SaveGame);
 
 protected:
@@ -126,9 +130,6 @@ protected:
 
 	/** Create all startup containers. */
 	void CreateStartupContainers();
-
-	/** Create and add the default items for all containers. */
-	void CreateDefaultItems();
 
 	/** Update all container link rules to assign any containers that aren't set yet. */
 	void ResolveContainerLinks();

@@ -40,6 +40,10 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	bool CanContainItem(const UGameItem* Item) const;
 
+	/** Return true if an item is allowed in the container by definition. */
+	UFUNCTION(BlueprintNativeEvent)
+	bool CanContainItemByDef(TSubclassOf<UGameItemDef> ItemDef) const;
+
 	/** Return the maximum allowed count for an item, or -1 if unlimited. */
 	UFUNCTION(BlueprintNativeEvent)
 	int32 GetItemMaxCount(const UGameItem* Item) const;

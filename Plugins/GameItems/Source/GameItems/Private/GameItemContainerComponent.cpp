@@ -220,12 +220,12 @@ void UGameItemContainerComponent::CreateStartupContainers()
 	}
 }
 
-void UGameItemContainerComponent::CreateDefaultItems()
+void UGameItemContainerComponent::CreateDefaultItems(bool bForce)
 {
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Creating default items..."), *GetReadableName());
 	for (auto& Elem : Containers)
 	{
-		Elem.Value->CreateDefaultItems();
+		Elem.Value->CreateDefaultItems(bForce);
 	}
 }
 
