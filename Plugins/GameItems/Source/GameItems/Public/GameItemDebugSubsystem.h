@@ -23,10 +23,10 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void AddItemCheatsExtension(APlayerController* Player);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void RemoveItemCheatsExtension(APlayerController* Player);
 
 protected:

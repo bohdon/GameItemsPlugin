@@ -478,7 +478,7 @@ private:
 
 public:
 	/** Return a readable name for this container object for debugging. */
-	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
+	UFUNCTION(BlueprintPure, Category = "GameItems")
 	virtual FString GetReadableName() const;
 
 	/** Display debug info about this component. */

@@ -28,22 +28,22 @@ class GAMEITEMS_API IGameItemContainerInterface
 
 public:
 	/** Return all available item containers. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	virtual TArray<UGameItemContainer*> GetAllItemContainers() const = 0;
 
 	/** Return all available item container ids. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	virtual TArray<FGameplayTag> GetAllItemContainerIds() const;
 
 	/** Return an item container by tag id. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"), Category = "GameItems")
 	virtual UGameItemContainer* GetItemContainer(FGameplayTag ContainerId) const;
 
 	/** Return the default item container. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	virtual UGameItemContainer* GetDefaultItemContainer() const;
 
 	/** Return default container that should hold a specific item. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	virtual UGameItemContainer* GetDefaultContainerForItem(TSubclassOf<UGameItemDef> ItemDef) const;
 };

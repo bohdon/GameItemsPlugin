@@ -40,30 +40,30 @@ public:
 	FORCEINLINE TSubclassOf<UGameItemDef> GetItemDef() const { return ItemDef; }
 
 	/** Return the class default object for this item's definition. */
-	UFUNCTION(BlueprintPure, DisplayName = "GetItemDef")
+	UFUNCTION(BlueprintPure, DisplayName = "GetItemDef", Category = "GameItems")
 	const UGameItemDef* GetItemDefCDO() const;
 
 	void SetItemDef(TSubclassOf<UGameItemDef> NewItemDef);
 
 	/** Return the owned tags of the item definition. */
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category = "GameItems")
 	const FGameplayTagContainer& GetOwnedTags() const;
 
 	FORCEINLINE int32 GetCount() const { return Count; }
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItem")
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
 	void SetCount(int32 NewCount);
 
 	/** Increase the value of a stat tag. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItem")
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
 	void AddTagStat(FGameplayTag Tag, int32 DeltaValue);
 
 	/** Decrease the value of a stat tag. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItem")
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
 	void RemoveTagStat(FGameplayTag Tag, int32 DeltaValue);
 
 	/** Return the value of a stat. */
-	UFUNCTION(BlueprintPure, Category = "GameItem")
+	UFUNCTION(BlueprintPure, Category = "GameItems")
 	int32 GetTagStat(FGameplayTag Tag) const;
 
 	/**
@@ -80,11 +80,11 @@ public:
 	void CopyItemProperties(const UGameItem* Item);
 
 	/** Return all containers that this item is in. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	TArray<UGameItemContainer*> GetContainers() const;
 
 	/** Return a debug string representation of this item instance. */
-	UFUNCTION(BlueprintPure, Category = "GameItem")
+	UFUNCTION(BlueprintPure, Category = "GameItems")
 	FString ToDebugString() const;
 
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FCountChangedDelegate, int32 /*NewCount*/, int32 /*OldCount*/);

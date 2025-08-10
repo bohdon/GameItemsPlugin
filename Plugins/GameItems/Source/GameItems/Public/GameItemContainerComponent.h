@@ -97,7 +97,7 @@ public:
 	 * Create a new item container.
 	 * @return The new container, or null if a container already exists with the same id.
 	 */
-	UFUNCTION(BlueprintCallable, Meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
+	UFUNCTION(BlueprintCallable, Category = "GameItems", Meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
 	UGameItemContainer* CreateContainer(FGameplayTag ContainerId, TSubclassOf<UGameItemContainerDef> ContainerDef = nullptr);
 
 	/** Create and add the default items for any newly created containers. */

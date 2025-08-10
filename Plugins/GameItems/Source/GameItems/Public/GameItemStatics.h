@@ -41,13 +41,13 @@ public:
 	static UGameItemContainer* GetItemContainerForActor(AActor* Actor, FGameplayTag ContainerId);
 
 	/** Find and return an item fragment by class. */
-	UFUNCTION(BlueprintCallable, Meta = (WorldContext = "WorldContextObject", DeterminesOutputType = "FragmentClass"), Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems", Meta = (WorldContext = "WorldContextObject", DeterminesOutputType = "FragmentClass"))
 	static const UGameItemFragment* FindGameItemFragment(const UObject* WorldContextObject, TSubclassOf<UGameItemDef> ItemDef,
 	                                                     TSubclassOf<UGameItemFragment> FragmentClass);
 
 	/** Find and return an item fragment by class from a game item. */
-	UFUNCTION(BlueprintCallable, Meta = (WorldContext = "WorldContextObject", DeterminesOutputType = "FragmentClass"),
-		Category = "GameItems", DisplayName = "Find Fragment (Item)")
+	UFUNCTION(BlueprintCallable, Category = "GameItems", Meta = (WorldContext = "WorldContextObject", DeterminesOutputType = "FragmentClass"),
+		DisplayName = "Find Fragment (Item)")
 	static const UGameItemFragment* FindGameItemFragmentFromItem(const UObject* WorldContextObject, UGameItem* Item,
 	                                                             TSubclassOf<UGameItemFragment> FragmentClass);
 
@@ -55,13 +55,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameItems", meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
 	static UGameItemContainer* GetItemContainerById(const TArray<UGameItemContainer*>& Containers, FGameplayTag ContainerId);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "GameItems|Conditions")
 	static bool IsEquipmentConditionMet(UGameItem* Item);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "GameItems|Drops")
 	static bool IsDropConditionMet(TSubclassOf<UGameItemDef> ItemDef, AActor* TargetActor);
 
-	UFUNCTION(BlueprintCallable, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems|Drops")
 	static void SelectItemsFromDropTableRow(const FGameItemDropContext& Context, const FGameItemDropTableRow& DropTableRow,
 	                                        TArray<FGameItemDefStack>& OutItems);
 

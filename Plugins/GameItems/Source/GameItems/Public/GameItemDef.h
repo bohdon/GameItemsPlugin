@@ -45,7 +45,7 @@ public:
 	TArray<TObjectPtr<UGameItemFragment>> Fragments;
 
 	/** Find and return a fragment of this item definition by class. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Meta = (DeterminesOutputType = "FragmentClass"))
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems", Meta = (DeterminesOutputType = "FragmentClass"))
 	const UGameItemFragment* FindFragment(TSubclassOf<UGameItemFragment> FragmentClass) const;
 
 	/** Find and return a fragment of this item definition by class. */
