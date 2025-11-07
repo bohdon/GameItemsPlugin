@@ -40,6 +40,20 @@ void UGameItemContainerLink_Selection::SetSelectedSlot(int32 NewSlot)
 	}
 }
 
+bool UGameItemContainerLink_Selection::SetSelectedItem(UGameItem* Item)
+{
+	if (Item && LinkedContainer)
+	{
+		const int32 Slot = LinkedContainer->GetItemSlot(Item);
+		if (Slot != INDEX_NONE)
+		{
+			SetSelectedSlot(Slot);
+			return true;
+		}
+	}
+	return false;
+}
+
 void UGameItemContainerLink_Selection::SelectNextSlot(bool bLoop)
 {
 	if (bAllowSelectingEmptySlots)

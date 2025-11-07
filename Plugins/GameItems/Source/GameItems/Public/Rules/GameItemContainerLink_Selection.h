@@ -31,6 +31,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetSelectedSlot(int32 NewSlot);
 
+	/**
+	 * Find the slot of an item in the linked container, and set the selected slot to that.
+	 * Does nothing if the item isn't found.
+	 */
+	UFUNCTION(BlueprintCallable)
+	bool SetSelectedItem(UGameItem* Item);
+
 	/** Select the next slot, or the next item if empty slots cannot be selected. */
 	UFUNCTION(BlueprintCallable)
 	void SelectNextSlot(bool bLoop = true);
