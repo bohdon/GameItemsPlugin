@@ -25,7 +25,7 @@ public:
 
 private:
 	/** The definition of the item. */
-	UPROPERTY(Replicated, BlueprintReadOnly, DisplayName = "ItemDefClass", Meta = (AllowPrivateAccess))
+	UPROPERTY(Replicated, BlueprintReadOnly, Meta = (AllowPrivateAccess))
 	TSubclassOf<UGameItemDef> ItemDef;
 
 	/** The quantity of this item in this instance (aka stack). */
@@ -40,7 +40,7 @@ public:
 	FORCEINLINE TSubclassOf<UGameItemDef> GetItemDef() const { return ItemDef; }
 
 	/** Return the class default object for this item's definition. */
-	UFUNCTION(BlueprintPure, DisplayName = "GetItemDef", Category = "GameItems")
+	UFUNCTION(BlueprintPure, Category = "GameItems")
 	const UGameItemDef* GetItemDefCDO() const;
 
 	void SetItemDef(TSubclassOf<UGameItemDef> NewItemDef);
