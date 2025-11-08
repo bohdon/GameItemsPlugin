@@ -101,6 +101,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Meta = (DeterminesOutputType = "FragmentClass"), Category = "GameItems")
 	const UGameItemFragment* FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass) const;
 
+	template <class T>
+	const T* FindFragment(TSubclassOf<UGameItemDef> ItemDef) const
+	{
+		static_assert(TIsDerivedFrom<T, UGameItemFragment>::IsDerived, TEXT("T must derive from UGameItemFragment"));
+		return Cast<T>(FindFragment(ItemDef, T::StaticClass()));
+	}
+
 	/** Return a game item container component from an actor, using the IGameItemContainerComponentInterface if possible. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	UGameItemContainerComponent* GetContainerComponentForActor(const AActor* Actor) const;
