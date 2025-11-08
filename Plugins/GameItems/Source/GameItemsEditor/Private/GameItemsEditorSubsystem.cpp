@@ -38,6 +38,23 @@ TArray<TSubclassOf<UGameItemDef>> UGameItemsEditorSubsystem::GetSelectedItems()
 	return Result;
 }
 
+UGameItemFragment* UGameItemsEditorSubsystem::FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass)
+{
+	if (!ItemDef)
+	{
+		return nullptr;
+	}
+	UGameItemDef* ItemDefCDO = ItemDef->GetDefaultObject<UGameItemDef>();
+	for (const TObjectPtr<UGameItemFragment>& Fragment : ItemDefCDO->Fragments)
+	{
+		if (Fragment->IsA(FragmentClass))
+		{
+			return Fragment;
+		}
+	}
+	return nullptr;
+}
+
 UGameItemFragment* UGameItemsEditorSubsystem::FindOrAddFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass)
 {
 	if (!ItemDef)
