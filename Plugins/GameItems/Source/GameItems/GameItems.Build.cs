@@ -24,5 +24,7 @@ public class GameItems : ModuleRules
 			"Slate",
 			"SlateCore",
 		});
+
+		SetupIrisSupport(Target);
 	}
 }

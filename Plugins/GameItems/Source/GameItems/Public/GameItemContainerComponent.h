@@ -97,11 +97,11 @@ public:
 	 * Create a new item container.
 	 * @return The new container, or null if a container already exists with the same id.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "GameItems", Meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems", Meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
 	UGameItemContainer* CreateContainer(FGameplayTag ContainerId, TSubclassOf<UGameItemContainerDef> ContainerDef = nullptr);
 
 	/** Create and add the default items for any newly created containers. */
-	UFUNCTION(BlueprintCallable, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
 	void CreateDefaultItems(bool bForce = false);
 
 	virtual void InitializeComponent() override;
@@ -124,9 +124,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void LoadSaveGame(USaveGame* SaveGame);
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
+	UPROPERTY(Transient, ReplicatedUsing = OnRep_Containers)
+	TArray<TObjectPtr<UGameItemContainer>> Containers;
+
+	/** Non-replicated map of containers by id, for faster lookup. */
 	UPROPERTY(Transient)
-	TMap<FGameplayTag, UGameItemContainer*> Containers;
+	TMap<FGameplayTag, TObjectPtr<UGameItemContainer>> ContainerMap;
 
 	/** Create all startup containers. */
 	void CreateStartupContainers();
@@ -134,5 +140,12 @@ protected:
 	/** Update all container link rules to assign any containers that aren't set yet. */
 	void ResolveContainerLinks();
 
-	void AddContainer(UGameItemContainer* Container);
+	virtual void AddContainer(UGameItemContainer* Container);
+
+	UFUNCTION()
+	void OnRep_Containers();
+
+	virtual void OnItemAdded(UGameItem* GameItem);
+
+	virtual void OnItemRemoved(UGameItem* GameItem);
 };

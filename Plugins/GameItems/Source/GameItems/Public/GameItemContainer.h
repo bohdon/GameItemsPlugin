@@ -71,11 +71,11 @@ public:
 	UGameItemContainer(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	/** The unique tag identifying this container amongst others. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated, Category = "GameItemContainer")
 	FGameplayTag ContainerId;
 
 	/** The user-facing display name of this container. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameItemContainer")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated, Category = "GameItemContainer")
 	FText DisplayName;
 
 	/** Set the definition for this container. Cannot be changed once set. */
@@ -395,14 +395,14 @@ public:
 
 protected:
 	/** The settings for this container. */
-	UPROPERTY(Transient, BlueprintReadOnly, DisplayName = "ContainerDefClass", Meta = (AllowPrivateAccess = true), Category = "GameItemContainer")
+	UPROPERTY(Transient, BlueprintReadOnly, Replicated, DisplayName = "ContainerDefClass", Meta = (AllowPrivateAccess = true), Category = "GameItemContainer")
 	TSubclassOf<UGameItemContainerDef> ContainerDef;
 
 	/** The active rules applied to this container. */
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "GameItemContainer")
 	TArray<TObjectPtr<UGameItemContainerRule>> Rules;
 
-	/** All child containers, which must register themself via Register/UnregisterChild */
+	/** All child containers, which must register themselves via Register/UnregisterChild */
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UGameItemContainer>> ChildContainers;
 
@@ -456,6 +456,9 @@ protected:
 	virtual void OnItemAdded(UGameItem* Item, int32 Slot);
 	virtual void OnItemRemoved(UGameItem* Item, int32 Slot);
 
+	/** Called when the replicated item list has changed. */
+	virtual void OnItemListEntryNewOrRemoved(FGameItemListEntry& Entry, int32 Slot, bool bAdded);
+
 	/** Start a slot change operation, gathering slot changes to broadcast later. */
 	void BeginSlotChanges();
 
@@ -468,8 +471,9 @@ protected:
 
 	virtual void BroadcastSlotChanges();
 
-	/** Called when the underlying list has changed. */
-	virtual void OnListChanged(FGameItemListEntry& Entry, int32 NewCount, int32 OldCount);
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual bool IsSupportedForNetworking() const override { return true; }
+	virtual void RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Context, UE::Net::EFragmentRegistrationFlags RegistrationFlags) override;
 
 private:
 	/** The replicated item list struct. */

@@ -87,7 +87,8 @@ struct GAMEITEMS_API FGameItemTagStack : public FFastArraySerializerItem
 	{
 	}
 
-	FString ToDebugString() const;
+	// FFastArraySerializerItem
+	FString GetDebugString() const;
 
 	bool operator==(const FGameItemTagStack& Other) const
 	{
@@ -99,14 +100,11 @@ struct GAMEITEMS_API FGameItemTagStack : public FFastArraySerializerItem
 		return Tag != Other.Tag || Count != Other.Count;
 	}
 
-private:
 	UPROPERTY()
 	FGameplayTag Tag;
 
 	UPROPERTY()
 	int32 Count = 0;
-
-	friend FGameItemTagStackContainer;
 };
 
 
@@ -164,7 +162,6 @@ struct GAMEITEMS_API FGameItemTagStackContainer : public FFastArraySerializer
 		return !(*this == Other);
 	}
 
-private:
 	/** Replicated array of gameplay tag stacks. */
 	UPROPERTY()
 	TArray<FGameItemTagStack> Stacks;
@@ -196,16 +193,12 @@ struct GAMEITEMS_API FGameItemListEntry : public FFastArraySerializerItem
 	{
 	}
 
-	FString ToDebugString() const;
+	// FFastArraySerializerItem
+	FString GetDebugString() const;
 
-	UGameItem* GetItem() const { return Item; }
-
-private:
 	/** The item in this entry. */
 	UPROPERTY()
 	TObjectPtr<UGameItem> Item = nullptr;
-
-	friend FGameItemList;
 };
 
 
@@ -231,6 +224,8 @@ struct GAMEITEMS_API FGameItemList : public FFastArraySerializer
 		return FFastArraySerializer::FastArrayDeltaSerialize<FGameItemListEntry, FGameItemList>(Entries, DeltaParms, *this);
 	}
 
+	void PostSerialize(const FArchive& Ar);
+
 	/** Add an item/stack to the list. */
 	void AddEntry(UGameItem* Item);
 
@@ -246,6 +241,9 @@ struct GAMEITEMS_API FGameItemList : public FFastArraySerializer
 	 */
 	UGameItem* RemoveEntryAt(int32 Index, bool bPreserveIndices = false);
 
+	/** Return all item entries. */
+	FORCEINLINE const TArray<FGameItemListEntry>& GetEntries() const { return Entries; }
+
 	/** Clear all entries. */
 	void Reset();
 
@@ -254,18 +252,17 @@ struct GAMEITEMS_API FGameItemList : public FFastArraySerializer
 
 	void GetAllItems(TArray<UGameItem*>& OutItems) const;
 
-	DECLARE_MULTICAST_DELEGATE_ThreeParams(FGameItemListChangedDelegate, FGameItemListEntry& /*Entry*/, int32 /*NewCount*/, int32 /*OldCount*/);
+	DECLARE_MULTICAST_DELEGATE_ThreeParams(FGameItemListNewOrRemovedDelegate, FGameItemListEntry& /*Entry*/, int32 /*Slot*/, bool /*bAdded*/);
 
 	/** Called when any item is added or removed. */
-	FGameItemListChangedDelegate OnListChangedEvent;
+	FGameItemListNewOrRemovedDelegate OnItemAddedOrRemovedEvent;
 
-private:
+protected:
 	/** Replicated list of items and their stack counts. */
 	UPROPERTY()
 	TArray<FGameItemListEntry> Entries;
-
-	friend UGameItemContainer;
 };
+
 
 template <>
 struct TStructOpsTypeTraits<FGameItemList> : public TStructOpsTypeTraitsBase2<FGameItemList>

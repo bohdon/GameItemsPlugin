@@ -267,9 +267,24 @@ void UGameItemSubsystem::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebu
 		return;
 	}
 
+	FString NetSuffix;
+	switch (HUD->GetNetMode())
+	{
+	case NM_DedicatedServer:
+	case NM_ListenServer:
+		NetSuffix = FString::Printf(TEXT("(Server)"));
+		break;
+	case NM_Client:
+		NetSuffix = FString::Printf(TEXT("(Client %d)"), UE::GetPlayInEditorID());
+		break;
+	case NM_Standalone:
+	default: ;
+	}
+
 	FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
 	DisplayDebugManager.SetDrawColor(FColor::Yellow);
-	DisplayDebugManager.DrawString(TEXT("GAME ITEMS"));
+
+	DisplayDebugManager.DrawString(FString::Printf(TEXT("GAME ITEMS %s"), *NetSuffix));
 
 	// display debug info for all containers of the target actor
 	TArray<UGameItemContainer*> Containers = GetAllContainersForActor(HUD->GetCurrentDebugTargetActor());

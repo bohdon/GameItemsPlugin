@@ -23,7 +23,7 @@ int32 FGameItemCountLimit::GetMaxCount(int32 Default) const
 // FGameItemTagStack
 // -----------------
 
-FString FGameItemTagStack::ToDebugString() const
+FString FGameItemTagStack::GetDebugString() const
 {
 	return FString::Printf(TEXT("%sx%d"), *Tag.ToString(), Count);
 }
@@ -144,7 +144,7 @@ FString FGameItemTagStackContainer::ToDebugString() const
 	TArray<FString> StackStrings;
 	for (const FGameItemTagStack& Stack : Stacks)
 	{
-		StackStrings.Add(Stack.ToDebugString());
+		StackStrings.Add(Stack.GetDebugString());
 	}
 	return FString::Join(StackStrings, TEXT(", "));
 }
@@ -153,7 +153,7 @@ FString FGameItemTagStackContainer::ToDebugString() const
 // FGameItemListEntry
 // ------------------
 
-FString FGameItemListEntry::ToDebugString() const
+FString FGameItemListEntry::GetDebugString() const
 {
 	return Item ? Item->ToDebugString() : TEXT("(none)");
 }
@@ -166,9 +166,8 @@ void FGameItemList::PreReplicatedRemove(const TArrayView<int32> RemovedIndices, 
 {
 	for (const int32 Idx : RemovedIndices)
 	{
-		// FGameItemListEntry& Entry = Entries[Idx];
-		// OnListChangedEvent.Broadcast(Entry, 0, Entry.Count);
-		// Entry.LastKnownCount = 0;
+		FGameItemListEntry& Entry = Entries[Idx];
+		OnItemAddedOrRemovedEvent.Broadcast(Entry, Idx, false);
 	}
 }
 
@@ -176,9 +175,8 @@ void FGameItemList::PostReplicatedAdd(const TArrayView<int32> AddedIndices, int3
 {
 	for (const int32 Idx : AddedIndices)
 	{
-		// FGameItemListEntry& Entry = Entries[Idx];
-		// OnListChangedEvent.Broadcast(Entry, Entry.Count, 0);
-		// Entry.LastKnownCount = Entry.Count;
+		FGameItemListEntry& Entry = Entries[Idx];
+		OnItemAddedOrRemovedEvent.Broadcast(Entry, Idx, true);
 	}
 }
 
@@ -186,10 +184,13 @@ void FGameItemList::PostReplicatedChange(const TArrayView<int32> ChangedIndices,
 {
 	for (const int32 Idx : ChangedIndices)
 	{
-		// FGameItemListEntry& Entry = Entries[Idx];
-		// OnListChangedEvent.Broadcast(Entry, Entry.LastKnownCount, Entry.Count);
-		// Entry.LastKnownCount = Entry.Count;
+		// TODO: item change event?
 	}
+}
+
+void FGameItemList::PostSerialize(const FArchive& Ar)
+{
+	// TODO: item change events?
 }
 
 void FGameItemList::AddEntry(UGameItem* Item)
@@ -298,6 +299,10 @@ void FGameItemList::GetAllItems(TArray<UGameItem*>& OutItems) const
 		OutItems.Add(Entry.Item);
 	}
 }
+
+
+// FGameItemSaveData
+// -----------------
 
 FGameItemSaveData::FGameItemSaveData()
 {

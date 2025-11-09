@@ -25,6 +25,11 @@
 #include "Serialization/MemoryWriter.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 
+#if UE_WITH_IRIS
+#include "Iris/ReplicationSystem/ReplicationFragmentUtil.h"
+#endif
+
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemContainer)
 
 
@@ -54,15 +59,30 @@ void FGameItemContainerAddPlan::UpdateDerivedValues(int32 ItemCount)
 UGameItemContainer::UGameItemContainer(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	ItemList.OnListChangedEvent.AddUObject(this, &UGameItemContainer::OnListChanged);
+	ItemList.OnItemAddedOrRemovedEvent.AddUObject(this, &UGameItemContainer::OnItemListEntryNewOrRemoved);
 }
 
 void UGameItemContainer::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	FDoRepLifetimeParams SharedParams;
+	SharedParams.bIsPushBased = true;
+
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ContainerId, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, DisplayName, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ContainerDef, SharedParams);
 	DOREPLIFETIME(ThisClass, ItemList);
 }
+
+#if UE_WITH_IRIS
+void UGameItemContainer::RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Context, UE::Net::EFragmentRegistrationFlags RegistrationFlags)
+{
+	UObject::RegisterReplicationFragments(Context, RegistrationFlags);
+
+	UE::Net::FReplicationFragmentUtil::CreateAndRegisterFragmentsForObject(this, Context, RegistrationFlags);
+}
+#endif
 
 UObject* UGameItemContainer::GetItemOuter() const
 {
@@ -78,6 +98,7 @@ void UGameItemContainer::SetContainerDef(TSubclassOf<UGameItemContainerDef> NewC
 	if (!ContainerDef)
 	{
 		ContainerDef = NewContainerDef;
+		MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainer, ContainerDef, this);
 
 		// duplicate container rules from the definition so that they can be stateful
 		if (const UGameItemContainerDef* ContainerDefCDO = GetContainerDefCDO())
@@ -340,7 +361,7 @@ void UGameItemContainer::RemoveItems(TArray<UGameItem*> Items)
 
 UGameItem* UGameItemContainer::RemoveItemAt(int32 Slot)
 {
-	if (!ItemList.Entries.IsValidIndex(Slot))
+	if (!ItemList.GetEntries().IsValidIndex(Slot))
 	{
 		return nullptr;
 	}
@@ -398,9 +419,9 @@ void UGameItemContainer::RemoveAllItems()
 	// gather items that will be removed, and record which slot they were in
 	int32 MaxSlot = 0;
 	TMap<int32, UGameItem*> RemovedItems;
-	for (int32 Slot = 0; Slot < ItemList.Entries.Num(); ++Slot)
+	for (int32 Slot = 0; Slot < ItemList.GetEntries().Num(); ++Slot)
 	{
-		if (UGameItem* Item = ItemList.Entries[Slot].GetItem())
+		if (UGameItem* Item = ItemList.GetEntries()[Slot].Item)
 		{
 			RemovedItems.Add(Slot, Item);
 			MaxSlot = FMath::Max(MaxSlot, Slot);
@@ -499,7 +520,7 @@ TArray<UGameItem*> UGameItemContainer::GetAllItems() const
 
 UGameItem* UGameItemContainer::GetItemAt(int32 Slot) const
 {
-	return ItemList.Entries.IsValidIndex(Slot) ? ItemList.Entries[Slot].GetItem() : nullptr;
+	return ItemList.GetEntries().IsValidIndex(Slot) ? ItemList.GetEntries()[Slot].Item.Get() : nullptr;
 }
 
 UGameItem* UGameItemContainer::GetFirstItem() const
@@ -513,9 +534,9 @@ UGameItem* UGameItemContainer::FindFirstItemByDef(TSubclassOf<UGameItemDef> Item
 	{
 		return nullptr;
 	}
-	for (const FGameItemListEntry& Entry : ItemList.Entries)
+	for (const FGameItemListEntry& Entry : ItemList.GetEntries())
 	{
-		UGameItem* EntryItem = Entry.GetItem();
+		UGameItem* EntryItem = Entry.Item;
 		if (IsValid(EntryItem) && EntryItem->GetItemDef() == ItemDef)
 		{
 			return EntryItem;
@@ -531,9 +552,9 @@ TArray<UGameItem*> UGameItemContainer::FindItemsByDef(TSubclassOf<UGameItemDef> 
 	{
 		return Result;
 	}
-	for (const FGameItemListEntry& Entry : ItemList.Entries)
+	for (const FGameItemListEntry& Entry : ItemList.GetEntries())
 	{
-		UGameItem* EntryItem = Entry.GetItem();
+		UGameItem* EntryItem = Entry.Item;
 		if (IsValid(EntryItem) && EntryItem->GetItemDef() == ItemDef)
 		{
 			Result.Add(EntryItem);
@@ -544,9 +565,9 @@ TArray<UGameItem*> UGameItemContainer::FindItemsByDef(TSubclassOf<UGameItemDef> 
 
 UGameItem* UGameItemContainer::FindFirstMatchingItem(const UGameItem* Item) const
 {
-	for (const FGameItemListEntry& Entry : ItemList.Entries)
+	for (const FGameItemListEntry& Entry : ItemList.GetEntries())
 	{
-		UGameItem* EntryItem = Entry.GetItem();
+		UGameItem* EntryItem = Entry.Item;
 		if (IsValid(EntryItem) && EntryItem->IsMatching(Item))
 		{
 			return EntryItem;
@@ -558,9 +579,9 @@ UGameItem* UGameItemContainer::FindFirstMatchingItem(const UGameItem* Item) cons
 TArray<UGameItem*> UGameItemContainer::GetAllMatchingItems(const UGameItem* Item) const
 {
 	TArray<UGameItem*> Result;
-	for (const FGameItemListEntry& Entry : ItemList.Entries)
+	for (const FGameItemListEntry& Entry : ItemList.GetEntries())
 	{
-		UGameItem* EntryItem = Entry.GetItem();
+		UGameItem* EntryItem = Entry.Item;
 		if (IsValid(EntryItem) && EntryItem->IsMatching(Item))
 		{
 			Result.Add(EntryItem);
@@ -571,9 +592,9 @@ TArray<UGameItem*> UGameItemContainer::GetAllMatchingItems(const UGameItem* Item
 
 int32 UGameItemContainer::GetItemSlot(const UGameItem* Item) const
 {
-	return ItemList.Entries.IndexOfByPredicate([Item](const FGameItemListEntry& Entry)
+	return ItemList.GetEntries().IndexOfByPredicate([Item](const FGameItemListEntry& Entry)
 	{
-		return Entry.GetItem() == Item;
+		return Entry.Item == Item;
 	});
 }
 
@@ -600,9 +621,9 @@ int32 UGameItemContainer::GetTotalItemCountByDef(TSubclassOf<UGameItemDef> ItemD
 	}
 
 	int32 Total = 0;
-	for (const FGameItemListEntry& Entry : ItemList.Entries)
+	for (const FGameItemListEntry& Entry : ItemList.GetEntries())
 	{
-		const UGameItem* EntryItem = Entry.GetItem();
+		const UGameItem* EntryItem = Entry.Item;
 		if (IsValid(EntryItem) && EntryItem->GetItemDef() == ItemDef)
 		{
 			Total += EntryItem->GetCount();
@@ -614,9 +635,9 @@ int32 UGameItemContainer::GetTotalItemCountByDef(TSubclassOf<UGameItemDef> ItemD
 int32 UGameItemContainer::GetTotalMatchingItemCount(const UGameItem* Item) const
 {
 	int32 Total = 0;
-	for (const FGameItemListEntry& Entry : ItemList.Entries)
+	for (const FGameItemListEntry& Entry : ItemList.GetEntries())
 	{
-		const UGameItem* EntryItem = Entry.GetItem();
+		const UGameItem* EntryItem = Entry.Item;
 		if (IsValid(EntryItem) && EntryItem->IsMatching(Item))
 		{
 			Total += EntryItem->GetCount();
@@ -634,9 +655,9 @@ int32 UGameItemContainer::GetCollectionMatchingItemCount(const UGameItem* Item) 
 int32 UGameItemContainer::GetTotalItemCount() const
 {
 	int32 Total = 0;
-	for (const FGameItemListEntry& Entry : ItemList.Entries)
+	for (const FGameItemListEntry& Entry : ItemList.GetEntries())
 	{
-		const UGameItem* EntryItem = Entry.GetItem();
+		const UGameItem* EntryItem = Entry.Item;
 		if (IsValid(EntryItem))
 		{
 			Total += EntryItem->GetCount();
@@ -658,9 +679,9 @@ bool UGameItemContainer::IsStackFull(int32 Slot) const
 int32 UGameItemContainer::GetNumItems() const
 {
 	int32 Total = 0;
-	for (const FGameItemListEntry& Entry : ItemList.Entries)
+	for (const FGameItemListEntry& Entry : ItemList.GetEntries())
 	{
-		if (Entry.GetItem())
+		if (Entry.Item)
 		{
 			++Total;
 		}
@@ -705,7 +726,7 @@ int32 UGameItemContainer::GetNextEmptySlot() const
 	}
 
 	// iterate over existing entries looking for any gaps
-	for (int32 Idx = 0; Idx < ItemList.Entries.Num(); ++Idx)
+	for (int32 Idx = 0; Idx < ItemList.GetEntries().Num(); ++Idx)
 	{
 		if (IsSlotEmpty(Idx))
 		{
@@ -713,7 +734,7 @@ int32 UGameItemContainer::GetNextEmptySlot() const
 		}
 	}
 	// return next index
-	return ItemList.Entries.Num() + 1;
+	return ItemList.GetEntries().Num() + 1;
 }
 
 bool UGameItemContainer::IsValidSlot(int32 Slot) const
@@ -723,7 +744,7 @@ bool UGameItemContainer::IsValidSlot(int32 Slot) const
 
 bool UGameItemContainer::IsSlotEmpty(int32 Slot) const
 {
-	return !ItemList.Entries.IsValidIndex(Slot) || ItemList.Entries[Slot].GetItem() == nullptr;
+	return !ItemList.GetEntries().IsValidIndex(Slot) || !ItemList.GetEntries()[Slot].Item;
 }
 
 bool UGameItemContainer::CanContainItem(const UGameItem* Item) const
@@ -1163,6 +1184,33 @@ void UGameItemContainer::OnItemRemoved(UGameItem* Item, int32 Slot)
 	// }
 }
 
+void UGameItemContainer::OnItemListEntryNewOrRemoved(FGameItemListEntry& Entry, int32 Slot, bool bAdded)
+{
+	// re-broadcast the change from this component
+	UGameItem* Item = Entry.Item;
+
+	// TODO: why is Item always null here
+	if (!Item)
+	{
+		return;
+	}
+
+	if (bAdded)
+	{
+		UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] OnItemAdded [Slot %d] %s (replicated)"),
+		       *GetReadableName(), Slot, *Item->ToDebugString());
+		OnItemAddedEvent.Broadcast(Item);
+		Item->OnSlottedEvent.Broadcast(this, Slot, INDEX_NONE);
+	}
+	else
+	{
+		UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] OnItemRemoved [Slot %d] %s (replicated)"),
+		       *GetReadableName(), Slot, *Item->ToDebugString());
+		OnItemRemovedEvent.Broadcast(Item);
+		Item->OnUnslottedEvent.Broadcast(this, Slot);
+	}
+}
+
 void UGameItemContainer::BeginSlotChanges()
 {
 	if (ActiveChangeOperations == 0)
@@ -1288,12 +1336,6 @@ void UGameItemContainer::OnSlotRangeChanged(int32 StartSlot, int32 EndSlot)
 	}
 }
 
-void UGameItemContainer::OnListChanged(FGameItemListEntry& Entry, int32 NewCount, int32 OldCount)
-{
-	// re-broadcast the change from this component
-	// TODO
-}
-
 FString UGameItemContainer::GetReadableName() const
 {
 	if (const UActorComponent* CompOuter = Cast<UActorComponent>(GetOuter()))
@@ -1318,9 +1360,9 @@ void UGameItemContainer::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& 
 		                         : FString::FromInt(GetNumItems());
 	DisplayDebugManager.DrawString(FString::Printf(TEXT("%s (%s items)"), *ContainerId.ToString(), *CountStr));
 
-	for (int32 Idx = 0; Idx < ItemList.Entries.Num(); ++Idx)
+	for (int32 Idx = 0; Idx < ItemList.GetEntries().Num(); ++Idx)
 	{
-		const FGameItemListEntry& Entry = ItemList.Entries[Idx];
-		DisplayDebugManager.DrawString(FString::Printf(TEXT("    [%d] %s"), Idx, *Entry.ToDebugString()));
+		const FGameItemListEntry& Entry = ItemList.GetEntries()[Idx];
+		DisplayDebugManager.DrawString(FString::Printf(TEXT("    [%d] %s"), Idx, *Entry.GetDebugString()));
 	}
 }

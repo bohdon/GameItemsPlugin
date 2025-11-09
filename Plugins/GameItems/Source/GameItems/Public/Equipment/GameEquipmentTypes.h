@@ -50,7 +50,8 @@ struct FGameEquipmentListEntry : public FFastArraySerializerItem
 	{
 	}
 
-	FString ToDebugString() const;
+	// FFastArraySerializerItem
+	FString GetDebugString() const;
 
 	TObjectPtr<UGameEquipment> GetEquipment() const { return Equipment; }
 

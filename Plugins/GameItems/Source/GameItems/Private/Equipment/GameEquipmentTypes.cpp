@@ -9,7 +9,7 @@
 // FGameEquipmentListEntry
 // -----------------------
 
-FString FGameEquipmentListEntry::ToDebugString() const
+FString FGameEquipmentListEntry::GetDebugString() const
 {
 	return FString::Printf(TEXT("%s"), *GetNameSafe(Equipment));
 }

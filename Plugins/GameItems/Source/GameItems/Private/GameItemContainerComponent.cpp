@@ -9,9 +9,12 @@
 #include "GameItemSaveDataInterface.h"
 #include "GameItemSettings.h"
 #include "GameItemsModule.h"
+#include "Engine/ActorChannel.h"
 #include "Engine/World.h"
 #include "GameFramework/SaveGame.h"
+#include "Net/UnrealNetwork.h"
 #include "Rules/GameItemContainerLink.h"
+
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemContainerComponent)
 
@@ -26,10 +29,21 @@ UGameItemContainerComponent::UGameItemContainerComponent(const FObjectInitialize
 	DefaultContainerSpec.ContainerId = UGameItemSettings::GetDefaultContainerId();
 }
 
+void UGameItemContainerComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	FDoRepLifetimeParams SharedParams;
+	SharedParams.bIsPushBased = true;
+
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerComponent, Containers, SharedParams);
+}
+
 void UGameItemContainerComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
 
+#if WITH_SERVER_CODE
 	const UWorld* MyWorld = GetWorld();
 	if (!MyWorld || !MyWorld->IsGameWorld())
 	{
@@ -41,53 +55,48 @@ void UGameItemContainerComponent::InitializeComponent()
 		CreateStartupContainers();
 		CreateDefaultItems();
 	}
+#endif
 }
 
 void UGameItemContainerComponent::ReadyForReplication()
 {
 	Super::ReadyForReplication();
 
-	// TODO: register any existing containers...
 	// register any existing items
-	// if (IsUsingRegisteredSubObjectList())
-	// {
-	// 	for (const FGameItemListEntry& Entry : ItemList.Entries)
-	// 	{
-	// 		if (IsValid(Entry.GetItem()))
-	// 		{
-	// 			AddReplicatedSubObject(Entry.GetItem());
-	// 		}
-	// 	}
-	// }
+	if (IsUsingRegisteredSubObjectList())
+	{
+		for (const TPair<FGameplayTag, UGameItemContainer*>& Elem : ContainerMap)
+		{
+			if (IsValid(Elem.Value))
+			{
+				AddReplicatedSubObject(Elem.Value);
+			}
+		}
+	}
 }
 
 bool UGameItemContainerComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
 	bool bDidWrite = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
 
-	// TODO: replicate all containers...
-	// replicate all item instances in this container
-	// for (const FGameItemListEntry& Entry : ItemList.Entries)
-	// {
-	// 	if (IsValid(Entry.GetItem()))
-	// 	{
-	// 		bDidWrite |= Channel->ReplicateSubobject(Entry.GetItem(), *Bunch, *RepFlags);
-	// 	}
-	// }
-
+	for (const TPair<FGameplayTag, UGameItemContainer*>& Elem : ContainerMap)
+	{
+		if (IsValid(Elem.Value))
+		{
+			bDidWrite |= Channel->ReplicateSubobject(Elem.Value, *Bunch, *RepFlags);
+		}
+	}
 	return bDidWrite;
 }
 
 TArray<UGameItemContainer*> UGameItemContainerComponent::GetAllItemContainers() const
 {
-	TArray<UGameItemContainer*> AllContainers;
-	Containers.GenerateValueArray(AllContainers);
-	return AllContainers;
+	return Containers;
 }
 
 UGameItemContainer* UGameItemContainerComponent::GetItemContainer(FGameplayTag ContainerId) const
 {
-	return Containers.FindRef(ContainerId);
+	return ContainerMap.FindRef(ContainerId);
 }
 
 int32 UGameItemContainerComponent::GetTotalMatchingItemCount(const UGameItem* Item) const
@@ -99,7 +108,7 @@ int32 UGameItemContainerComponent::GetTotalMatchingItemCount(const UGameItem* It
 
 	// TODO: cache the counts for faster lookup
 	int32 Result = 0;
-	for (const auto& Elem : Containers)
+	for (const auto& Elem : ContainerMap)
 	{
 		// only parent containers contribute to collection count
 		if (!Elem.Value->IsChild())
@@ -119,7 +128,7 @@ int32 UGameItemContainerComponent::GetTotalMatchingItemCountByDef(TSubclassOf<UG
 
 	// TODO: cache the counts for faster lookup
 	int32 Result = 0;
-	for (const auto& Elem : Containers)
+	for (const auto& Elem : ContainerMap)
 	{
 		// only parent containers contribute to collection count
 		if (!Elem.Value->IsChild())
@@ -146,7 +155,7 @@ void UGameItemContainerComponent::CommitSaveGame(USaveGame* SaveGame)
 	TMap<UGameItem*, FGuid> SavedItems;
 
 	// save parent containers
-	for (const auto& ContainerElem : Containers)
+	for (const auto& ContainerElem : ContainerMap)
 	{
 		UGameItemContainer* Container = ContainerElem.Value;
 		if (!Container->IsChild())
@@ -157,7 +166,7 @@ void UGameItemContainerComponent::CommitSaveGame(USaveGame* SaveGame)
 	}
 
 	// ...then save all children, now that item guids have been created
-	for (const auto& ContainerElem : Containers)
+	for (const auto& ContainerElem : ContainerMap)
 	{
 		UGameItemContainer* Container = ContainerElem.Value;
 		if (Container->IsChild())
@@ -184,7 +193,7 @@ void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame)
 	TMap<FGuid, UGameItem*> LoadedItems;
 
 	// load parent containers
-	for (const auto& ContainerElem : Containers)
+	for (const auto& ContainerElem : ContainerMap)
 	{
 		UGameItemContainer* Container = ContainerElem.Value;
 		if (!Container->IsChild())
@@ -195,7 +204,7 @@ void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame)
 	}
 
 	// ...then load all children, now that items have been created
-	for (const auto& ContainerElem : Containers)
+	for (const auto& ContainerElem : ContainerMap)
 	{
 		UGameItemContainer* Container = ContainerElem.Value;
 		if (Container->IsChild())
@@ -208,7 +217,11 @@ void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame)
 
 void UGameItemContainerComponent::CreateStartupContainers()
 {
-	check(GetOwner()->HasAuthority());
+#if WITH_SERVER_CODE
+	if (!ensure(GetOwner()->HasAuthority()))
+	{
+		return;
+	}
 
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Creating startup containers..."), *GetReadableName());
 	for (const FGameItemContainerSpec& ContainerSpec : StartupContainers)
@@ -218,20 +231,28 @@ void UGameItemContainerComponent::CreateStartupContainers()
 			Container->DisplayName = ContainerSpec.DisplayName;
 		}
 	}
+#endif
 }
 
 void UGameItemContainerComponent::CreateDefaultItems(bool bForce)
 {
+#if WITH_SERVER_CODE
+	if (!ensure(GetOwner()->HasAuthority()))
+	{
+		return;
+	}
+
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Creating default items..."), *GetReadableName());
-	for (auto& Elem : Containers)
+	for (auto& Elem : ContainerMap)
 	{
 		Elem.Value->CreateDefaultItems(bForce);
 	}
+#endif
 }
 
 void UGameItemContainerComponent::ResolveContainerLinks()
 {
-	for (const auto& Elem : Containers)
+	for (const auto& Elem : ContainerMap)
 	{
 		const UGameItemContainer* Container = Elem.Value;
 		const TArray<UGameItemContainerRule*>& Rules = Container->GetRules();
@@ -266,7 +287,13 @@ bool UGameItemContainerComponent::IsItemSlotted(UGameItem* Item, FGameplayTagCon
 
 UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag ContainerId, TSubclassOf<UGameItemContainerDef> ContainerDef)
 {
-	if (Containers.Contains(ContainerId))
+#if WITH_SERVER_CODE
+	if (!ensure(GetOwner()->HasAuthority()))
+	{
+		return nullptr;
+	}
+
+	if (ContainerMap.Contains(ContainerId))
 	{
 		// already exists, or invalid id
 		UE_LOG(LogGameItems, Warning, TEXT("[%s] Container already exists with id: %s"),
@@ -324,14 +351,49 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag Co
 	ResolveContainerLinks();
 
 	return NewContainer;
+#else
+	return nullptr;
+#endif
 }
 
 void UGameItemContainerComponent::AddContainer(UGameItemContainer* Container)
 {
 	check(Container);
-	check(!Containers.Contains(Container->ContainerId));
+	check(!ContainerMap.Contains(Container->ContainerId));
 
-	Containers.Add(Container->ContainerId, Container);
+	Containers.Emplace(Container);
+	ContainerMap.Emplace(Container->ContainerId, Container);
 
+	// containers can never be removed (yet), so there is no matching RemoveReplicatedSubObject
 	AddReplicatedSubObject(Container);
+
+	// monitor for items added/removed so we can replicate those too
+	Container->OnItemAddedEvent.AddUObject(this, &ThisClass::OnItemAdded);
+	Container->OnItemRemovedEvent.AddUObject(this, &ThisClass::OnItemRemoved);
+}
+
+void UGameItemContainerComponent::OnRep_Containers()
+{
+	// update container map
+	ContainerMap.Reset();
+	for (const TObjectPtr<UGameItemContainer>& Container : Containers)
+	{
+		ContainerMap.Emplace(Container->ContainerId, Container);
+	}
+}
+
+void UGameItemContainerComponent::OnItemAdded(UGameItem* GameItem)
+{
+	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && GameItem)
+	{
+		AddReplicatedSubObject(GameItem);
+	}
+}
+
+void UGameItemContainerComponent::OnItemRemoved(UGameItem* GameItem)
+{
+	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && GameItem)
+	{
+		RemoveReplicatedSubObject(GameItem);
+	}
 }
