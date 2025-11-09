@@ -38,5 +38,5 @@ bool UGameItemContainerLink_Parent::CanContainItem_Implementation(const UGameIte
 void UGameItemContainerLink_Parent::OnLinkedItemRemoved(UGameItem* Item)
 {
 	// remove from this container when removed from parent
-	Container->RemoveItem(Item);
+	GetContainer()->RemoveItem(Item);
 }

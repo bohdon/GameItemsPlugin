@@ -72,6 +72,9 @@ void UGameItemContainer::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ContainerId, SharedParams);
 	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, DisplayName, SharedParams);
 	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ContainerDef, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, Rules, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ChildContainers, SharedParams);
+
 	DOREPLIFETIME(ThisClass, ItemList);
 }
 
@@ -95,26 +98,30 @@ UObject* UGameItemContainer::GetItemOuter() const
 
 void UGameItemContainer::SetContainerDef(TSubclassOf<UGameItemContainerDef> NewContainerDef)
 {
-	if (!ContainerDef)
+	if (!ensureMsgf(!ContainerDef, TEXT("Cannot change ContainerDef after creation")))
 	{
-		ContainerDef = NewContainerDef;
-		MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainer, ContainerDef, this);
+		return;
+	}
 
-		// duplicate container rules from the definition so that they can be stateful
-		if (const UGameItemContainerDef* ContainerDefCDO = GetContainerDefCDO())
+	ContainerDef = NewContainerDef;
+	MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainer, ContainerDef, this);
+
+	// duplicate container rules from the definition so that they can be stateful
+	if (const UGameItemContainerDef* ContainerDefCDO = GetContainerDefCDO())
+	{
+		for (const UGameItemContainerRule* CDORule : ContainerDefCDO->Rules)
 		{
-			for (const UGameItemContainerRule* CDORule : ContainerDefCDO->Rules)
+			if (!CDORule)
 			{
-				if (!CDORule)
-				{
-					continue;
-				}
-
-				UGameItemContainerRule* NewRule = DuplicateObject(CDORule, this);
-				check(NewRule);
-				Rules.Add(NewRule);
-				NewRule->Initialize();
+				continue;
 			}
+
+			UGameItemContainerRule* NewRule = DuplicateObject(CDORule, this);
+			NewRule->ClearFlags(RF_Public | RF_ArchetypeObject);
+			NewRule->SetFlags(RF_Transient);
+			check(NewRule);
+			Rules.Add(NewRule);
+			MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainer, Rules, this);
 		}
 	}
 }
@@ -756,7 +763,7 @@ bool UGameItemContainer::CanContainItem(const UGameItem* Item) const
 
 	for (const UGameItemContainerRule* Rule : Rules)
 	{
-		if (!Rule->CanContainItem(Item))
+		if (Rule && !Rule->CanContainItem(Item))
 		{
 			return false;
 		}
@@ -773,7 +780,7 @@ bool UGameItemContainer::CanContainItemByDef(TSubclassOf<UGameItemDef> ItemDef) 
 
 	for (const UGameItemContainerRule* Rule : Rules)
 	{
-		if (!Rule->CanContainItemByDef(ItemDef))
+		if (Rule && !Rule->CanContainItemByDef(ItemDef))
 		{
 			return false;
 		}
@@ -794,6 +801,11 @@ int32 UGameItemContainer::GetItemMaxCount(const UGameItem* Item) const
 
 	for (const UGameItemContainerRule* Rule : Rules)
 	{
+		if (!Rule)
+		{
+			continue;
+		}
+
 		const int32 RuleMaxCount = Rule->GetItemMaxCount(Item);
 		if (RuleMaxCount >= 0)
 		{
@@ -817,6 +829,11 @@ int32 UGameItemContainer::GetItemStackMaxCount(const UGameItem* Item) const
 
 	for (const UGameItemContainerRule* Rule : Rules)
 	{
+		if (!Rule)
+		{
+			continue;
+		}
+
 		const int32 RuleMaxCount = Rule->GetItemStackMaxCount(Item);
 		if (RuleMaxCount >= 0)
 		{
@@ -898,7 +915,7 @@ UGameItemContainerRule* UGameItemContainer::GetRule(TSubclassOf<UGameItemContain
 {
 	for (UGameItemContainerRule* Rule : Rules)
 	{
-		if (Rule->IsA(RuleClass))
+		if (Rule && Rule->IsA(RuleClass))
 		{
 			return Rule;
 		}
@@ -912,7 +929,7 @@ UGameItemContainerRule* UGameItemContainer::AddRule(TSubclassOf<UGameItemContain
 	if (NewRule)
 	{
 		Rules.Add(NewRule);
-		NewRule->Initialize();
+		MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainer, Rules, this);
 		return NewRule;
 	}
 	return nullptr;
@@ -922,15 +939,14 @@ int32 UGameItemContainer::RemoveRule(TSubclassOf<UGameItemContainerRule> RuleCla
 {
 	TArray<UGameItemContainerRule*> MatchingRules = Rules.FilterByPredicate([RuleClass](const UGameItemContainerRule* Rule)
 	{
-		check(Rule);
-		return Rule->GetClass() == RuleClass;
+		return Rule && Rule->GetClass() == RuleClass;
 	});
 
 	int32 NumRemoved = 0;
 	for (UGameItemContainerRule* Rule : MatchingRules)
 	{
-		Rule->Uninitialize();
 		Rules.Remove(Rule);
+		MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainer, Rules, this);
 		++NumRemoved;
 	}
 	return NumRemoved;
@@ -938,7 +954,7 @@ int32 UGameItemContainer::RemoveRule(TSubclassOf<UGameItemContainerRule> RuleCla
 
 bool UGameItemContainer::IsChild() const
 {
-	return Algo::AnyOf(Rules, [](const UGameItemContainerRule* Rule) { return Rule->IsChild(); });
+	return Algo::AnyOf(Rules, [](const UGameItemContainerRule* Rule) { return Rule && Rule->IsChild(); });
 }
 
 bool UGameItemContainer::HasParent(UGameItemContainer* ParentContainer) const
@@ -957,15 +973,21 @@ TArray<UGameItemContainer*> UGameItemContainer::GetChildren() const
 
 void UGameItemContainer::RegisterChild(UGameItemContainer* ChildContainer)
 {
+#if WITH_SERVER_CODE
 	if (ChildContainer)
 	{
 		ChildContainers.AddUnique(ChildContainer);
+		MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainer, ChildContainers, this);
 	}
+#endif
 }
 
 void UGameItemContainer::UnregisterChild(UGameItemContainer* ChildContainer)
 {
+#if WITH_SERVER_CODE
 	ChildContainers.Remove(ChildContainer);
+	MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainer, ChildContainers, this);
+#endif
 }
 
 int32 UGameItemContainer::GetAutoSlotPriorityForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const
@@ -1162,11 +1184,6 @@ void UGameItemContainer::OnItemAdded(UGameItem* Item, int32 Slot)
 	       *GetReadableName(), Slot, *Item->ToDebugString());
 	OnItemAddedEvent.Broadcast(Item);
 	Item->OnSlottedEvent.Broadcast(this, Slot, INDEX_NONE);
-
-	// if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && Item)
-	// {
-	// 	AddReplicatedSubObject(Item);
-	// }
 }
 
 void UGameItemContainer::OnItemRemoved(UGameItem* Item, int32 Slot)
@@ -1177,11 +1194,6 @@ void UGameItemContainer::OnItemRemoved(UGameItem* Item, int32 Slot)
 	       *GetReadableName(), Slot, *Item->ToDebugString());
 	OnItemRemovedEvent.Broadcast(Item);
 	Item->OnUnslottedEvent.Broadcast(this, Slot);
-
-	// if (IsUsingRegisteredSubObjectList() && Item)
-	// {
-	// 	RemoveReplicatedSubObject(Item);
-	// }
 }
 
 void UGameItemContainer::OnItemListEntryNewOrRemoved(FGameItemListEntry& Entry, int32 Slot, bool bAdded)
@@ -1192,6 +1204,27 @@ void UGameItemContainer::OnItemListEntryNewOrRemoved(FGameItemListEntry& Entry, 
 	// TODO: why is Item always null here
 	if (!Item)
 	{
+		// temporary workaround
+		if (bAdded)
+		{
+			if (UGameItem* SlottedItem = GetItemAt(Slot))
+			{
+				UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] OnItemAdded [Slot %d] %s (replicated fallback)"),
+					   *GetReadableName(), Slot, *SlottedItem->ToDebugString());
+				OnItemAddedEvent.Broadcast(SlottedItem);
+				SlottedItem->OnSlottedEvent.Broadcast(this, Slot, INDEX_NONE);
+			}
+		}
+		else
+		{
+			if (UGameItem* SlottedItem = GetItemAt(Slot))
+			{
+				UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] OnItemRemoved [Slot %d] %s (replicated fallback)"),
+					   *GetReadableName(), Slot, *SlottedItem->ToDebugString());
+				OnItemRemovedEvent.Broadcast(SlottedItem);
+				SlottedItem->OnUnslottedEvent.Broadcast(this, Slot);
+			}
+		}
 		return;
 	}
 

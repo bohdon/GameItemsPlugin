@@ -79,7 +79,6 @@ public:
 	FText DisplayName;
 
 	/** Set the definition for this container. Cannot be changed once set. */
-	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
 	void SetContainerDef(TSubclassOf<UGameItemContainerDef> NewContainerDef);
 
 	/** Set the item collection that this container belongs to. */
@@ -194,7 +193,7 @@ public:
 	 * Set the item in a slot by removing any existing item first, then adding.
 	 * Doesn't verify first if the item can be added before removing.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
 	TArray<UGameItem*> SetItemAt(UGameItem* Item, int32 Slot);
 
 	/** Return true if an item exists in the container. */
@@ -399,11 +398,11 @@ protected:
 	TSubclassOf<UGameItemContainerDef> ContainerDef;
 
 	/** The active rules applied to this container. */
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "GameItemContainer")
+	UPROPERTY(Transient, BlueprintReadOnly, Replicated, Category = "GameItemContainer")
 	TArray<TObjectPtr<UGameItemContainerRule>> Rules;
 
 	/** All child containers, which must register themselves via Register/UnregisterChild */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, Replicated)
 	TArray<TObjectPtr<UGameItemContainer>> ChildContainers;
 
 	/** The collection that this container belongs to. */

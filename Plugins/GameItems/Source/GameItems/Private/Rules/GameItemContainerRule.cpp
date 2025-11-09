@@ -13,14 +13,9 @@ UGameItemContainerRule::UGameItemContainerRule()
 {
 }
 
-void UGameItemContainerRule::Initialize()
+UGameItemContainer* UGameItemContainerRule::GetContainer() const
 {
-	Container = GetTypedOuter<UGameItemContainer>();
-	check(Container);
-}
-
-void UGameItemContainerRule::Uninitialize()
-{
+	return GetTypedOuter<UGameItemContainer>();
 }
 
 bool UGameItemContainerRule::IsChild_Implementation() const
@@ -30,7 +25,11 @@ bool UGameItemContainerRule::IsChild_Implementation() const
 
 UWorld* UGameItemContainerRule::GetWorld() const
 {
-	return GetOuter() ? GetOuter()->GetWorld() : nullptr;
+	if (const UObject* Outer = GetOuter())
+	{
+		return Outer->GetWorld();
+	}
+	return nullptr;
 }
 
 bool UGameItemContainerRule::CanContainItem_Implementation(const UGameItem* Item) const

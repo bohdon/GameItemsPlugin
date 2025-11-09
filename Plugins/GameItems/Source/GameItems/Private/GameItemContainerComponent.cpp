@@ -65,11 +65,19 @@ void UGameItemContainerComponent::ReadyForReplication()
 	// register any existing items
 	if (IsUsingRegisteredSubObjectList())
 	{
-		for (const TPair<FGameplayTag, UGameItemContainer*>& Elem : ContainerMap)
+		for (UGameItemContainer* Container : Containers)
 		{
-			if (IsValid(Elem.Value))
+			if (IsValid(Container))
 			{
-				AddReplicatedSubObject(Elem.Value);
+				AddReplicatedSubObject(Container);
+
+				for (UGameItemContainerRule* Rule : Container->GetRules())
+				{
+					if (IsValid(Rule))
+					{
+						AddReplicatedSubObject(Rule);
+					}
+				}
 			}
 		}
 	}
@@ -79,11 +87,16 @@ bool UGameItemContainerComponent::ReplicateSubobjects(UActorChannel* Channel, FO
 {
 	bool bDidWrite = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
 
-	for (const TPair<FGameplayTag, UGameItemContainer*>& Elem : ContainerMap)
+	for (UGameItemContainer* Container : Containers)
 	{
-		if (IsValid(Elem.Value))
+		if (IsValid(Container))
 		{
-			bDidWrite |= Channel->ReplicateSubobject(Elem.Value, *Bunch, *RepFlags);
+			bDidWrite |= Channel->ReplicateSubobject(Container, *Bunch, *RepFlags);
+
+			for (UGameItemContainerRule* Rule : Container->GetRules())
+			{
+				bDidWrite |= Channel->ReplicateSubobject(Rule, *Bunch, *RepFlags);
+			}
 		}
 	}
 	return bDidWrite;
@@ -362,10 +375,23 @@ void UGameItemContainerComponent::AddContainer(UGameItemContainer* Container)
 	check(!ContainerMap.Contains(Container->ContainerId));
 
 	Containers.Emplace(Container);
+	MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainerComponent, Containers, this);
+
 	ContainerMap.Emplace(Container->ContainerId, Container);
 
-	// containers can never be removed (yet), so there is no matching RemoveReplicatedSubObject
-	AddReplicatedSubObject(Container);
+	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
+	{
+		// containers can never be removed (yet), so there is no matching RemoveReplicatedSubObject
+		AddReplicatedSubObject(Container);
+
+		for (UGameItemContainerRule* Rule : Container->GetRules())
+		{
+			if (IsValid(Rule))
+			{
+				AddReplicatedSubObject(Rule);
+			}
+		}
+	}
 
 	// monitor for items added/removed so we can replicate those too
 	Container->OnItemAddedEvent.AddUObject(this, &ThisClass::OnItemAdded);

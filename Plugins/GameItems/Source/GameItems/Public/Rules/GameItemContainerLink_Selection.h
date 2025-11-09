@@ -21,37 +21,37 @@ public:
 	UGameItemContainerLink_Selection();
 
 	/** The slot in this container where the selected item should be added. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Selection")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Selection")
 	int32 TargetSlot;
 
 	/** If true, allow selecting slots in the linked container that have no item. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Selection")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Selection")
 	bool bAllowSelectingEmptySlots;
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Server, Reliable)
 	void SetSelectedSlot(int32 NewSlot);
 
 	/**
 	 * Find the slot of an item in the linked container, and set the selected slot to that.
 	 * Does nothing if the item isn't found.
 	 */
-	UFUNCTION(BlueprintCallable)
-	bool SetSelectedItem(UGameItem* Item);
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void SetSelectedItem(UGameItem* Item);
 
 	/** Select the next slot, or the next item if empty slots cannot be selected. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Server, Reliable)
 	void SelectNextSlot(bool bLoop = true);
 
 	/** Select the previous slot, or the previous item if empty slots cannot be selected. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Server, Reliable)
 	void SelectPrevSlot(bool bLoop = true);
 
 	/** Select the next valid item in the linked container. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Server, Reliable)
 	void SelectNextItem(bool bLoop = true);
 
 	/** Select the previous valid item in the linked container. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Server, Reliable)
 	void SelectPrevItem(bool bLoop = true);
 
 	/** Clamp or loop a slot in the linked container. */
@@ -60,9 +60,14 @@ public:
 
 	virtual void OnLinkedContainerChanged(UGameItemContainer* NewContainer, UGameItemContainer* OldContainer) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION()
+	void OnRep_SelectedSlot();
+
 protected:
 	/** The currently selected slot in the linked container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Selection")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing = OnRep_SelectedSlot, Category = "Selection")
 	int32 SelectedSlot;
 
 	/** Find the next or previous slot in the linked container with a valid item. */

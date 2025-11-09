@@ -13,7 +13,7 @@ int32 UGameItemAutoSlotRule::GetAutoSlotPriorityForItem_Implementation(UGameItem
 
 bool UGameItemAutoSlotRule::CanAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
-	return Container->CanContainItem(Item);
+	return GetContainer()->CanContainItem(Item);
 }
 
 bool UGameItemAutoSlotRule::TryAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags, TArray<UGameItem*>& OutItems) const
@@ -23,6 +23,8 @@ bool UGameItemAutoSlotRule::TryAutoSlot_Implementation(UGameItem* Item, const FG
 	const int32 Slot = GetBestSlotForItem(Item, ContextTags);
 
 	// check for (and possibly remove) existing item
+	UGameItemContainer* Container = GetContainer();
+	check(Container);
 	if (UGameItem* ExistingItem = Container->GetItemAt(Slot))
 	{
 		if (ShouldReplaceItem(Item, ExistingItem, ContextTags))

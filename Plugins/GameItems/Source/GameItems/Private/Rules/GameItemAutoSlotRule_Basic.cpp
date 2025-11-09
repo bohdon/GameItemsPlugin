@@ -5,6 +5,7 @@
 
 #include "GameItemContainer.h"
 #include "NativeGameplayTags.h"
+#include "Net/UnrealNetwork.h"
 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Item_AutoSlot_NoReplace, "Item.AutoSlot.NoReplace", "Don't replace existing items when auto-slotting");
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Item_AutoSlot_Replace, "Item.AutoSlot.Replace", "Replace existing items when auto-slotting");
@@ -15,6 +16,20 @@ UGameItemAutoSlotRule_Basic::UGameItemAutoSlotRule_Basic()
 	: Priority(1),
 	  bReplaceByDefault(true)
 {
+}
+
+void UGameItemAutoSlotRule_Basic::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	FDoRepLifetimeParams SharedParams;
+	SharedParams.bIsPushBased = true;
+
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemAutoSlotRule_Basic, Priority, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemAutoSlotRule_Basic, bReplaceByDefault, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemAutoSlotRule_Basic, RequireTags, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemAutoSlotRule_Basic, IgnoreTags, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemAutoSlotRule_Basic, Query, SharedParams);
 }
 
 bool UGameItemAutoSlotRule_Basic::CanAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
@@ -35,6 +50,8 @@ int32 UGameItemAutoSlotRule_Basic::GetAutoSlotPriorityForItem_Implementation(UGa
 
 bool UGameItemAutoSlotRule_Basic::TryAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags, TArray<UGameItem*>& OutItems) const
 {
+	UGameItemContainer* Container = GetContainer();
+	check(Container);
 	if (Container->Contains(Item))
 	{
 		if (ContextTags.HasTag(TAG_Item_AutoSlot_Toggle))
@@ -51,7 +68,7 @@ bool UGameItemAutoSlotRule_Basic::TryAutoSlot_Implementation(UGameItem* Item, co
 
 int32 UGameItemAutoSlotRule_Basic::GetBestSlotForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
-	const int32 NextEmptySlot = Container->GetNextEmptySlot();
+	const int32 NextEmptySlot = GetContainer()->GetNextEmptySlot();
 	if (NextEmptySlot != INDEX_NONE)
 	{
 		// has empty slot, or unlimited slots

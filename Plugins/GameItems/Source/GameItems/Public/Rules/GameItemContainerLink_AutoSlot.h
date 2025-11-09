@@ -19,14 +19,16 @@ public:
 	UGameItemContainerLink_AutoSlot();
 
 	/** Items must match this query to be auto-slotted. If empty, all compatible items are auto-slotted. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Auto Slot", meta = (GameplayTagFilter="GameItemTagsCategory"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Auto Slot", meta = (GameplayTagFilter="GameItemTagsCategory"))
 	FGameplayTagQuery ItemQuery;
 
 	/** Context tags to pass when auto-slotting the item. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Auto Slot")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Auto Slot")
 	FGameplayTagContainer ContextTags;
 
 	virtual void OnLinkedContainerChanged(UGameItemContainer* NewContainer, UGameItemContainer* OldContainer) override;
+
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	void OnLinkedItemAdded(UGameItem* Item);
