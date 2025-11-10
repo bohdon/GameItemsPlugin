@@ -80,15 +80,14 @@ public:
 
 protected:
 	/** The item containers to monitor for items with equipment. */
-	UPROPERTY()
 	TArray<TWeakObjectPtr<UGameItemContainer>> ItemContainers;
 
 	/** Map of condition states for each item with equipment in the target containers. */
-	UPROPERTY()
+	UPROPERTY(Transient)
 	TMap<TObjectPtr<UGameItem>, FGameItemEquipmentConditionState> ItemConditionStates;
 
 	/** Map of equipment that was applied, indexed by the source item. */
-	UPROPERTY()
+	UPROPERTY(Transient)
 	TMap<TObjectPtr<UGameItem>, TObjectPtr<UGameEquipment>> ItemEquipmentMap;
 
 	/** Activate the equipment conditions for an item, and apply the equipment if met. */

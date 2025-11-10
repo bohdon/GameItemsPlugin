@@ -5,6 +5,7 @@
 
 #include "GameItemsModule.h"
 #include "Engine/ActorChannel.h"
+#include "Engine/World.h"
 #include "Equipment/GameEquipment.h"
 #include "Equipment/GameEquipmentDef.h"
 #include "GameFramework/Actor.h"
@@ -15,6 +16,7 @@ UGameEquipmentComponent::UGameEquipmentComponent(const FObjectInitializer& Objec
 	: Super(ObjectInitializer)
 {
 	bWantsInitializeComponent = true;
+	SetIsReplicatedByDefault(true);
 }
 
 void UGameEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -24,6 +26,17 @@ void UGameEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	DOREPLIFETIME(ThisClass, EquipmentList);
 }
 
+void UGameEquipmentComponent::InitializeComponent()
+{
+	Super::InitializeComponent();
+
+	if (GetOwner() && !GetOwner()->HasAnyFlags(RF_ClassDefaultObject))
+	{
+		EquipmentList.OnPreReplicatedRemoveEvent.AddUObject(this, &ThisClass::OnPreReplicatedRemove);
+		EquipmentList.OnPostReplicatedAddEvent.AddUObject(this, &ThisClass::OnPostReplicatedAdd);
+		EquipmentList.OnPostReplicatedChangeEvent.AddUObject(this, &ThisClass::OnPostReplicatedChange);
+	}
+}
 
 void UGameEquipmentComponent::UninitializeComponent()
 {
@@ -39,11 +52,11 @@ void UGameEquipmentComponent::ReadyForReplication()
 	// register any existing equipment
 	if (IsUsingRegisteredSubObjectList())
 	{
-		for (const FGameEquipmentListEntry& Entry : EquipmentList.Entries)
+		for (const FGameEquipmentListEntry& Entry : EquipmentList.GetEntries())
 		{
-			if (IsValid(Entry.GetEquipment()))
+			if (IsValid(Entry.Equipment))
 			{
-				AddReplicatedSubObject(Entry.GetEquipment());
+				AddReplicatedSubObject(Entry.Equipment);
 			}
 		}
 	}
@@ -53,9 +66,9 @@ bool UGameEquipmentComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBu
 {
 	bool bDidWrite = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
 
-	for (const FGameEquipmentListEntry& Entry : EquipmentList.Entries)
+	for (const FGameEquipmentListEntry& Entry : EquipmentList.GetEntries())
 	{
-		UGameEquipment* Equipment = Entry.GetEquipment();
+		UGameEquipment* Equipment = Entry.Equipment;
 		if (IsValid(Equipment))
 		{
 			bDidWrite |= Channel->ReplicateSubobject(Equipment, *Bunch, *RepFlags);
@@ -75,7 +88,8 @@ UGameEquipment* UGameEquipmentComponent::ApplyEquipment(TSubclassOf<UGameEquipme
 	const UGameEquipmentDef* EquipmentDefCDO = GetDefault<UGameEquipmentDef>(EquipmentDef);
 	if (EquipmentDefCDO->EquipmentClass == nullptr)
 	{
-		UE_LOG(LogGameItems, Error, TEXT("Cant apply equipment, %s.EquipmentClass is not set"), *EquipmentDef->GetName());
+		UE_LOG(LogGameItems, Error, TEXT("%s[%s] Cant apply equipment, %s.EquipmentClass is not set"),
+		       *GetNetDebugString(), *GetReadableName(), *EquipmentDef->GetName());
 		return nullptr;
 	}
 
@@ -86,7 +100,13 @@ UGameEquipment* UGameEquipmentComponent::ApplyEquipment(TSubclassOf<UGameEquipme
 
 	EquipmentList.AddEntry(NewEquipment);
 
-	UE_LOG(LogGameItems, Verbose, TEXT("Applied equipment: %s (Instigator: %s)"), *NewEquipment->GetName(), *GetNameSafe(Instigator));
+	if (NewEquipment && IsUsingRegisteredSubObjectList() && IsReadyForReplication())
+	{
+		AddReplicatedSubObject(NewEquipment);
+	}
+
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Applied equipment: %s (Instigator: %s)"),
+	       *GetNetDebugString(), *GetReadableName(), *NewEquipment->GetName(), *GetNameSafe(Instigator));
 
 	return NewEquipment;
 }
@@ -98,7 +118,7 @@ void UGameEquipmentComponent::RemoveEquipment(UGameEquipment* Equipment)
 		return;
 	}
 
-	if (IsUsingRegisteredSubObjectList())
+	if (Equipment && IsUsingRegisteredSubObjectList() && IsReadyForReplication())
 	{
 		RemoveReplicatedSubObject(Equipment);
 	}
@@ -108,7 +128,8 @@ void UGameEquipmentComponent::RemoveEquipment(UGameEquipment* Equipment)
 
 	EquipmentList.RemoveEntry(Equipment);
 
-	UE_LOG(LogGameItems, Verbose, TEXT("Removed equipment: %s"), *Equipment->GetName());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Removed equipment: %s"),
+	       *GetNetDebugString(), *GetReadableName(), *Equipment->GetName());
 }
 
 void UGameEquipmentComponent::RemoveAllEquipment()
@@ -117,9 +138,9 @@ void UGameEquipmentComponent::RemoveAllEquipment()
 
 UGameEquipment* UGameEquipmentComponent::FindEquipment(TSubclassOf<UGameEquipment> EquipmentClass) const
 {
-	for (const FGameEquipmentListEntry& Entry : EquipmentList.Entries)
+	for (const FGameEquipmentListEntry& Entry : EquipmentList.GetEntries())
 	{
-		UGameEquipment* Equipment = Entry.GetEquipment();
+		UGameEquipment* Equipment = Entry.Equipment;
 		if (IsValid(Equipment) && Equipment->IsA(EquipmentClass))
 		{
 			return Equipment;
@@ -131,9 +152,9 @@ UGameEquipment* UGameEquipmentComponent::FindEquipment(TSubclassOf<UGameEquipmen
 TArray<UGameEquipment*> UGameEquipmentComponent::FindAllEquipment(TSubclassOf<UGameEquipment> EquipmentClass) const
 {
 	TArray<UGameEquipment*> Result;
-	for (const FGameEquipmentListEntry& Entry : EquipmentList.Entries)
+	for (const FGameEquipmentListEntry& Entry : EquipmentList.GetEntries())
 	{
-		UGameEquipment* Equipment = Entry.GetEquipment();
+		UGameEquipment* Equipment = Entry.Equipment;
 		if (IsValid(Equipment) && Equipment->IsA(EquipmentClass))
 		{
 			Result.Add(Equipment);
@@ -145,9 +166,9 @@ TArray<UGameEquipment*> UGameEquipmentComponent::FindAllEquipment(TSubclassOf<UG
 TArray<UGameEquipment*> UGameEquipmentComponent::FindAllEquipmentByInstigator(UObject* Instigator) const
 {
 	TArray<UGameEquipment*> Result;
-	for (const auto Entry : EquipmentList.Entries)
+	for (const auto Entry : EquipmentList.GetEntries())
 	{
-		UGameEquipment* Equipment = Entry.GetEquipment();
+		UGameEquipment* Equipment = Entry.Equipment;
 		if (IsValid(Equipment) && Equipment->GetInstigator() == Instigator)
 		{
 			Result.Add(Equipment);
@@ -159,13 +180,65 @@ TArray<UGameEquipment*> UGameEquipmentComponent::FindAllEquipmentByInstigator(UO
 TArray<UGameEquipment*> UGameEquipmentComponent::GetAllEquipment() const
 {
 	TArray<UGameEquipment*> Result;
-	for (const auto Entry : EquipmentList.Entries)
+	for (const auto Entry : EquipmentList.GetEntries())
 	{
-		UGameEquipment* Equipment = Entry.GetEquipment();
+		UGameEquipment* Equipment = Entry.Equipment;
 		if (IsValid(Equipment))
 		{
 			Result.Add(Equipment);
 		}
 	}
 	return Result;
+}
+
+void UGameEquipmentComponent::OnPreReplicatedRemove(FGameEquipmentListEntry& Entry)
+{
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%hs][%s] %s"),
+	       *GetNetDebugString(), __func__, *GetReadableName(), *Entry.GetDebugString());
+
+	if (Entry.Equipment)
+	{
+		Entry.Equipment->OnUnequipped();
+	}
+}
+
+void UGameEquipmentComponent::OnPostReplicatedAdd(FGameEquipmentListEntry& Entry)
+{
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%hs][%s] %s"),
+	       *GetNetDebugString(), __func__, *GetReadableName(), *Entry.GetDebugString());
+
+	if (Entry.Equipment)
+	{
+		Entry.Equipment->OnEquipped();
+	}
+}
+
+void UGameEquipmentComponent::OnPostReplicatedChange(FGameEquipmentListEntry& Entry)
+{
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%hs][%s] %s"),
+	       *GetNetDebugString(), __func__, *GetReadableName(), *Entry.GetDebugString());
+
+	// this should only be called if the entry went from null -> valid, so treat it like OnPostReplicatedAdd
+	if (Entry.Equipment)
+	{
+		Entry.Equipment->OnEquipped();
+	}
+}
+
+FString UGameEquipmentComponent::GetNetDebugString() const
+{
+	if (ensure(GetWorld()))
+	{
+		switch (GetWorld()->GetNetMode())
+		{
+		case NM_DedicatedServer:
+		case NM_ListenServer:
+			return TEXT("Server: ");
+		case NM_Client:
+			return FString::Printf(TEXT("Client %d: "), UE::GetPlayInEditorID());
+		case NM_Standalone:
+		default: ;
+		}
+	}
+	return FString();
 }

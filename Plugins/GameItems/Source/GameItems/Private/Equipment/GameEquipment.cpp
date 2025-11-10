@@ -35,6 +35,11 @@ UWorld* UGameEquipment::GetWorld() const
 	return nullptr;
 }
 
+FString UGameEquipment::GetReadableName() const
+{
+	return FString::Printf(TEXT("%s.%s"), GetOwner() ? *GetOwner()->GetReadableName() : TEXT("(null)"), *GetName());
+}
+
 void UGameEquipment::SetEquipmentDef(TSubclassOf<UGameEquipmentDef> InEquipmentDef)
 {
 	EquipmentDef = InEquipmentDef;

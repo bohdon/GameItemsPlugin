@@ -23,7 +23,9 @@ public:
 	UGameEquipment(const FObjectInitializer& ObjectInitializer);
 
 	virtual bool IsSupportedForNetworking() const override { return true; }
-	virtual UWorld* GetWorld() const override final;
+	virtual UWorld* GetWorld() const override;
+
+	virtual FString GetReadableName() const;
 
 	/** Set the definition of this equipment. */
 	void SetEquipmentDef(TSubclassOf<UGameEquipmentDef> InEquipmentDef);

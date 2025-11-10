@@ -53,7 +53,7 @@ void UAbilityEquipment::GiveAbilitySets()
 	if (!AbilityEquipDef)
 	{
 		UE_LOG(LogGameItems, Error, TEXT("[%s] %s must be a UAbilityEquipmentDef"),
-		       *GetOwningActor()->GetActorNameOrLabel(), *GetEquipmentDef()->GetName());
+		       *GetReadableName(), *GetEquipmentDef()->GetName());
 		return;
 	}
 
@@ -61,7 +61,7 @@ void UAbilityEquipment::GiveAbilitySets()
 	if (!AbilitySystem)
 	{
 		UE_LOG(LogGameItems, Error, TEXT("[%s] No AbilitySystem found"),
-		       *GetOwner()->GetReadableName());
+		       *GetReadableName());
 		return;
 	}
 
@@ -70,7 +70,7 @@ void UAbilityEquipment::GiveAbilitySets()
 		if (!AbilitySet)
 		{
 			UE_LOG(LogGameItems, Error, TEXT("[%s] %s has invalid AbilitySet"),
-			       *GetOwner()->GetReadableName(), *GetNameSafe(AbilityEquipDef));
+			       *GetReadableName(), *GetNameSafe(AbilityEquipDef));
 			continue;
 		}
 

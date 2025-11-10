@@ -148,4 +148,6 @@ protected:
 	virtual void OnItemAdded(UGameItem* GameItem);
 
 	virtual void OnItemRemoved(UGameItem* GameItem);
+
+	FString GetNetDebugString() const;
 };

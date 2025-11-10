@@ -32,7 +32,7 @@ UGameItemContainerComponent::UGameItemContainerComponent(const FObjectInitialize
 void UGameItemContainerComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
+
 	FDoRepLifetimeParams SharedParams;
 	SharedParams.bIsPushBased = true;
 
@@ -236,7 +236,9 @@ void UGameItemContainerComponent::CreateStartupContainers()
 		return;
 	}
 
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Creating startup containers..."), *GetReadableName());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Creating startup containers..."),
+	       *GetNetDebugString(), *GetReadableName());
+
 	for (const FGameItemContainerSpec& ContainerSpec : StartupContainers)
 	{
 		if (UGameItemContainer* Container = CreateContainer(ContainerSpec.ContainerId, ContainerSpec.ContainerDef))
@@ -255,7 +257,9 @@ void UGameItemContainerComponent::CreateDefaultItems(bool bForce)
 		return;
 	}
 
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Creating default items..."), *GetReadableName());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Creating default items..."),
+	       *GetNetDebugString(), *GetReadableName());
+
 	for (auto& Elem : ContainerMap)
 	{
 		Elem.Value->CreateDefaultItems(bForce);
@@ -309,16 +313,16 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag Co
 	if (ContainerMap.Contains(ContainerId))
 	{
 		// already exists, or invalid id
-		UE_LOG(LogGameItems, Warning, TEXT("[%s] Container already exists with id: %s"),
-		       *GetReadableName(), *ContainerId.ToString());
+		UE_LOG(LogGameItems, Warning, TEXT("%s[%s] Container already exists with id: %s"),
+		       *GetNetDebugString(), *GetReadableName(), *ContainerId.ToString());
 		return nullptr;
 	}
 
 	if (!ContainerDef)
 	{
 		// must provide a container def
-		UE_LOG(LogGameItems, Warning, TEXT("[%s] Attempted to create container with null ContainerDef: %s"),
-		       *GetReadableName(), *ContainerId.ToString());
+		UE_LOG(LogGameItems, Warning, TEXT("%s[%s] Attempted to create container with null ContainerDef: %s"),
+		       *GetNetDebugString(), *GetReadableName(), *ContainerId.ToString());
 		return nullptr;
 	}
 
@@ -337,8 +341,8 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag Co
 	NewContainer->SetCollection(this);
 	NewContainer->SetContainerDef(ContainerDef);
 
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Created container: %s (%s)"),
-	       *GetReadableName(), *ContainerId.ToString(), *ContainerDef->GetName());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Created container: %s (%s)"),
+	       *GetNetDebugString(), *GetReadableName(), *ContainerId.ToString(), *ContainerDef->GetName());
 
 	// add link rules
 	for (const FGameItemContainerLinkSpec& LinkSpec : ContainerLinks)
@@ -353,8 +357,9 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(FGameplayTag Co
 			{
 				// just set the container id, then resolve this (and any other links) later
 				NewLink->LinkedContainerId = LinkSpec.LinkedContainerId;
-				UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Linked %s to %s (%s)"),
-				       *GetReadableName(), *ContainerId.ToString(), *LinkSpec.LinkedContainerId.ToString(), *LinkSpec.ContainerLinkClass->GetName());
+				UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Linked %s to %s (%s)"),
+				       *GetNetDebugString(), *GetReadableName(),
+				       *ContainerId.ToString(), *LinkSpec.LinkedContainerId.ToString(), *LinkSpec.ContainerLinkClass->GetName());
 			}
 		}
 	}
@@ -422,4 +427,22 @@ void UGameItemContainerComponent::OnItemRemoved(UGameItem* GameItem)
 	{
 		RemoveReplicatedSubObject(GameItem);
 	}
+}
+
+FString UGameItemContainerComponent::GetNetDebugString() const
+{
+	if (ensure(GetWorld()))
+	{
+		switch (GetWorld()->GetNetMode())
+		{
+		case NM_DedicatedServer:
+		case NM_ListenServer:
+			return TEXT("Server: ");
+		case NM_Client:
+			return FString::Printf(TEXT("Client %d: "), UE::GetPlayInEditorID());
+		case NM_Standalone:
+		default: ;
+		}
+	}
+	return FString();
 }

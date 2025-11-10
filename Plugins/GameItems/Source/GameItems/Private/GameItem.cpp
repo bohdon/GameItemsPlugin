@@ -16,6 +16,15 @@ UGameItem::UGameItem(const FObjectInitializer& ObjectInitializer)
 {
 }
 
+void UGameItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, ItemDef);
+	DOREPLIFETIME(ThisClass, Count);
+	DOREPLIFETIME(ThisClass, TagStats);
+}
+
 const UGameItemDef* UGameItem::GetItemDefCDO() const
 {
 	return ItemDef ? GetDefault<UGameItemDef>(ItemDef) : nullptr;
@@ -38,6 +47,7 @@ void UGameItem::SetCount(int32 NewCount)
 	{
 		const int32 OldCount = Count;
 		Count = NewCount;
+		MARK_PROPERTY_DIRTY_FROM_NAME(UGameItem, Count, this);
 
 		OnCountChangedEvent.Broadcast(NewCount, OldCount);
 	}
@@ -91,7 +101,9 @@ bool UGameItem::IsMatching(const UGameItem* Item) const
 void UGameItem::CopyItemProperties(const UGameItem* Item)
 {
 	Count = Item->Count;
+	MARK_PROPERTY_DIRTY_FROM_NAME(UGameItem, Count, this);
 	TagStats = Item->TagStats;
+	TagStats.MarkArrayDirty();
 }
 
 TArray<UGameItemContainer*> UGameItem::GetContainers() const
@@ -105,14 +117,5 @@ TArray<UGameItemContainer*> UGameItem::GetContainers() const
 
 FString UGameItem::ToDebugString() const
 {
-	return FString::Printf(TEXT("%s (%sx%d)"), *GetName(), *GetNameSafe(ItemDef), Count);
-}
-
-void UGameItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(ThisClass, ItemDef);
-	DOREPLIFETIME(ThisClass, Count);
-	DOREPLIFETIME(ThisClass, TagStats);
+	return FString::Printf(TEXT("%s (%s x %d)"), *GetName(), *GetNameSafe(ItemDef), Count);
 }

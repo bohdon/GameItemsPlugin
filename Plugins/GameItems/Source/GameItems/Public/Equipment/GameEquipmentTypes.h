@@ -50,17 +50,17 @@ struct FGameEquipmentListEntry : public FFastArraySerializerItem
 	{
 	}
 
+	FGameEquipmentListEntry(UGameEquipment* InEquipment)
+		: Equipment(InEquipment)
+	{
+	}
+
 	// FFastArraySerializerItem
 	FString GetDebugString() const;
 
-	TObjectPtr<UGameEquipment> GetEquipment() const { return Equipment; }
-
-private:
 	/** The equipment instance. */
 	UPROPERTY()
 	TObjectPtr<UGameEquipment> Equipment = nullptr;
-
-	friend FGameEquipmentList;
 };
 
 
@@ -77,8 +77,9 @@ struct FGameEquipmentList : public FFastArraySerializer
 	}
 
 	// FFastArraySerializer
-	void PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize);
-	void PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize);
+	void PreReplicatedRemove(const TArrayView<int32>& RemovedIndices, int32 FinalSize);
+	void PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize);
+	void PostReplicatedChange(const TArrayView<int32>& ChangedIndices, int32 FinalSize);
 
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
 	{
@@ -88,12 +89,19 @@ struct FGameEquipmentList : public FFastArraySerializer
 	void AddEntry(UGameEquipment* Equipment);
 	void RemoveEntry(UGameEquipment* Equipment);
 
-private:
+	const TArray<FGameEquipmentListEntry>& GetEntries() const { return Entries; }
+
+protected:
 	/** Replicated list of equipment entries */
 	UPROPERTY()
 	TArray<FGameEquipmentListEntry> Entries;
 
-	friend UGameEquipmentComponent;
+public:
+	DECLARE_MULTICAST_DELEGATE_OneParam(FGameEquipmentListReplicateDelegate, FGameEquipmentListEntry& /*Entry*/);
+
+	FGameEquipmentListReplicateDelegate OnPreReplicatedRemoveEvent;
+	FGameEquipmentListReplicateDelegate OnPostReplicatedAddEvent;
+	FGameEquipmentListReplicateDelegate OnPostReplicatedChangeEvent;
 };
 
 template <>

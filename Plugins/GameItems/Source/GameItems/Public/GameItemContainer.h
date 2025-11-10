@@ -151,9 +151,16 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
 	void StackItems(int32 FromSlot, int32 ToSlot, bool bAllowPartial = true);
 
-	/** Return all items in the container, may include null entries for empty slots. */
+	/** Return all items in the container as a map indexed by slot. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
-	TArray<UGameItem*> GetAllItems() const;
+	TMap<int32, UGameItem*> GetAllItems() const;
+
+	/**
+	 * Return all items in the container, in an array matching slots (which may include null entries).
+	 * Slower than GetAllItems but useful for UI, etc.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
+	TArray<UGameItem*> GetAllItemsAsSlotArray() const;
 
 	/** Return the item in a specific slot of this container. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
@@ -392,6 +399,38 @@ public:
 	/** Called when the total number of slots has changed. */
 	FNumSlotsChangedDelegate OnNumSlotsChangedEvent;
 
+public:
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void ServerAddItem(UGameItem* Item, int32 TargetSlot = -1);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void ServerAddItems(const TArray<UGameItem*>& Items, int32 TargetSlot = -1);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void ServerRemoveItem(UGameItem* Item);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void ServerRemoveItems(const TArray<UGameItem*>& Items);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void ServerRemoveItemAt(int32 Slot);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void ServerRemoveItemsByDef(TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void ServerRemoveAllItems();
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void ServerSwapItems(int32 SlotA, int32 SlotB);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void ServerStackItems(int32 FromSlot, int32 ToSlot, bool bAllowPartial = true);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void ServerSetItemAt(UGameItem* Item, int32 Slot);
+
+
 protected:
 	/** The settings for this container. */
 	UPROPERTY(Transient, BlueprintReadOnly, Replicated, DisplayName = "ContainerDefClass", Meta = (AllowPrivateAccess = true), Category = "GameItemContainer")
@@ -456,7 +495,9 @@ protected:
 	virtual void OnItemRemoved(UGameItem* Item, int32 Slot);
 
 	/** Called when the replicated item list has changed. */
-	virtual void OnItemListEntryNewOrRemoved(FGameItemListEntry& Entry, int32 Slot, bool bAdded);
+	virtual void OnPreReplicatedRemove(FGameItemListEntry& Entry);
+	virtual void OnPostReplicatedAdd(FGameItemListEntry& Entry);
+	virtual void OnPostReplicatedChange(FGameItemListEntry& Entry);
 
 	/** Start a slot change operation, gathering slot changes to broadcast later. */
 	void BeginSlotChanges();
@@ -472,11 +513,15 @@ protected:
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool IsSupportedForNetworking() const override { return true; }
+	virtual int32 GetFunctionCallspace(UFunction* Function, FFrame* Stack) override;
+	virtual bool CallRemoteFunction(UFunction* Function, void* Parms, struct FOutParmRec* OutParms, FFrame* Stack) override;
 	virtual void RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Context, UE::Net::EFragmentRegistrationFlags RegistrationFlags) override;
+
+	FString GetNetDebugString() const;
 
 private:
 	/** The replicated item list struct. */
-	UPROPERTY(Replicated)
+	UPROPERTY(Transient, Replicated)
 	FGameItemList ItemList;
 
 public:

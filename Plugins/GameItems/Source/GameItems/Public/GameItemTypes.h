@@ -55,7 +55,8 @@ struct GAMEITEMS_API FGameItemDefStack
 	}
 
 	FGameItemDefStack(const TSubclassOf<UGameItemDef>& InItemDef, const int32& InCount)
-		: ItemDef(InItemDef), Count(InCount)
+		: ItemDef(InItemDef)
+		, Count(InCount)
 	{
 	}
 
@@ -82,8 +83,8 @@ struct GAMEITEMS_API FGameItemTagStack : public FFastArraySerializerItem
 	}
 
 	FGameItemTagStack(FGameplayTag InTag, int32 InCount)
-		: Tag(InTag),
-		  Count(InCount)
+		: Tag(InTag)
+		, Count(InCount)
 	{
 	}
 
@@ -193,12 +194,25 @@ struct GAMEITEMS_API FGameItemListEntry : public FFastArraySerializerItem
 	{
 	}
 
+	FGameItemListEntry(UGameItem* InItem, int32 InSlot)
+		: Item(InItem)
+		, Slot(InSlot)
+	{
+	}
+
 	// FFastArraySerializerItem
 	FString GetDebugString() const;
 
-	/** The item in this entry. */
+	/**
+	 * The item in this entry. Will always be set once added, since
+	 * entries are fully removed when an item is removed from a slot.
+	 */
 	UPROPERTY()
-	TObjectPtr<UGameItem> Item = nullptr;
+	TObjectPtr<UGameItem> Item;
+
+	/** The slot index of this entry, since item list order is unstable. */
+	UPROPERTY()
+	int32 Slot = -1;
 };
 
 
@@ -215,9 +229,9 @@ struct GAMEITEMS_API FGameItemList : public FFastArraySerializer
 	}
 
 	// FFastArraySerializer
-	void PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize);
-	void PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize);
-	void PostReplicatedChange(const TArrayView<int32> ChangedIndices, int32 FinalSize);
+	void PreReplicatedRemove(const TArrayView<int32>& RemovedIndices, int32 FinalSize);
+	void PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize);
+	void PostReplicatedChange(const TArrayView<int32>& ChangedIndices, int32 FinalSize);
 
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
 	{
@@ -226,41 +240,58 @@ struct GAMEITEMS_API FGameItemList : public FFastArraySerializer
 
 	void PostSerialize(const FArchive& Ar);
 
-	/** Add an item/stack to the list. */
-	void AddEntry(UGameItem* Item);
-
 	/** Add an item/stack to the list at a specific index, expanding the list size as needed. */
-	void AddEntryAt(UGameItem* Item, int32 Index);
+	void AddEntryForSlot(UGameItem* Item, int32 Slot);
 
 	/** Remove an item/stack from the list. */
 	void RemoveEntry(UGameItem* Item);
 
-	/**
-	 * Remove an item/stack from a specific index in the list.
-	 * @param bPreserveIndices Simply null out the item instead of removing it from the list, which would affect all item indices following it.
-	 */
-	UGameItem* RemoveEntryAt(int32 Index, bool bPreserveIndices = false);
+	/** Remove an entry from the list for a slot. */
+	UGameItem* RemoveEntryForSlot(int32 Slot);
 
-	/** Return all item entries. */
-	FORCEINLINE const TArray<FGameItemListEntry>& GetEntries() const { return Entries; }
+	/** Return the item in a slot. */
+	UGameItem* GetItemInSlot(int32 Slot) const;
+
+	/** Return true if an item exists in a slot. */
+	bool HasItemInSlot(int32 Slot) const;
 
 	/** Clear all entries. */
 	void Reset();
 
 	/** Swap the location of two entries, expanding the array size if needed. */
-	void SwapEntries(int32 IndexA, int32 IndexB);
+	void SwapEntries(int32 SlotA, int32 SlotB);
 
-	void GetAllItems(TArray<UGameItem*>& OutItems) const;
+	/** Return all items in the list, mapped by slot. */
+	void GetAllItems(TMap<int32, UGameItem*>& OutItems) const;
 
-	DECLARE_MULTICAST_DELEGATE_ThreeParams(FGameItemListNewOrRemovedDelegate, FGameItemListEntry& /*Entry*/, int32 /*Slot*/, bool /*bAdded*/);
+	/** Return slots with items, sorted. */
+	void GetAllSlots(TArray<int32>& OutSlots) const;
 
-	/** Called when any item is added or removed. */
-	FGameItemListNewOrRemovedDelegate OnItemAddedOrRemovedEvent;
+	/** Return all item entries. Remember that index and order of this array is unstable. */
+	FORCEINLINE const TArray<FGameItemListEntry>& GetEntries() const { return Entries; }
 
 protected:
 	/** Replicated list of items and their stack counts. */
 	UPROPERTY()
 	TArray<FGameItemListEntry> Entries;
+
+public:
+	DECLARE_MULTICAST_DELEGATE_OneParam(FGameItemListReplicateDelegate, FGameItemListEntry& /*Entry*/);
+
+	FGameItemListReplicateDelegate OnPreReplicatedRemoveEvent;
+	FGameItemListReplicateDelegate OnPostReplicatedAddEvent;
+	FGameItemListReplicateDelegate OnPostReplicatedChangeEvent;
+
+	int32 MyValA = 4;
+
+	UPROPERTY()
+	int32 MyValB = 5;
+
+	UPROPERTY(NotReplicated)
+	int32 MyValC = 6;
+
+	UPROPERTY(NotReplicated)
+	TObjectPtr<class UActorComponent> OwningComponent;
 };
 
 
@@ -270,6 +301,7 @@ struct TStructOpsTypeTraits<FGameItemList> : public TStructOpsTypeTraitsBase2<FG
 	enum
 	{
 		WithNetDeltaSerializer = true,
+		WithPostSerialize = true,
 	};
 };
 

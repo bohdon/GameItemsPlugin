@@ -18,35 +18,33 @@ FString FGameEquipmentListEntry::GetDebugString() const
 // FGameEquipmentList
 // ------------------
 
-void FGameEquipmentList::PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize)
+void FGameEquipmentList::PreReplicatedRemove(const TArrayView<int32>& RemovedIndices, int32 FinalSize)
 {
 	for (const int32 Idx : RemovedIndices)
 	{
-		const FGameEquipmentListEntry& Entry = Entries[Idx];
-		if (Entry.Equipment != nullptr)
-		{
-			Entry.Equipment->OnUnequipped();
-		}
+		OnPreReplicatedRemoveEvent.Broadcast(Entries[Idx]);
 	}
 }
 
-void FGameEquipmentList::PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize)
+void FGameEquipmentList::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize)
 {
 	for (const int32 Idx : AddedIndices)
 	{
-		const FGameEquipmentListEntry& Entry = Entries[Idx];
-		if (Entry.Equipment != nullptr)
-		{
-			Entry.Equipment->OnEquipped();
-		}
+		OnPostReplicatedAddEvent.Broadcast(Entries[Idx]);
+	}
+}
+
+void FGameEquipmentList::PostReplicatedChange(const TArrayView<int32>& ChangedIndices, int32 FinalSize)
+{
+	for (const int32 Idx : ChangedIndices)
+	{
+		OnPostReplicatedChangeEvent.Broadcast(Entries[Idx]);
 	}
 }
 
 void FGameEquipmentList::AddEntry(UGameEquipment* Equipment)
 {
-	FGameEquipmentListEntry& NewEntry = Entries.AddDefaulted_GetRef();
-	NewEntry.Equipment = Equipment;
-
+FGameEquipmentListEntry& NewEntry = Entries.Emplace_GetRef(Equipment);
 	MarkItemDirty(NewEntry);
 }
 

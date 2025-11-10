@@ -38,9 +38,9 @@ void UGameItemEquipmentComponent::AddItemContainer(UGameItemContainer* ItemConta
 	ItemContainer->OnItemAddedEvent.AddUObject(this, &UGameItemEquipmentComponent::OnItemAdded);
 	ItemContainer->OnItemRemovedEvent.AddUObject(this, &UGameItemEquipmentComponent::OnItemRemoved);
 
-	for (UGameItem* Item : ItemContainer->GetAllItems())
+	for (const TPair<int32, UGameItem*>& Elem : ItemContainer->GetAllItems())
 	{
-		OnItemAdded(Item);
+		OnItemAdded(Elem.Value);
 	}
 }
 
@@ -56,9 +56,9 @@ void UGameItemEquipmentComponent::RemoveItemContainer(UGameItemContainer* ItemCo
 	ItemContainer->OnItemAddedEvent.RemoveAll(this);
 	ItemContainer->OnItemRemovedEvent.RemoveAll(this);
 
-	for (UGameItem* Item : ItemContainer->GetAllItems())
+	for (const TPair<int32, UGameItem*>& Elem : ItemContainer->GetAllItems())
 	{
-		OnItemRemoved(Item);
+		OnItemRemoved(Elem.Value);
 	}
 }
 
@@ -70,11 +70,11 @@ void UGameItemEquipmentComponent::ReapplyAllItemEquipment()
 	{
 		if (Container.IsValid())
 		{
-			for (UGameItem* Item : Container->GetAllItems())
+			for (const TPair<int32, UGameItem*>& Elem : Container->GetAllItems())
 			{
-				if (const UGameItemFragment_Equipment* EquipFrag = GetItemEquipmentFragment(Item))
+				if (const UGameItemFragment_Equipment* EquipFrag = GetItemEquipmentFragment(Elem.Value))
 				{
-					CheckItemEquipmentCondition(Item, EquipFrag);
+					CheckItemEquipmentCondition(Elem.Value, EquipFrag);
 				}
 			}
 		}
@@ -148,7 +148,8 @@ void UGameItemEquipmentComponent::ActivateItemEquipmentCondition(UGameItem* Item
 	const FWorldConditionContext Context(ItemCondition.State, ContextData);
 	if (!Context.Activate())
 	{
-		UE_LOG(LogGameItems, Error, TEXT("Failed to activate condition for item equipment: %s"), *Item->GetName());
+		UE_LOG(LogGameItems, Error, TEXT("[%s] Failed to activate condition for item equipment: %s"),
+			*GetReadableName(), *Item->GetName());
 		return;
 	}
 

@@ -160,7 +160,10 @@ TArray<UGameItem*> UGameItemSubsystem::MoveAllItems(UGameItemContainer* FromCont
 {
 	if (FromContainer)
 	{
-		const TArray<UGameItem*> Items = FromContainer->GetAllItems();
+		// TODO: optimize
+		const TMap<int32, UGameItem*> ItemsBySlot = FromContainer->GetAllItems();
+		TArray<UGameItem*> Items;
+		ItemsBySlot.GenerateValueArray(Items);
 		return MoveItems(FromContainer, ToContainer, Items, bAllowPartial);
 	}
 	return TArray<UGameItem*>();

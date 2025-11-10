@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameItemTypes.h"
+#include "Engine/EngineTypes.h"
 #include "UObject/Object.h"
 #include "GameItemContainerRule.generated.h"
 
@@ -24,6 +25,11 @@ public:
 	UGameItemContainerRule();
 
 	virtual bool IsSupportedForNetworking() const override { return true; }
+	virtual int32 GetFunctionCallspace(UFunction* Function, FFrame* Stack) override;
+	virtual bool CallRemoteFunction(UFunction* Function, void* Parms, struct FOutParmRec* OutParms, FFrame* Stack) override;
+
+	/** Return the net role of the owning actor. */
+	ENetRole GetNetRole() const;
 
 	/** Return the owning container. */
 	UFUNCTION(BlueprintPure, Category = "GameItems")

@@ -22,6 +22,7 @@ class GAMEITEMS_API UGameEquipmentComponent : public UActorComponent
 public:
 	UGameEquipmentComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+	virtual void InitializeComponent() override;
 	virtual void UninitializeComponent() override;
 	virtual void ReadyForReplication() override;
 	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
@@ -61,6 +62,13 @@ public:
 	TArray<UGameEquipment*> GetAllEquipment() const;
 
 protected:
-	UPROPERTY(Replicated)
+	void OnPreReplicatedRemove(FGameEquipmentListEntry& Entry);
+	void OnPostReplicatedAdd(FGameEquipmentListEntry& Entry);
+	void OnPostReplicatedChange(FGameEquipmentListEntry& Entry);
+
+	FString GetNetDebugString() const;
+
+protected:
+	UPROPERTY(Transient, Replicated)
 	FGameEquipmentList EquipmentList;
 };

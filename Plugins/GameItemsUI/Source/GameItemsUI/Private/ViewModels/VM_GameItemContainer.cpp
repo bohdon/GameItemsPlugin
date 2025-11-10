@@ -42,7 +42,7 @@ int32 UVM_GameItemContainer::GetNumSlots() const
 
 TArray<UGameItem*> UVM_GameItemContainer::GetItems() const
 {
-	return Container ? Container->GetAllItems() : TArray<UGameItem*>();
+	return Container ? Container->GetAllItemsAsSlotArray() : TArray<UGameItem*>();
 }
 
 TArray<UVM_GameItemSlot*> UVM_GameItemContainer::GetSlotViewModels() const

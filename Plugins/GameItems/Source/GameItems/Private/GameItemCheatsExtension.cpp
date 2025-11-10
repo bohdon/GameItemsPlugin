@@ -85,9 +85,9 @@ AActor* UGameItemCheatsExtension::ResolveActor(AActor* Actor)
 
 TSubclassOf<UGameItemDef> UGameItemCheatsExtension::FindItemDefInContainer(UGameItemContainer* Container, const FString& ItemDefName, bool bLogWarning) const
 {
-	TArray<UGameItem*> AllItems = Container->GetAllItems();
-	for (const UGameItem* Item : AllItems)
+	for (const TPair<int32, UGameItem*>& Elem : Container->GetAllItems())
 	{
+		const UGameItem* Item = Elem.Value;
 		if (!Item || !Item->GetItemDef())
 		{
 			continue;
