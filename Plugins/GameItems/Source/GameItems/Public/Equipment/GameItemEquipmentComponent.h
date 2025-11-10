@@ -59,18 +59,18 @@ public:
 	TArray<UGameEquipment*> FindAllEquipmentFromItem(UGameItem* Item) const;
 
 	/** Add an item container as a source of items for providing equipment. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameEquipment")
 	void AddItemContainer(UGameItemContainer* ItemContainer);
 
 	/** Remove an item container as a source of items for providing equipment. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameEquipment")
 	void RemoveItemContainer(UGameItemContainer* ItemContainer);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameEquipment")
 	void ReapplyAllItemEquipment();
 
 	/** Find and add all startup item containers by id. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameEquipment")
 	void AddStartupItemContainers();
 
 	/** Return the equipment fragment for an item, or null if it has one or the fragment is invalid. */

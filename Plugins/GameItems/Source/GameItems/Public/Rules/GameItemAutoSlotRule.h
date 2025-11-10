@@ -25,24 +25,28 @@ class GAMEITEMS_API UGameItemAutoSlotRule : public UGameItemContainerRule
 
 public:
 	/** Return the priority of this container when selecting the 'best' container for auto-slotting an item. */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	int32 GetAutoSlotPriorityForItem(UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
 
 	/** Return true if this rule can handle auto-slotting an item. */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	bool CanAutoSlot(UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
 
 	/**
 	 * Try auto-slotting an item.
 	 * @return True if the auto-slotting was successful. */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false, BlueprintAuthorityOnly, Category = "GameItems")
 	bool TryAutoSlot(UGameItem* Item, const FGameplayTagContainer& ContextTags, TArray<UGameItem*>& OutItems) const;
 
 	/** Return the best slot to use for auto-slotting an item. */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	int32 GetBestSlotForItem(UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
 
 	/** Return true if an item should replace an existing item in the container. */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	bool ShouldReplaceItem(UGameItem* NewItem, UGameItem* ExistingItem, const FGameplayTagContainer& ContextTags) const;
+
+public:
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
+	virtual void ServerTryAutoSlot(UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
 };

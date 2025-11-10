@@ -48,7 +48,7 @@ public:
 	TArray<TSubclassOf<UGameItemFragment>> RequireFragments;
 
 	/** Fill an item set with items. */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	void FillSet(UGameItemSet* ItemSet) const;
 
 	/** Return true if an item definition should be included in the set. */

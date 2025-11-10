@@ -400,34 +400,34 @@ public:
 	FNumSlotsChangedDelegate OnNumSlotsChangedEvent;
 
 public:
-	UFUNCTION(BlueprintCallable, Server, Reliable)
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
 	void ServerAddItem(UGameItem* Item, int32 TargetSlot = -1);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable)
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
 	void ServerAddItems(const TArray<UGameItem*>& Items, int32 TargetSlot = -1);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable)
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
 	void ServerRemoveItem(UGameItem* Item);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable)
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
 	void ServerRemoveItems(const TArray<UGameItem*>& Items);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable)
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
 	void ServerRemoveItemAt(int32 Slot);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable)
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
 	void ServerRemoveItemsByDef(TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable)
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
 	void ServerRemoveAllItems();
 
-	UFUNCTION(BlueprintCallable, Server, Reliable)
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
 	void ServerSwapItems(int32 SlotA, int32 SlotB);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable)
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
 	void ServerStackItems(int32 FromSlot, int32 ToSlot, bool bAllowPartial = true);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable)
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
 	void ServerSetItemAt(UGameItem* Item, int32 Slot);
 
 

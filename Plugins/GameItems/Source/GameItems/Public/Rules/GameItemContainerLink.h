@@ -29,7 +29,7 @@ public:
 	UGameItemContainer* GetLinkedContainer() const { return LinkedContainer; }
 
 	/** Set the container that this one is linked to. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
 	void SetLinkedContainer(UGameItemContainer* NewContainer);
 
 	/** Called when the linked container has changed. */

@@ -28,10 +28,10 @@ class GAMEITEMS_API IGameItemCollectionInterface
 
 public:
 	/** Return the total quantity of an item in the collection. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	virtual int32 GetTotalMatchingItemCount(const UGameItem* Item) const = 0;
 
 	/** Return the total quantity of an item by definition in the collection. */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false)
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	virtual int32 GetTotalMatchingItemCountByDef(TSubclassOf<UGameItemDef> ItemDef) const = 0;
 };

@@ -25,15 +25,15 @@ public:
 	bool bUseDropRules = true;
 
 	/** Select one or more items from a game item set. */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "GameItems")
 	void SelectItems(const FGameItemDropContext& Context, const UGameItemSet* ItemSet, TArray<FGameItemDefStack>& OutItems) const;
 
 	/** Return true if an item passes all conditions and can be selected. */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "GameItems")
 	bool CanSelectItem(const FGameItemDropContext& Context, const UGameItemSet* ItemSet, const FGameItemDefStack& Entry) const;
 
 	/** Return the relative probability to use for selecting an item in the set. */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "GameItems")
 	float GetItemProbability(const FGameItemDropContext& Context, const UGameItemSet* ItemSet, const FGameItemDefStack& Entry) const;
 
 protected:
