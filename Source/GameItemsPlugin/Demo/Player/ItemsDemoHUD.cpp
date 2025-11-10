@@ -5,6 +5,7 @@
 
 #include "GameItemContainerComponent.h"
 #include "GameItemsModule.h"
+#include "TimerManager.h"
 #include "Demo/UI/UIMainLayout.h"
 #include "UObject/UObjectIterator.h"
 
@@ -32,9 +33,18 @@ UCommonActivatableWidgetStack* AItemsDemoHUD::GetUILayer(FGameplayTag LayerTag) 
 
 void AItemsDemoHUD::BeginPlay()
 {
-	CreateMainLayout();
-
 	Super::BeginPlay();
+
+	if (GetNetMode() == NM_Standalone)
+	{
+		CreateMainLayout();
+	}
+	else
+	{
+		// wait a bit for player state to replicate
+		FTimerHandle DelayHandle;
+		GetWorldTimerManager().SetTimer(DelayHandle, this, &ThisClass::CreateMainLayout, 0.1f);
+	}
 }
 
 void AItemsDemoHUD::CreateMainLayout()

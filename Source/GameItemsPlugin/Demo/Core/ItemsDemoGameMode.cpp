@@ -33,12 +33,14 @@ void AItemsDemoGameMode::Logout(AController* Exiting)
 {
 	if (const APlayerController* PlayerController = Cast<APlayerController>(Exiting))
 	{
-		const UDemoSaveGameSubsystem* SaveSubsystem = UGameInstance::GetSubsystem<UDemoSaveGameSubsystem>(GetGameInstance());
-		USaveGame* SaveGame = SaveSubsystem->GetSaveGame();
-		AItemsDemoPlayerState* PlayerState = PlayerController->GetPlayerState<AItemsDemoPlayerState>();
-		if (PlayerState && SaveGame)
+		if (const UDemoSaveGameSubsystem* SaveSubsystem = UGameInstance::GetSubsystem<UDemoSaveGameSubsystem>(GetGameInstance()))
 		{
-			PlayerState->CommitSaveGame(SaveGame);
+			USaveGame* SaveGame = SaveSubsystem->GetSaveGame();
+			AItemsDemoPlayerState* PlayerState = PlayerController->GetPlayerState<AItemsDemoPlayerState>();
+			if (PlayerState && SaveGame)
+			{
+				PlayerState->CommitSaveGame(SaveGame);
+			}
 		}
 	}
 

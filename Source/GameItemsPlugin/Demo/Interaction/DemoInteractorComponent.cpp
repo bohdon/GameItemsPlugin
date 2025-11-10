@@ -90,7 +90,7 @@ FTransform UDemoInteractorComponent::GetAimTransform() const
 bool UDemoInteractorComponent::CanInteract() const
 {
 	UGameViewportClient* ViewportClient = GetWorld() ? GetWorld()->GetGameViewport() : nullptr;
-	if (!ViewportClient->GetGameViewport()->HasMouseCapture())
+	if (ViewportClient && !ViewportClient->GetGameViewport()->HasMouseCapture())
 	{
 		// ignore input when not capturing mouse
 		return false;
