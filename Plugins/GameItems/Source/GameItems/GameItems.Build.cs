@@ -25,6 +25,7 @@ public class GameItems : ModuleRules
 			"SlateCore",
 		});
 
+		SetupGameplayDebuggerSupport(Target);
 		SetupIrisSupport(Target);
 	}
 }

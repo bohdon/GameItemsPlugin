@@ -117,5 +117,7 @@ TArray<UGameItemContainer*> UGameItem::GetContainers() const
 
 FString UGameItem::ToDebugString() const
 {
-	return FString::Printf(TEXT("%s (%s x %d)"), *GetName(), *GetNameSafe(ItemDef), Count);
+	FString ItemDefName = GetNameSafe(ItemDef);
+	ItemDefName.RemoveFromEnd(TEXT("_C"));
+	return FString::Printf(TEXT("%s (%s x %d)"), *GetName(), *ItemDefName, Count);
 }

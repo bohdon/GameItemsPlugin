@@ -2,6 +2,11 @@
 
 #include "GameItemsModule.h"
 
+#if WITH_GAMEPLAY_DEBUGGER
+#include "GameplayDebugger.h"
+#include "GameplayDebuggerCategory_GameItems.h"
+#endif
+
 #include "Engine/Console.h"
 
 #define LOCTEXT_NAMESPACE "FGameItemsModule"
@@ -13,6 +18,15 @@ const FName ShowDebugNames::GameItems(TEXT("GameItems"));
 
 void FGameItemsModule::StartupModule()
 {
+#if WITH_GAMEPLAY_DEBUGGER
+	IGameplayDebugger& GameplayDebuggerModule = IGameplayDebugger::Get();
+	GameplayDebuggerModule.RegisterCategory(
+		"GameItems",
+		IGameplayDebugger::FOnGetCategory::CreateStatic(&FGameplayDebuggerCategory_GameItems::MakeInstance),
+		EGameplayDebuggerCategoryState::EnabledInGame, 7);
+	GameplayDebuggerModule.NotifyCategoriesChanged();
+#endif
+
 #if ALLOW_CONSOLE
 	UConsole::RegisterConsoleAutoCompleteEntries.AddStatic(&FGameItemsModule::PopulateAutoCompleteEntries);
 #endif
@@ -20,6 +34,14 @@ void FGameItemsModule::StartupModule()
 
 void FGameItemsModule::ShutdownModule()
 {
+#if WITH_GAMEPLAY_DEBUGGER
+	if (IGameplayDebugger::IsAvailable())
+	{
+		IGameplayDebugger& GameplayDebuggerModule = IGameplayDebugger::Get();
+		GameplayDebuggerModule.UnregisterCategory("GameItems");
+		GameplayDebuggerModule.NotifyCategoriesChanged();
+	}
+#endif
 }
 
 #if ALLOW_CONSOLE
