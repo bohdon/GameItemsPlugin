@@ -169,6 +169,7 @@ void FGameItemList::PreReplicatedRemove(const TArrayView<int32>& RemovedIndices,
 	for (const int32 Idx : RemovedIndices)
 	{
 		OnPreReplicatedRemoveEvent.Broadcast(Entries[Idx]);
+		Entries[Idx].LastKnownSlot = Entries[Idx].Slot;
 	}
 }
 
@@ -178,15 +179,17 @@ void FGameItemList::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int
 	{
 		// TODO: Entry.Item is always null here (before UpdateUnmappedObjects is called), but should be valid 
 		OnPostReplicatedAddEvent.Broadcast(Entries[Idx]);
+		Entries[Idx].LastKnownSlot = Entries[Idx].Slot;
 	}
 }
 
 void FGameItemList::PostReplicatedChange(const TArrayView<int32>& ChangedIndices, int32 FinalSize)
 {
-	// TODO: currently called when Entry.Item goes from null -> valid, which should ideally happen before PostReplicatedAdd
+	// TODO: currently handles when Entry.Item goes from null -> valid, which should ideally happen before PostReplicatedAdd
 	for (const int32 Idx : ChangedIndices)
 	{
 		OnPostReplicatedChangeEvent.Broadcast(Entries[Idx]);
+		Entries[Idx].LastKnownSlot = Entries[Idx].Slot;
 	}
 }
 
@@ -231,22 +234,35 @@ void FGameItemList::RemoveEntry(UGameItem* Item)
 	}
 }
 
-UGameItem* FGameItemList::RemoveEntryForSlot(int32 Slot)
+UGameItem* FGameItemList::RemoveEntryForSlot(int32 Slot, bool bCollapseSlots)
 {
 	UGameItem* RemovedItem = nullptr;
 	for (auto EntryIt = Entries.CreateIterator(); EntryIt; ++EntryIt)
 	{
-		if (EntryIt->Slot == Slot)
+		FGameItemListEntry& Entry = *EntryIt;
+		if (Entry.Slot == Slot)
 		{
-			RemovedItem = EntryIt->Item;
+			RemovedItem = Entry.Item;
 			EntryIt.RemoveCurrent();
 			MarkArrayDirty();
 			break;
 		}
 	}
-#if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
-	ensureAlwaysMsgf(!HasItemInSlot(Slot), TEXT("Multiple entries found for slot: %d"), Slot);
-#endif
+
+	// remove gaps if desired, done in a second pass to avoid false positives
+	if (bCollapseSlots)
+	{
+		for (auto EntryIt = Entries.CreateIterator(); EntryIt; ++EntryIt)
+		{
+			FGameItemListEntry& Entry = *EntryIt;
+			if (Entry.Slot > Slot)
+			{
+				// if higher slot, drop down by 1
+				Entry.Slot -= 1;
+				MarkItemDirty(Entry);
+			}
+		}
+	}
 	return RemovedItem;
 }
 
@@ -282,19 +298,29 @@ void FGameItemList::Reset()
 	MarkArrayDirty();
 }
 
-void FGameItemList::SwapEntries(int32 SlotA, int32 SlotB)
+bool FGameItemList::SwapEntries(int32 SlotA, int32 SlotB)
 {
 	check(SlotA >= 0);
 	check(SlotB >= 0);
 
-	const int32 MaxIndex = FMath::Max(SlotA, SlotB);
-	if (MaxIndex >= Entries.Num() - 1)
+	bool bDidChange = false;
+	for (auto EntryIt = Entries.CreateIterator(); EntryIt; ++EntryIt)
 	{
-		Entries.SetNum(MaxIndex + 1);
+		FGameItemListEntry& Entry = *EntryIt;
+		if (Entry.Slot == SlotA)
+		{
+			Entry.Slot = SlotB;
+			MarkItemDirty(Entry);
+			bDidChange = true;
+		}
+		else if (Entry.Slot == SlotB)
+		{
+			Entry.Slot = SlotA;
+			MarkItemDirty(Entry);
+			bDidChange = true;
+		}
 	}
-
-	Entries.Swap(SlotA, SlotB);
-	MarkArrayDirty();
+	return bDidChange;
 }
 
 void FGameItemList::GetAllItems(TMap<int32, UGameItem*>& OutItems) const
@@ -303,6 +329,7 @@ void FGameItemList::GetAllItems(TMap<int32, UGameItem*>& OutItems) const
 	OutItems.Reserve(Entries.Num());
 	for (const FGameItemListEntry& Entry : Entries)
 	{
+		ensureAlways(!OutItems.Contains(Entry.Slot));
 		OutItems.Add(Entry.Slot, Entry.Item);
 	}
 }

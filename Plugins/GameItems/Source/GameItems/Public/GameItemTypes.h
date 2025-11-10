@@ -212,7 +212,11 @@ struct GAMEITEMS_API FGameItemListEntry : public FFastArraySerializerItem
 
 	/** The slot index of this entry, since item list order is unstable. */
 	UPROPERTY()
-	int32 Slot = -1;
+	int32 Slot = INDEX_NONE;
+
+	/** The last known slot of this entry, before the latest replicated update. */
+	UPROPERTY(NotReplicated)
+	int32 LastKnownSlot = INDEX_NONE;
 };
 
 
@@ -246,8 +250,8 @@ struct GAMEITEMS_API FGameItemList : public FFastArraySerializer
 	/** Remove an item/stack from the list. */
 	void RemoveEntry(UGameItem* Item);
 
-	/** Remove an entry from the list for a slot. */
-	UGameItem* RemoveEntryForSlot(int32 Slot);
+	/** Remove an entry from the list for a slot, optionally updating items in higher slots to remove gaps. */
+	UGameItem* RemoveEntryForSlot(int32 Slot, bool bCollapseSlots = false);
 
 	/** Return the item in a slot. */
 	UGameItem* GetItemInSlot(int32 Slot) const;
@@ -258,8 +262,8 @@ struct GAMEITEMS_API FGameItemList : public FFastArraySerializer
 	/** Clear all entries. */
 	void Reset();
 
-	/** Swap the location of two entries, expanding the array size if needed. */
-	void SwapEntries(int32 SlotA, int32 SlotB);
+	/** Swap the slot of two entries. Returns true if any entries were changed. */
+	bool SwapEntries(int32 SlotA, int32 SlotB);
 
 	/** Return all items in the list, mapped by slot. */
 	void GetAllItems(TMap<int32, UGameItem*>& OutItems) const;

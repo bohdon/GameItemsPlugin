@@ -434,15 +434,15 @@ UGameItem* UGameItemContainer::RemoveItemAt(int32 Slot)
 
 	FScopedSlotChanges SlotChangeScope(this);
 
-	// don't preserve indexes for unlimited inventories
-	const bool bPreserveIndexes = GetContainerDefCDO()->bLimitSlots;
-	UGameItem* RemovedItem = ItemList.RemoveEntryForSlot(Slot);
+	// slide all items after this down when the inventory has unlimited slots (remove gaps)
+	const bool bShouldCollapse = !GetContainerDefCDO()->bLimitSlots;
+	UGameItem* RemovedItem = ItemList.RemoveEntryForSlot(Slot, bShouldCollapse);
 	if (RemovedItem)
 	{
 		RemovedItem->Containers.Remove(this);
 
 		OnItemRemoved(RemovedItem, Slot);
-		OnSlotRangeChanged(Slot, bPreserveIndexes ? Slot : GetNumSlots() - 1);
+		OnSlotRangeChanged(Slot, bShouldCollapse ? GetNumSlots() - 1 : Slot);
 	}
 
 	return RemovedItem;
@@ -525,8 +525,11 @@ void UGameItemContainer::SwapItems(int32 SlotA, int32 SlotB)
 
 	FScopedSlotChanges SlotChangeScope(this);
 
-	ItemList.SwapEntries(SlotA, SlotB);
-	OnSlotsChanged({SlotA, SlotB});
+	// nothing will change if both slots are empty
+	if (ItemList.SwapEntries(SlotA, SlotB))
+	{
+		OnSlotsChanged({SlotA, SlotB});
+	}
 }
 
 void UGameItemContainer::StackItems(int32 FromSlot, int32 ToSlot, bool bAllowPartial)
@@ -1367,12 +1370,21 @@ void UGameItemContainer::OnPostReplicatedChange(FGameItemListEntry& Entry)
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%hs][%s] %s"),
 	       *GetNetDebugString(), __func__, *GetReadableName(), *Entry.GetDebugString());
 
-	// TODO: this is a fallback since Item is null during OnPostReplicatedAdd, and goes from null -> valid here (there's no other type of 'change')
+	// usually called when the slot of an entry has changed,
+	// treat this as adding a new item to that slot, and also broadcast slot
+	// change on the old slot if different
+
+	// TODO: this is also fallback since Item is null during OnPostReplicatedAdd, and goes from null -> valid here (there's no other type of 'change')
 	if (UGameItem* NewItem = Entry.Item)
 	{
 		FScopedSlotChanges SlotChangeScope(this);
+
 		OnItemAdded(NewItem, Entry.Slot);
 		OnSlotChanged(Entry.Slot);
+		if (Entry.LastKnownSlot != Entry.Slot && Entry.LastKnownSlot != INDEX_NONE)
+		{
+			OnSlotChanged(Entry.LastKnownSlot);
+		}
 	}
 }
 

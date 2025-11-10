@@ -143,8 +143,11 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
 	void RemoveAllItems();
 
-	/** Swap the location of two items in the container. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
+	/**
+	 * Swap the location of two slots in the container.
+	 * This should be used to move an item to a new empty slot as well.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer", meta = (Keywords = "Move"))
 	void SwapItems(int32 SlotA, int32 SlotB);
 
 	/** Stack two items in the container. */
