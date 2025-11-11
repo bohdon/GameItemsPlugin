@@ -22,7 +22,7 @@ void UVM_GameItemContainerTransfer::SetContainerB(UGameItemContainer* NewContain
 void UVM_GameItemContainerTransfer::MoveItem(UVM_GameItemSlot* SlotViewModel, bool bAllowPartial)
 {
 	if (AreContainersValid() && SlotViewModel &&
-		SlotViewModel->GetContainer() == ContainerA || SlotViewModel->GetContainer() == ContainerB)
+		(SlotViewModel->GetContainer() == ContainerA || SlotViewModel->GetContainer() == ContainerB))
 	{
 		UGameItemContainer* OtherContainer = SlotViewModel->GetContainer() == ContainerA ? ContainerB : ContainerA;
 		SlotViewModel->MoveItem(OtherContainer, bAllowPartial);

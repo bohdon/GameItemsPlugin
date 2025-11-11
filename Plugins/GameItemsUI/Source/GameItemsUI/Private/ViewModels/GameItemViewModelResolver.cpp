@@ -1,7 +1,7 @@
 ﻿// Copyright Bohdon Sayre, All Rights Reserved.
 
 
-#include "ViewModels\GameItemViewModelResolver.h"
+#include "ViewModels/GameItemViewModelResolver.h"
 
 #include "GameItemContainerProvider.h"
 #include "GameItemSettings.h"

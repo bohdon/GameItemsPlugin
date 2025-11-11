@@ -166,7 +166,7 @@ TArray<UGameEquipment*> UGameEquipmentComponent::FindAllEquipment(TSubclassOf<UG
 TArray<UGameEquipment*> UGameEquipmentComponent::FindAllEquipmentByInstigator(UObject* Instigator) const
 {
 	TArray<UGameEquipment*> Result;
-	for (const auto Entry : EquipmentList.GetEntries())
+	for (const auto &Entry : EquipmentList.GetEntries())
 	{
 		UGameEquipment* Equipment = Entry.Equipment;
 		if (IsValid(Equipment) && Equipment->GetInstigator() == Instigator)
@@ -180,7 +180,7 @@ TArray<UGameEquipment*> UGameEquipmentComponent::FindAllEquipmentByInstigator(UO
 TArray<UGameEquipment*> UGameEquipmentComponent::GetAllEquipment() const
 {
 	TArray<UGameEquipment*> Result;
-	for (const auto Entry : EquipmentList.GetEntries())
+	for (const auto &Entry : EquipmentList.GetEntries())
 	{
 		UGameEquipment* Equipment = Entry.Equipment;
 		if (IsValid(Equipment))
