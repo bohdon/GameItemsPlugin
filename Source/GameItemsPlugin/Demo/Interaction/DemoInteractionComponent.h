@@ -28,7 +28,7 @@ public:
 	TArray<TObjectPtr<UDemoInteraction>> Interactions;
 
 	/** The UI component to use for displaying interactions. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (MustImplement = "DemoInteractionUIInterface"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (MustImplement = "/Script/GameItemsPlugin.DemoInteractionUIInterface"))
 	TSubclassOf<USceneComponent> UIComponentClass;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
