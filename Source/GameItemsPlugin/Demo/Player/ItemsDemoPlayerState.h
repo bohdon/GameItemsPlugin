@@ -25,7 +25,7 @@ class GAMEITEMSPLUGIN_API AItemsDemoPlayerState : public APlayerState,
 
 protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly)
-	UGameItemContainerComponent* GameItemContainerComponent;
+	TObjectPtr<UGameItemContainerComponent> GameItemContainerComponent;
 
 public:
 	AItemsDemoPlayerState(const FObjectInitializer& ObjectInitializer);

@@ -6,8 +6,6 @@ public class GameItemsPlugin : ModuleRules
 {
 	public GameItemsPlugin(ReadOnlyTargetRules Target) : base(Target)
 	{
-		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-
 		PublicIncludePaths.AddRange(new string[]
 		{
 			// the game module doesnt use Public/Private folders,

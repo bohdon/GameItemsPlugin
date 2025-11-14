@@ -44,8 +44,8 @@ public:
 
 protected:
 	UPROPERTY(Transient, BlueprintReadWrite, Setter, Getter, FieldNotify)
-	UGameItemContainer* ContainerA;
+	TObjectPtr<UGameItemContainer> ContainerA;
 
 	UPROPERTY(Transient, BlueprintReadWrite, Setter, Getter, FieldNotify)
-	UGameItemContainer* ContainerB;
+	TObjectPtr<UGameItemContainer> ContainerB;
 };

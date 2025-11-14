@@ -22,7 +22,7 @@ class GAMEITEMSPLUGIN_API AItemsDemoCharacter : public ACharacter,
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UDemoInteractorComponent* InteractorComponent;
+	TObjectPtr<UDemoInteractorComponent> InteractorComponent;
 
 public:
 	AItemsDemoCharacter(const FObjectInitializer& ObjectInitializer);

@@ -19,14 +19,14 @@ UVM_GameItemContainer* UGameItemsUISubsystem::GetOrCreateContainerViewModel(UGam
 		return nullptr;
 	}
 
-	UVM_GameItemContainer** ContainerViewModel = ContainerViewModels.FindByPredicate([Container](UVM_GameItemContainer* ViewModel)
+	const TObjectPtr<UVM_GameItemContainer>* ContainerViewModel = ContainerViewModels.FindByPredicate([Container](const UVM_GameItemContainer* ViewModel)
 	{
 		return ViewModel && ViewModel->GetContainer() == Container;
 	});
 
 	if (ContainerViewModel)
 	{
-		return *ContainerViewModel;
+		return ContainerViewModel->Get();
 	}
 
 	// create a new view model

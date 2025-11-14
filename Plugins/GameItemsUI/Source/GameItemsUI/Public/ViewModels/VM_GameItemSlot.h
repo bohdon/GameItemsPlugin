@@ -50,7 +50,7 @@ public:
 protected:
 	/** The owning container. */
 	UPROPERTY(BlueprintReadOnly, Getter, FieldNotify, Meta = (AllowPrivateAccess))
-	UGameItemContainer* Container;
+	TObjectPtr<UGameItemContainer> Container;
 
 	/** The slot in the container. */
 	UPROPERTY(BlueprintReadOnly, Getter, FieldNotify, Meta = (AllowPrivateAccess))
@@ -58,7 +58,7 @@ protected:
 
 	/** The currently slotted item. */
 	UPROPERTY(BlueprintReadOnly, Getter, FieldNotify)
-	UGameItem* Item;
+	TObjectPtr<UGameItem> Item;
 
 	void UpdateItem();
 

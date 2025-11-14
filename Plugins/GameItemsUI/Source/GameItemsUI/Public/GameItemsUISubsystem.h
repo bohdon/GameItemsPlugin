@@ -57,7 +57,7 @@ public:
 protected:
 	/** All container view models that have been created. */
 	UPROPERTY(Transient)
-	TArray<UVM_GameItemContainer*> ContainerViewModels;
+	TArray<TObjectPtr<UVM_GameItemContainer>> ContainerViewModels;
 
 	UVM_GameItemContainer* CreateContainerViewModel(UGameItemContainer* Container);
 };

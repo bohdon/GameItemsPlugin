@@ -94,7 +94,7 @@ protected:
 
 	/** The actors this equipment has spawned. */
 	UPROPERTY(Replicated)
-	TArray<AActor*> SpawnedActors;
+	TArray<TObjectPtr<AActor>> SpawnedActors;
 
 	/** Called when the equipment is added to an actor. */
 	UFUNCTION(BlueprintImplementableEvent, Meta = (DisplayName = "OnEquipped"), Category = "Equipment")

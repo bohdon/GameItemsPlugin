@@ -29,5 +29,5 @@ public:
 
 protected:
 	UPROPERTY(Transient)
-	TMap<FGameplayTag, UCommonActivatableWidgetStack*> UILayers;
+	TMap<FGameplayTag, TObjectPtr<UCommonActivatableWidgetStack>> UILayers;
 };

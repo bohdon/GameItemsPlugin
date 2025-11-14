@@ -25,5 +25,5 @@ public:
 
 	/** The icon of this item. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UIData")
-	USlateBrushAsset* Icon;
+	TObjectPtr<USlateBrushAsset> Icon;
 };

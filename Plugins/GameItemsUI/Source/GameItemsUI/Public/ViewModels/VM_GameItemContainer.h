@@ -41,11 +41,11 @@ public:
 protected:
 	/** The owning container. */
 	UPROPERTY(Transient, BlueprintReadOnly, FieldNotify)
-	UGameItemContainer* Container;
+	TObjectPtr<UGameItemContainer> Container;
 
 	/** The cached view models for each slot. */
 	UPROPERTY(Transient)
-	TArray<UVM_GameItemSlot*> SlotViewModels;
+	TArray<TObjectPtr<UVM_GameItemSlot>> SlotViewModels;
 
 	void OnItemAdded(UGameItem* Item);
 	void OnItemRemoved(UGameItem* Item);

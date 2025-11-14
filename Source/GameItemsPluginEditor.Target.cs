@@ -9,6 +9,7 @@ public class GameItemsPluginEditorTarget : TargetRules
 		Type = TargetType.Editor;
 		DefaultBuildSettings = BuildSettingsVersion.Latest;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
+		NativePointerMemberBehaviorOverride = PointerMemberBehavior.Disallow;
 
 		ExtraModuleNames.AddRange(new string[]
 		{

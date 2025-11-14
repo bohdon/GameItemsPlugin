@@ -9,6 +9,7 @@ public class GameItemsPluginTarget : TargetRules
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.Latest;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
+		NativePointerMemberBehaviorOverride = PointerMemberBehavior.Disallow;
 
 		ExtraModuleNames.AddRange(new string[]
 		{

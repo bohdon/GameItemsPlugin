@@ -38,5 +38,5 @@ public:
 
 protected:
 	UPROPERTY(Transient, BlueprintReadOnly)
-	UUIMainLayout* MainLayout;
+	TObjectPtr<UUIMainLayout> MainLayout;
 };
