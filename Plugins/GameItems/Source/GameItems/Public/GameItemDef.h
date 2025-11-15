@@ -6,7 +6,6 @@
 #include "GameItemFragment.h"
 #include "GameItemTypes.h"
 #include "GameplayTagContainer.h"
-#include "Engine/DataAsset.h"
 #include "GameItemDef.generated.h"
 
 

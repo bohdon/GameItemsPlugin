@@ -4,54 +4,42 @@
 
 #include "CoreMinimal.h"
 #include "GameItemCollectionInterface.h"
+#include "GameItemContainerGraph.h"
 #include "GameItemContainerInterface.h"
 #include "Components/ActorComponent.h"
 #include "GameItemContainerComponent.generated.h"
 
-class UGameItem;
+class UGameItemContainer;
 class UGameItemContainerDef;
-class UGameItemContainerLink;
+class UGameItemDef;
 class USaveGame;
 
 
 /**
- * Defines a container.
+ * Represents an applied container link, with optional source object.
  */
-USTRUCT(BlueprintType)
-struct FGameItemContainerSpec
+USTRUCT()
+struct FActiveGameItemContainerLink
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
-	FGameplayTag ContainerId;
+	FActiveGameItemContainerLink()
+	{
+	}
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UGameItemContainerDef> ContainerDef;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText DisplayName;
-};
-
-
-/**
- * Defines a container link to add to all matching containers.
- */
-USTRUCT(BlueprintType)
-struct FGameItemContainerLinkSpec
-{
-	GENERATED_BODY()
+	explicit FActiveGameItemContainerLink(const FGameItemContainerLinkSpec& InLinkSpec, const UObject* InSourceObject = nullptr)
+		: LinkSpec(InLinkSpec)
+		, SourceObject(InSourceObject)
+	{
+	}
 
 	/** The container link class to create for each matching container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ContainerLink")
-	TSubclassOf<UGameItemContainerLink> ContainerLinkClass;
+	UPROPERTY()
+	FGameItemContainerLinkSpec LinkSpec;
 
-	/** The container to link with. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ContainerLink", meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
-	FGameplayTag LinkedContainerId;
-
-	/** Apply this link to all containers matching this query. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ContainerLink", meta = (GameplayTagFilter="GameItemContainerTagsCategory"))
-	FGameplayTagQuery ContainerQuery;
+	/** The optional source object that created this link. */
+	UPROPERTY()
+	TObjectPtr<const UObject> SourceObject;
 };
 
 
@@ -69,13 +57,23 @@ class GAMEITEMS_API UGameItemContainerComponent
 public:
 	UGameItemContainerComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-	/** The definitions for all additional containers to create at startup. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (TitleProperty = "{ContainerId}"), Category = "GameItems")
+	/**
+	 * The default set of containers and links to create.
+	 * Additional graphs can be added at runtime to easily add more groups of related containers.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItems")
+	TArray<TObjectPtr<const UGameItemContainerGraph>> DefaultContainerGraphs;
+
+private:
+	/** DEPRECATED: Use DefaultContainerGraph instead. */
+	UPROPERTY(EditAnywhere, Meta = (TitleProperty = "{ContainerId}", DeprecatedProperty), Category = "GameItems")
 	TArray<FGameItemContainerSpec> StartupContainers;
 
-	/** The container links to add on any containers created by this component. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (TitleProperty = "{LinkedContainerId} {ContainerLinkClass}"), Category = "GameItems")
+	/** DEPRECATED: Use DefaultContainerGraph instead. */
+	UPROPERTY(EditAnywhere, Meta = (TitleProperty = "{LinkedContainerId} {ContainerLinkClass}", DeprecatedProperty), Category = "GameItems")
 	TArray<FGameItemContainerLinkSpec> ContainerLinks;
+
+public:
 
 	/** Whether this container collection should be saved. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveGame")
@@ -94,19 +92,37 @@ public:
 	bool IsItemSlotted(UGameItem* Item, FGameplayTagContainer ContainerTags) const;
 
 	/**
+	 * Add a new container graph, creating all the containers it defines, and setting up links
+	 * between containers (both old and new).
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	void AddContainerGraph(const UGameItemContainerGraph* Graph);
+
+	/**
 	 * Create a new item container.
 	 * @return The new container, or null if a container already exists with the same id.
 	 */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UGameItemContainer* CreateContainer(const FGameItemContainerSpec& ContainerSpec, bool bResolveLinks = true);
+
+	/**
+	 * Apply a new link between containers. Updates any pre-existing containers, and will apply to any containers created in the future.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems", Meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
-	UGameItemContainer* CreateContainer(FGameplayTag ContainerId, TSubclassOf<UGameItemContainerDef> ContainerDef = nullptr);
+	void CreateContainerLink(const FGameItemContainerLinkSpec& LinkSpec, const UObject* SourceObject = nullptr, bool bResolveLinks = true);
+
+	/**
+	 * Update all container link rules to assign any containers that aren't set yet.
+	 * Should be called after creating all related containers and links.
+	 * @param bForce If true, re-resolve linked containers even if they are already set.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	void ResolveAllContainerLinks(bool bForce = false);
 
 	/** Create and add the default items for any newly created containers. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
 	void CreateDefaultItems(bool bForce = false);
 
-	virtual void InitializeComponent() override;
-	virtual void ReadyForReplication() override;
-	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 
 	// IGameItemContainerInterface
 	virtual TArray<UGameItemContainer*> GetAllItemContainers() const override;
@@ -124,23 +140,40 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void LoadSaveGame(USaveGame* SaveGame);
 
+	virtual void PostLoad() override;
+	virtual void InitializeComponent() override;
+	virtual void ReadyForReplication() override;
+	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
+	/** The currently applied container graphs. */
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<const UGameItemContainerGraph>> Graphs;
+
+	/** All containers that have been created on this component. */
 	UPROPERTY(Transient, ReplicatedUsing = OnRep_Containers)
 	TArray<TObjectPtr<UGameItemContainer>> Containers;
+
+	/** Links that have been created to connect different containers via rules. */
+	UPROPERTY(Transient, Replicated)
+	TArray<FActiveGameItemContainerLink> Links;
 
 	/** Non-replicated map of containers by id, for faster lookup. */
 	UPROPERTY(Transient)
 	TMap<FGameplayTag, TObjectPtr<UGameItemContainer>> ContainerMap;
 
-	/** Create all startup containers. */
-	void CreateStartupContainers();
+	/** Register a newly created container. */
+	void AddContainer(UGameItemContainer* Container);
 
-	/** Update all container link rules to assign any containers that aren't set yet. */
-	void ResolveContainerLinks();
+	/** Called when a new container is added (only on authority). */
+	virtual void OnContainerAdded(UGameItemContainer* Container);
 
-	virtual void AddContainer(UGameItemContainer* Container);
+	/** Add new link rules to a container. */
+	void AddMatchingLinkRulesToContainer(UGameItemContainer* Container, const TArray<FActiveGameItemContainerLink>& InLinks);
+
+	/** Add a new link rule to a container, if the query matches. */
+	void AddLinkRuleToContainer(UGameItemContainer* Container, const FActiveGameItemContainerLink& Link);
 
 	UFUNCTION()
 	void OnRep_Containers();

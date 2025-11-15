@@ -20,7 +20,7 @@ class UGameItemContainerInterface : public UInterface
 
 
 /**
- * Interface for an object that provides one or more GameItemContainerComponents
+ * Interface for an object that provides one or more GameItemContainers
  */
 class GAMEITEMS_API IGameItemContainerInterface
 {

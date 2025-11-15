@@ -7,6 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "GameItemContainerLink.generated.h"
 
+class IGameItemContainerInterface;
 class UGameItemContainer;
 
 
@@ -31,6 +32,9 @@ public:
 	/** Set the container that this one is linked to. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
 	void SetLinkedContainer(UGameItemContainer* NewContainer);
+
+	/** Set the linked container (if not already) by searching for a container with LinkedContainerId. */
+	void ResolveLinkedContainer(const IGameItemContainerInterface* ContainerProvider, bool bForce = false);
 
 	/** Called when the linked container has changed. */
 	virtual void OnLinkedContainerChanged(UGameItemContainer* NewContainer, UGameItemContainer* OldContainer);
