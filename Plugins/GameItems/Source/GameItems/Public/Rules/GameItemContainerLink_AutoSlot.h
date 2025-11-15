@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "GameItemContainerLink.h"
+#include "GameItemContainerLink_Parent.h"
 #include "GameItemContainerLink_AutoSlot.generated.h"
 
 
@@ -11,7 +11,7 @@
  * By default, this rule includes the 'Item.AutoSlot.NoReplace' context tag when auto-slotting.
  */
 UCLASS(DisplayName = "Link (Trigger Auto Slot)")
-class UGameItemContainerLink_AutoSlot : public UGameItemContainerLink
+class UGameItemContainerLink_AutoSlot : public UGameItemContainerLink_Parent
 {
 	GENERATED_BODY()
 

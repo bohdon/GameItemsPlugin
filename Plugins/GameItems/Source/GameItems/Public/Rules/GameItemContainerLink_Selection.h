@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameItemContainerLink.h"
+#include "GameItemContainerLink_Parent.h"
 #include "GameItemContainerLink_Selection.generated.h"
 
 
@@ -13,7 +13,7 @@
  * an item is always selected when possible.
  */
 UCLASS(DisplayName = "Link (Selection)")
-class GAMEITEMS_API UGameItemContainerLink_Selection : public UGameItemContainerLink
+class GAMEITEMS_API UGameItemContainerLink_Selection : public UGameItemContainerLink_Parent
 {
 	GENERATED_BODY()
 
