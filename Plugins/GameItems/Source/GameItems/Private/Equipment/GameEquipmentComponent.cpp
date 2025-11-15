@@ -62,22 +62,6 @@ void UGameEquipmentComponent::ReadyForReplication()
 	}
 }
 
-bool UGameEquipmentComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
-{
-	bool bDidWrite = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
-
-	for (const FGameEquipmentListEntry& Entry : EquipmentList.GetEntries())
-	{
-		UGameEquipment* Equipment = Entry.Equipment;
-		if (IsValid(Equipment))
-		{
-			bDidWrite |= Channel->ReplicateSubobject(Equipment, *Bunch, *RepFlags);
-		}
-	}
-
-	return bDidWrite;
-}
-
 UGameEquipment* UGameEquipmentComponent::ApplyEquipment(TSubclassOf<UGameEquipmentDef> EquipmentDef, UObject* Instigator)
 {
 	if (!EquipmentDef)
@@ -193,8 +177,8 @@ TArray<UGameEquipment*> UGameEquipmentComponent::GetAllEquipment() const
 
 void UGameEquipmentComponent::OnPreReplicatedRemove(FGameEquipmentListEntry& Entry)
 {
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%hs][%s] %s"),
-	       *GetNetDebugString(), __func__, *GetReadableName(), *Entry.GetDebugString());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] %s"),
+	       *GetNetDebugString(), *GetReadableName(), __func__, *Entry.GetDebugString());
 
 	if (Entry.Equipment)
 	{
@@ -204,8 +188,8 @@ void UGameEquipmentComponent::OnPreReplicatedRemove(FGameEquipmentListEntry& Ent
 
 void UGameEquipmentComponent::OnPostReplicatedAdd(FGameEquipmentListEntry& Entry)
 {
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%hs][%s] %s"),
-	       *GetNetDebugString(), __func__, *GetReadableName(), *Entry.GetDebugString());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] %s"),
+	       *GetNetDebugString(), *GetReadableName(), __func__, *Entry.GetDebugString());
 
 	if (Entry.Equipment)
 	{
@@ -215,8 +199,8 @@ void UGameEquipmentComponent::OnPostReplicatedAdd(FGameEquipmentListEntry& Entry
 
 void UGameEquipmentComponent::OnPostReplicatedChange(FGameEquipmentListEntry& Entry)
 {
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%hs][%s] %s"),
-	       *GetNetDebugString(), __func__, *GetReadableName(), *Entry.GetDebugString());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] %s"),
+	       *GetNetDebugString(), *GetReadableName(), __func__, *Entry.GetDebugString());
 
 	// this should only be called if the entry went from null -> valid, so treat it like OnPostReplicatedAdd
 	if (Entry.Equipment)

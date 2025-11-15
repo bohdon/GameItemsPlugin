@@ -14,12 +14,12 @@ void UGameItemContainerRule_TagRequirements::GetLifetimeReplicatedProps(TArray<c
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
-	FDoRepLifetimeParams SharedParams;
-	SharedParams.bIsPushBased = true;
+	FDoRepLifetimeParams Params;
+	Params.bIsPushBased = true;
 
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerRule_TagRequirements, RequireTags, SharedParams);
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerRule_TagRequirements, IgnoreTags, SharedParams);
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerRule_TagRequirements, Query, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerRule_TagRequirements, RequireTags, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerRule_TagRequirements, IgnoreTags, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerRule_TagRequirements, Query, Params);
 }
 
 bool UGameItemContainerRule_TagRequirements::CanContainItem_Implementation(const UGameItem* Item) const

@@ -15,11 +15,19 @@ void UGameItemContainerLink::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	FDoRepLifetimeParams SharedParams;
-	SharedParams.bIsPushBased = true;
+	FDoRepLifetimeParams Params;
+	Params.bIsPushBased = true;
 
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerLink, LinkedContainerId, SharedParams);
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerLink, LinkedContainer, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerLink, LinkedContainerId, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerLink, LinkedContainer, Params);
+}
+
+FString UGameItemContainerLink::GetDebugString() const
+{
+	return FString::Printf(TEXT("%s (%s%s)"),
+	                       *Super::GetDebugString(),
+	                       *LinkedContainerId.ToString(),
+	                       IsValid(LinkedContainer) ? TEXT("") : TEXT("..."));
 }
 
 void UGameItemContainerLink::SetLinkedContainer(UGameItemContainer* NewContainer)
@@ -33,7 +41,7 @@ void UGameItemContainerLink::SetLinkedContainer(UGameItemContainer* NewContainer
 			if (NewContainer == Container)
 			{
 				UE_LOG(LogGameItems, Warning, TEXT("[%hs] Cant link container to itself: %s (%s)"),
-					__FUNCTION__, *Container->GetReadableName(), *GetName());
+				       __FUNCTION__, *Container->GetReadableName(), *GetName());
 				return;
 			}
 
@@ -41,13 +49,13 @@ void UGameItemContainerLink::SetLinkedContainer(UGameItemContainer* NewContainer
 			if (LinkedContainerId != NewContainer->ContainerId)
 			{
 				LinkedContainerId = NewContainer->ContainerId;
-				MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainerLink, LinkedContainerId, this);
+				MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, LinkedContainerId, this);
 			}
 		}
 
 		UGameItemContainer* OldContainer = LinkedContainer;
 		LinkedContainer = NewContainer;
-		MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainerLink, LinkedContainer, this);
+		MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, LinkedContainer, this);
 
 		OnLinkedContainerChanged(LinkedContainer, OldContainer);
 	}
@@ -69,7 +77,7 @@ void UGameItemContainerLink::ResolveLinkedContainer(const IGameItemContainerInte
 		else
 		{
 			UE_LOG(LogGameItems, Verbose, TEXT("Failed to resolve link: %s.%s (%s)"),
-				*GetContainer()->GetReadableName(), *GetName(), *LinkedContainerId.ToString());
+			       *GetContainer()->GetReadableName(), *GetName(), *LinkedContainerId.ToString());
 		}
 	}
 }

@@ -337,6 +337,8 @@ public:
 	 */
 	int32 RemoveRule(TSubclassOf<UGameItemContainerRule> RuleClass);
 
+	FString GetRulesDebugString() const;
+
 	/** Return true if the container is a child of another container, and cannot store its own items. */
 	virtual bool IsChild() const;
 
@@ -389,6 +391,7 @@ public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FItemSlotChangedDelegate, int32 /*Slot*/);
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FItemSlotsChangedDelegate, int32 /*StartSlot*/, int32 /*EndSlot*/);
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FNumSlotsChangedDelegate, int32 /*NewNumSlots*/, int32 /*OldNumSlots*/);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FRuleAddOrRemoveDelegate, UGameItemContainerRule* /*Rule*/);
 
 	/** Called when a new item is added. */
 	FItemAddOrRemoveDelegate OnItemAddedEvent;
@@ -404,6 +407,12 @@ public:
 
 	/** Called when the total number of slots has changed. */
 	FNumSlotsChangedDelegate OnNumSlotsChangedEvent;
+	
+	/** Called when a new rule is added. */
+	FRuleAddOrRemoveDelegate OnRuleAddedEvent;
+
+	/** Called when a rule is removed. */
+	FRuleAddOrRemoveDelegate OnRuleRemovedEvent;
 
 public:
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
@@ -443,8 +452,11 @@ protected:
 	TSubclassOf<UGameItemContainerDef> ContainerDef;
 
 	/** The active rules applied to this container. */
-	UPROPERTY(Transient, BlueprintReadOnly, Replicated, Category = "GameItemContainer")
+	UPROPERTY(Transient, BlueprintReadOnly, ReplicatedUsing = OnRep_Rules, Category = "GameItemContainer")
 	TArray<TObjectPtr<UGameItemContainerRule>> Rules;
+
+	UFUNCTION()
+	void OnRep_Rules(const TArray<UGameItemContainerRule*>& PreviousRules);
 
 	/** All child containers, which must register themselves via Register/UnregisterChild */
 	UPROPERTY(Transient, Replicated)
@@ -499,6 +511,9 @@ protected:
 
 	virtual void OnItemAdded(UGameItem* Item, int32 Slot);
 	virtual void OnItemRemoved(UGameItem* Item, int32 Slot);
+
+	virtual void OnRuleAdded(UGameItemContainerRule* Rule);
+	virtual void OnRuleRemoved(UGameItemContainerRule* Rule);
 
 	/** Called when the replicated item list has changed. */
 	virtual void OnPreReplicatedRemove(FGameItemListEntry& Entry);

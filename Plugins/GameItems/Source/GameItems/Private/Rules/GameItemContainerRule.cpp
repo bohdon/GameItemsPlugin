@@ -67,6 +67,11 @@ UWorld* UGameItemContainerRule::GetWorld() const
 	return nullptr;
 }
 
+FString UGameItemContainerRule::GetDebugString() const
+{
+	return GetName();
+}
+
 bool UGameItemContainerRule::CanContainItem_Implementation(const UGameItem* Item) const
 {
 	return true;

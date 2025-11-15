@@ -74,14 +74,14 @@ void UGameItemContainer::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	FDoRepLifetimeParams SharedParams;
-	SharedParams.bIsPushBased = true;
+	FDoRepLifetimeParams Params;
+	Params.bIsPushBased = true;
 
-	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ContainerId, SharedParams);
-	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, DisplayName, SharedParams);
-	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ContainerDef, SharedParams);
-	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, Rules, SharedParams);
-	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ChildContainers, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ContainerId, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, DisplayName, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ContainerDef, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, Rules, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ChildContainers, Params);
 
 	DOREPLIFETIME(ThisClass, ItemList);
 }
@@ -163,7 +163,7 @@ void UGameItemContainer::SetContainerDef(TSubclassOf<UGameItemContainerDef> NewC
 	}
 
 	ContainerDef = NewContainerDef;
-	MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainer, ContainerDef, this);
+	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, ContainerDef, this);
 
 	// duplicate container rules from the definition so that they can be stateful
 	if (const UGameItemContainerDef* ContainerDefCDO = GetContainerDefCDO())
@@ -176,11 +176,12 @@ void UGameItemContainer::SetContainerDef(TSubclassOf<UGameItemContainerDef> NewC
 			}
 
 			UGameItemContainerRule* NewRule = DuplicateObject(CDORule, this);
-			NewRule->ClearFlags(RF_Public | RF_ArchetypeObject);
-			NewRule->SetFlags(RF_Transient);
-			check(NewRule);
+			NewRule->ClearFlags(RF_AllFlags);
+
 			Rules.Add(NewRule);
-			MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainer, Rules, this);
+			MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, Rules, this);
+
+			OnRuleAdded(NewRule);
 		}
 	}
 }
@@ -239,7 +240,7 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 	if (DeltaCount == 0)
 	{
 		UE_CLOG(bWarn, LogGameItems, Warning, TEXT("%s: Cant add item, max count reached: %s"),
-		        *GetNameSafe(GetOwner()), *Item->ToDebugString());
+		        *GetNameSafe(GetOwner()), *Item->GetDebugString());
 		Plan.UpdateDerivedValues(Item->GetCount());
 		return Plan;
 	}
@@ -248,7 +249,7 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 	{
 		UE_CLOG(bWarn, LogGameItems, Warning,
 		        TEXT("%s: Adding %s, but %d will be lost due to capacity. Use CheckAddItem before adding to avoid this."),
-		        *GetNameSafe(GetOwner()), *Item->ToDebugString(), Item->GetCount() - DeltaCount);
+		        *GetNameSafe(GetOwner()), *Item->GetDebugString(), Item->GetCount() - DeltaCount);
 	}
 
 	// repeatedly add the item, splitting and stacking as necessary
@@ -277,7 +278,7 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 			// out of space
 			UE_CLOG(bWarn, LogGameItems, Warning,
 			        TEXT("%s: Adding %s, but %d will be lost due to limited slot capacity. Use CheckAddItem before adding to avoid this."),
-			        *GetNameSafe(GetOwner()), *Item->ToDebugString(), RemainingCountToAdd);
+			        *GetNameSafe(GetOwner()), *Item->GetDebugString(), RemainingCountToAdd);
 			break;
 		}
 
@@ -367,7 +368,6 @@ TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot
 			NewItem->SetCount(SlotDeltaCount);
 
 			ItemList.AddEntryForSlot(NewItem, Slot);
-			NewItem->Containers.AddUnique(this);
 
 			OnItemAdded(NewItem, Slot);
 			OnSlotChanged(Slot);
@@ -439,8 +439,6 @@ UGameItem* UGameItemContainer::RemoveItemAt(int32 Slot)
 	UGameItem* RemovedItem = ItemList.RemoveEntryForSlot(Slot, bShouldCollapse);
 	if (RemovedItem)
 	{
-		RemovedItem->Containers.Remove(this);
-
 		OnItemRemoved(RemovedItem, Slot);
 		OnSlotRangeChanged(Slot, bShouldCollapse ? GetNumSlots() - 1 : Slot);
 	}
@@ -509,7 +507,6 @@ void UGameItemContainer::RemoveAllItems()
 		const int32 Slot = Elem.Key;
 		UGameItem* Item = Elem.Value;
 
-		Item->Containers.Remove(this);
 		OnItemRemoved(Item, Slot);
 	}
 
@@ -1017,7 +1014,10 @@ UGameItemContainerRule* UGameItemContainer::AddRule(TSubclassOf<UGameItemContain
 	if (NewRule)
 	{
 		Rules.Add(NewRule);
-		MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainer, Rules, this);
+		MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, Rules, this);
+
+		OnRuleAdded(NewRule);
+
 		return NewRule;
 	}
 	return nullptr;
@@ -1034,10 +1034,40 @@ int32 UGameItemContainer::RemoveRule(TSubclassOf<UGameItemContainerRule> RuleCla
 	for (UGameItemContainerRule* Rule : MatchingRules)
 	{
 		Rules.Remove(Rule);
-		MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainer, Rules, this);
+		MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, Rules, this);
+
+		OnRuleRemoved(Rule);
+
 		++NumRemoved;
 	}
 	return NumRemoved;
+}
+
+void UGameItemContainer::OnRuleAdded(UGameItemContainerRule* Rule)
+{
+	check(Rule);
+	OnRuleAddedEvent.Broadcast(Rule);
+}
+
+void UGameItemContainer::OnRuleRemoved(UGameItemContainerRule* Rule)
+{
+	check(Rule);
+	OnRuleRemovedEvent.Broadcast(Rule);
+}
+
+FString UGameItemContainer::GetRulesDebugString() const
+{
+	FString Result;
+	for (int32 Idx = 0; Idx < Rules.Num(); ++Idx)
+	{
+		const TObjectPtr<UGameItemContainerRule>& Rule = Rules[Idx];
+		Result += Rule ? Rule->GetName() : TEXT("(null)");
+		if (Idx < Rules.Num())
+		{
+			Result += TEXT(", ");
+		}
+	}
+	return Result;
 }
 
 bool UGameItemContainer::IsChild() const
@@ -1065,7 +1095,7 @@ void UGameItemContainer::RegisterChild(UGameItemContainer* ChildContainer)
 	if (ChildContainer)
 	{
 		ChildContainers.AddUnique(ChildContainer);
-		MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainer, ChildContainers, this);
+		MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, ChildContainers, this);
 	}
 #endif
 }
@@ -1074,7 +1104,7 @@ void UGameItemContainer::UnregisterChild(UGameItemContainer* ChildContainer)
 {
 #if WITH_SERVER_CODE
 	ChildContainers.Remove(ChildContainer);
-	MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainer, ChildContainers, this);
+	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, ChildContainers, this);
 #endif
 }
 
@@ -1319,9 +1349,10 @@ void UGameItemContainer::LoadSaveData(const FGameItemContainerSaveData& Containe
 void UGameItemContainer::OnItemAdded(UGameItem* Item, int32 Slot)
 {
 	check(Item);
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] [Slot %d] %s"),
+	       *GetNetDebugString(), *GetReadableName(), __func__, Slot, *Item->GetDebugString());
 
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] OnItemAdded [Slot %d] %s"),
-	       *GetNetDebugString(), *GetReadableName(), Slot, *Item->ToDebugString());
+	Item->Containers.AddUnique(this);
 	OnItemAddedEvent.Broadcast(Item);
 	Item->OnSlottedEvent.Broadcast(this, Slot, INDEX_NONE);
 }
@@ -1329,17 +1360,18 @@ void UGameItemContainer::OnItemAdded(UGameItem* Item, int32 Slot)
 void UGameItemContainer::OnItemRemoved(UGameItem* Item, int32 Slot)
 {
 	check(Item);
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] [Slot %d] %s"),
+	       *GetNetDebugString(), *GetReadableName(), __func__, Slot, *Item->GetDebugString());
 
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] OnItemRemoved [Slot %d] %s"),
-	       *GetNetDebugString(), *GetReadableName(), Slot, *Item->ToDebugString());
+	Item->Containers.Remove(this);
 	OnItemRemovedEvent.Broadcast(Item);
 	Item->OnUnslottedEvent.Broadcast(this, Slot);
 }
 
 void UGameItemContainer::OnPreReplicatedRemove(FGameItemListEntry& Entry)
 {
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%hs][%s] %s"),
-	       *GetNetDebugString(), __func__, *GetReadableName(), *Entry.GetDebugString());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] %s"),
+	       *GetNetDebugString(), *GetReadableName(), __func__, *Entry.GetDebugString());
 
 	if (UGameItem* RemovedItem = Entry.Item)
 	{
@@ -1353,8 +1385,8 @@ void UGameItemContainer::OnPreReplicatedRemove(FGameItemListEntry& Entry)
 
 void UGameItemContainer::OnPostReplicatedAdd(FGameItemListEntry& Entry)
 {
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%hs][%s] %s"),
-	       *GetNetDebugString(), __func__, *GetReadableName(), *Entry.GetDebugString());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] %s"),
+	       *GetNetDebugString(), *GetReadableName(), __func__, *Entry.GetDebugString());
 
 	if (UGameItem* NewItem = Entry.Item)
 	{
@@ -1367,8 +1399,8 @@ void UGameItemContainer::OnPostReplicatedAdd(FGameItemListEntry& Entry)
 
 void UGameItemContainer::OnPostReplicatedChange(FGameItemListEntry& Entry)
 {
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%hs][%s] %s"),
-	       *GetNetDebugString(), __func__, *GetReadableName(), *Entry.GetDebugString());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] %s"),
+	       *GetNetDebugString(), *GetReadableName(), __func__, *Entry.GetDebugString());
 
 	// usually called when the slot of an entry has changed,
 	// treat this as adding a new item to that slot, and also broadcast slot
@@ -1492,6 +1524,36 @@ void UGameItemContainer::BroadcastSlotChanges()
 	}
 }
 
+void UGameItemContainer::OnRep_Rules(const TArray<UGameItemContainerRule*>& PreviousRules)
+{
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] Rules: %s"),
+	       *GetNetDebugString(), *GetReadableName(), __func__, *GetRulesDebugString());
+
+	// find rules that got removed
+	for (UGameItemContainerRule* PreviousRule : PreviousRules)
+	{
+		if (IsValid(PreviousRule))
+		{
+			if (!Rules.Contains(PreviousRule))
+			{
+				OnRuleRemoved(PreviousRule);
+			}
+		}
+	}
+
+	// find rules that got added
+	for (UGameItemContainerRule* NewRule : Rules)
+	{
+		if (IsValid(NewRule))
+		{
+			if (!PreviousRules.Contains(NewRule))
+			{
+				OnRuleAdded(NewRule);
+			}
+		}
+	}
+}
+
 void UGameItemContainer::OnSlotChanged(int32 Slot)
 {
 	ChangedSlots.Add(Slot);
@@ -1533,8 +1595,8 @@ void UGameItemContainer::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& 
 
 	DisplayDebugManager.SetDrawColor(FColor::White);
 	const FString CountStr = GetContainerDefCDO()->bLimitSlots
-		                         ? FString::Printf(TEXT("%d/%d"), GetNumItems(), GetContainerDefCDO()->SlotCount)
-		                         : FString::FromInt(GetNumItems());
+		? FString::Printf(TEXT("%d/%d"), GetNumItems(), GetContainerDefCDO()->SlotCount)
+		: FString::FromInt(GetNumItems());
 	DisplayDebugManager.DrawString(FString::Printf(TEXT("%s (%s items)"), *ContainerId.ToString(), *CountStr));
 
 	for (const FGameItemListEntry& Entry : ItemList.GetEntries())

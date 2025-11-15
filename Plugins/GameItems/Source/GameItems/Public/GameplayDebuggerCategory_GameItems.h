@@ -37,26 +37,33 @@ protected:
 
 	struct FRepData
 	{
-		struct FGameItemDebug
+		struct FItemDebug
 		{
-			int32 Slot;
 			FString Item;
 
 			int32 ReplicationID = INDEX_NONE;
 			GameItems::Debug::ENetworkStatus NetworkStatus = GameItems::Debug::ENetworkStatus::ServerOnly;
 		};
 
-		struct FGameItemContainerDebug
+		struct FContainerRuleDebug
 		{
-			FString ContainerId;
-			FString Owner;
-			int32 NumSlots;
-			TArray<FGameItemDebug> Items;
+			FString Rule;
 
 			GameItems::Debug::ENetworkStatus NetworkStatus = GameItems::Debug::ENetworkStatus::ServerOnly;
 		};
 
-		TArray<FGameItemContainerDebug> Containers;
+		struct FContainerDebug
+		{
+			FString ContainerId;
+			FString Owner;
+			int32 NumSlots;
+			TArray<FContainerRuleDebug> Rules;
+			TArray<FItemDebug> Items;
+
+			GameItems::Debug::ENetworkStatus NetworkStatus = GameItems::Debug::ENetworkStatus::ServerOnly;
+		};
+
+		TArray<FContainerDebug> Containers;
 
 		void Serialize(FArchive& Ar);
 	};
@@ -64,7 +71,7 @@ protected:
 	FRepData DataPack;
 
 	/** Collect all item container debug data for an actor. */
-	TArray<FRepData::FGameItemContainerDebug> CollectContainerData(APlayerController* OwnerPC, AActor* DebugActor);
+	TArray<FRepData::FContainerDebug> CollectContainerData(APlayerController* OwnerPC, AActor* DebugActor);
 
 	void DrawContainers(APlayerController* OwnerPC, FGameplayDebuggerCanvasContext& CanvasContext);
 
@@ -72,7 +79,7 @@ protected:
 	float LastDrawDataEndSize = 0.0f;
 
 	bool bShowItems = true;
-	bool bShowRules = true;
+	bool bShowRules = false;
 };
 
 #endif

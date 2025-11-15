@@ -56,4 +56,6 @@ public:
 	int32 GetItemStackMaxCount(const UGameItem* Item) const;
 
 	virtual UWorld* GetWorld() const override;
+
+	virtual FString GetDebugString() const;
 };

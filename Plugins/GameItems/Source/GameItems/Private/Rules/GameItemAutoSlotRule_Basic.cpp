@@ -22,14 +22,14 @@ void UGameItemAutoSlotRule_Basic::GetLifetimeReplicatedProps(TArray<class FLifet
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	FDoRepLifetimeParams SharedParams;
-	SharedParams.bIsPushBased = true;
+	FDoRepLifetimeParams Params;
+	Params.bIsPushBased = true;
 
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemAutoSlotRule_Basic, Priority, SharedParams);
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemAutoSlotRule_Basic, bReplaceByDefault, SharedParams);
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemAutoSlotRule_Basic, RequireTags, SharedParams);
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemAutoSlotRule_Basic, IgnoreTags, SharedParams);
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemAutoSlotRule_Basic, Query, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemAutoSlotRule_Basic, Priority, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemAutoSlotRule_Basic, bReplaceByDefault, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemAutoSlotRule_Basic, RequireTags, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemAutoSlotRule_Basic, IgnoreTags, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemAutoSlotRule_Basic, Query, Params);
 }
 
 bool UGameItemAutoSlotRule_Basic::CanAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const

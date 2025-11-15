@@ -41,6 +41,8 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	virtual FString GetDebugString() const override;
+
 protected:
 	/** The other container that is linked. */
 	UPROPERTY(Transient, BlueprintReadOnly, Replicated, Meta = (AllowPrivateAccess = true))

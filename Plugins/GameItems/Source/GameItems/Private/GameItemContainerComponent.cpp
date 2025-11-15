@@ -3,8 +3,6 @@
 
 #include "GameItemContainerComponent.h"
 
-#include <ThirdParty/Perforce/p4api-2021.2/Include/Win64/VS2015/p4/error.h>
-
 #include "GameItemContainer.h"
 #include "GameItemContainerDef.h"
 #include "GameItemDef.h"
@@ -32,11 +30,11 @@ void UGameItemContainerComponent::GetLifetimeReplicatedProps(TArray<class FLifet
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	FDoRepLifetimeParams SharedParams;
-	SharedParams.bIsPushBased = true;
+	FDoRepLifetimeParams Params;
+	Params.bIsPushBased = true;
 
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerComponent, Containers, SharedParams);
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerComponent, Links, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerComponent, Containers, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerComponent, Links, Params);
 }
 
 void UGameItemContainerComponent::PostLoad()
@@ -47,7 +45,7 @@ void UGameItemContainerComponent::PostLoad()
 	if (!StartupContainers.IsEmpty() || !ContainerLinks.IsEmpty())
 	{
 		UE_LOG(LogGameItems, Error, TEXT("[%s] StartupContainers and ContainerLinks are deprecated, use DefaultContainerGraph"),
-			*GetReadableName());
+		       *GetReadableName());
 	}
 #endif
 }
@@ -100,25 +98,6 @@ void UGameItemContainerComponent::ReadyForReplication()
 			}
 		}
 	}
-}
-
-bool UGameItemContainerComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
-{
-	bool bDidWrite = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
-
-	for (UGameItemContainer* Container : Containers)
-	{
-		if (IsValid(Container))
-		{
-			bDidWrite |= Channel->ReplicateSubobject(Container, *Bunch, *RepFlags);
-
-			for (UGameItemContainerRule* Rule : Container->GetRules())
-			{
-				bDidWrite |= Channel->ReplicateSubobject(Rule, *Bunch, *RepFlags);
-			}
-		}
-	}
-	return bDidWrite;
 }
 
 TArray<UGameItemContainer*> UGameItemContainerComponent::GetAllItemContainers() const
@@ -256,7 +235,7 @@ void UGameItemContainerComponent::CreateDefaultItems(bool bForce)
 	}
 
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Creating default items..."),
-		*GetNetDebugString(), *GetReadableName());
+	       *GetNetDebugString(), *GetReadableName());
 
 	for (auto& Elem : ContainerMap)
 	{
@@ -305,21 +284,21 @@ void UGameItemContainerComponent::AddContainerGraph(const UGameItemContainerGrap
 	if (!Graph)
 	{
 		UE_LOG(LogGameItems, Error, TEXT("%s[%s] AddContainerGraph called with null Graph"),
-			*GetNetDebugString(), *GetReadableName());
+		       *GetNetDebugString(), *GetReadableName());
 		return;
 	}
 
 	if (Graphs.Contains(Graph))
 	{
 		UE_LOG(LogGameItems, Warning, TEXT("%s[%s] Graph already added: %s"),
-			*GetNetDebugString(), *GetReadableName(), *Graph->GetName());
+		       *GetNetDebugString(), *GetReadableName(), *Graph->GetName());
 		return;
 	}
 
 	Graphs.Add(Graph);
 
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Adding container graph: %s"),
-		*GetNetDebugString(), *GetReadableName(), *Graph->GetName());
+	       *GetNetDebugString(), *GetReadableName(), *Graph->GetName());
 
 	// create containers
 	for (const FGameItemContainerSpec& ContainerSpec : Graph->Containers)
@@ -347,14 +326,14 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(const FGameItem
 	if (!ContainerSpec.IsValid())
 	{
 		UE_LOG(LogGameItems, Warning, TEXT("%s[%s] Invalid container spec, make sure ContainerDef and ContainerId are set: %s"),
-			*GetNetDebugString(), *GetReadableName(), *ContainerSpec.DisplayName.ToString());
+		       *GetNetDebugString(), *GetReadableName(), *ContainerSpec.DisplayName.ToString());
 		return nullptr;
 	}
 
 	if (ContainerMap.Contains(ContainerSpec.ContainerId))
 	{
 		UE_LOG(LogGameItems, Warning, TEXT("%s[%s] Container already exists with id: %s"),
-			*GetNetDebugString(), *GetReadableName(), *ContainerSpec.ContainerId.ToString());
+		       *GetNetDebugString(), *GetReadableName(), *ContainerSpec.ContainerId.ToString());
 		return nullptr;
 	}
 
@@ -375,12 +354,12 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(const FGameItem
 	NewContainer->DisplayName = ContainerSpec.DisplayName;
 
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Created container: %s (%s)"),
-		*GetNetDebugString(), *GetReadableName(), *ContainerSpec.ContainerId.ToString(), *ContainerSpec.ContainerDef->GetName());
-
-	AddContainer(NewContainer);
+	       *GetNetDebugString(), *GetReadableName(), *ContainerSpec.ContainerId.ToString(), *ContainerSpec.ContainerDef->GetName());
 
 	// add any already-defined links
 	AddMatchingLinkRulesToContainer(NewContainer, Links);
+
+	AddContainer(NewContainer);
 
 	if (bResolveLinks)
 	{
@@ -413,18 +392,26 @@ void UGameItemContainerComponent::AddContainer(UGameItemContainer* Container)
 {
 #if WITH_SERVER_CODE
 	check(Container);
-	check(!ContainerMap.Contains(Container->ContainerId));
+	ensureAlways(!ContainerMap.Contains(Container->ContainerId));
 
 	Containers.Emplace(Container);
-	MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainerComponent, Containers, this);
+	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, Containers, this);
 
 	ContainerMap.Emplace(Container->ContainerId, Container);
 
+	OnContainerAdded(Container);
+#endif
+}
+
+void UGameItemContainerComponent::OnContainerAdded(UGameItemContainer* Container)
+{
+	check(Container);
+
 	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
 	{
-		// containers can never be removed (yet), so there is no matching RemoveReplicatedSubObject
 		AddReplicatedSubObject(Container);
 
+		// also replicate rules (new rules added later will be replicated in OnRuleAdded below)
 		for (UGameItemContainerRule* Rule : Container->GetRules())
 		{
 			if (IsValid(Rule))
@@ -434,16 +421,34 @@ void UGameItemContainerComponent::AddContainer(UGameItemContainer* Container)
 		}
 	}
 
-	// monitor for items added/removed so we can replicate those too
+	// monitor for item and rule changes so that all subobjects can be replicated
 	Container->OnItemAddedEvent.AddUObject(this, &ThisClass::OnItemAdded);
 	Container->OnItemRemovedEvent.AddUObject(this, &ThisClass::OnItemRemoved);
-
-	OnContainerAdded(Container);
-#endif
+	Container->OnRuleAddedEvent.AddUObject(this, &ThisClass::OnRuleAdded);
+	Container->OnRuleRemovedEvent.AddUObject(this, &ThisClass::OnRuleRemoved);
 }
 
-void UGameItemContainerComponent::OnContainerAdded(UGameItemContainer* Container)
+void UGameItemContainerComponent::OnContainerRemoved(UGameItemContainer* Container)
 {
+	check(Container);
+
+	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
+	{
+		RemoveReplicatedSubObject(Container);
+
+		for (UGameItemContainerRule* Rule : Container->GetRules())
+		{
+			if (IsValid(Rule))
+			{
+				RemoveReplicatedSubObject(Rule);
+			}
+		}
+	}
+
+	Container->OnItemAddedEvent.RemoveAll(this);
+	Container->OnItemRemovedEvent.RemoveAll(this);
+	Container->OnRuleAddedEvent.RemoveAll(this);
+	Container->OnRuleRemovedEvent.RemoveAll(this);
 }
 
 void UGameItemContainerComponent::AddMatchingLinkRulesToContainer(UGameItemContainer* Container, const TArray<FActiveGameItemContainerLink>& InLinks)
@@ -472,16 +477,46 @@ void UGameItemContainerComponent::AddLinkRuleToContainer(UGameItemContainer* Con
 			NewLink->LinkedContainerId = Link.LinkSpec.LinkedContainerId;
 
 			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Linked %s to %s (%s)"),
-				*GetNetDebugString(), *GetReadableName(),
-				*Container->ContainerId.ToString(), *NewLink->LinkedContainerId.ToString(), *Link.LinkSpec.ContainerLinkClass->GetName());
+			       *GetNetDebugString(), *GetReadableName(),
+			       *Container->ContainerId.ToString(), *NewLink->LinkedContainerId.ToString(), *Link.LinkSpec.ContainerLinkClass->GetName());
 		}
 	}
 #endif
 }
 
-void UGameItemContainerComponent::OnRep_Containers()
+void UGameItemContainerComponent::OnRep_Containers(const TArray<UGameItemContainer*>& PreviousContainers)
 {
-	// update container map
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] Containers: %d"),
+		   *GetNetDebugString(), *GetReadableName(), __func__, Containers.Num());
+
+	// find containers that got removed
+	for (UGameItemContainer* PreviousContainer : PreviousContainers)
+	{
+		if (IsValid(PreviousContainer))
+		{
+			if (!Containers.Contains(PreviousContainer))
+			{
+				OnContainerRemoved(PreviousContainer);
+			}
+		}
+	}
+
+	// find containers that got added
+	for (UGameItemContainer* NewContainer : Containers)
+	{
+		if (IsValid(NewContainer))
+		{
+			if (!PreviousContainers.Contains(NewContainer))
+			{
+				OnContainerAdded(NewContainer);
+			}
+		}
+	}
+
+	// try to resolve container links
+	ResolveAllContainerLinks();
+
+	// update container lookup map
 	ContainerMap.Reset();
 	for (const TObjectPtr<UGameItemContainer>& Container : Containers)
 	{
@@ -499,9 +534,28 @@ void UGameItemContainerComponent::OnItemAdded(UGameItem* GameItem)
 
 void UGameItemContainerComponent::OnItemRemoved(UGameItem* GameItem)
 {
-	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && GameItem)
+	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && GameItem && GameItem->GetContainers().IsEmpty())
 	{
 		RemoveReplicatedSubObject(GameItem);
+	}
+}
+
+void UGameItemContainerComponent::OnRuleAdded(UGameItemContainerRule* Rule)
+{
+	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
+	{
+		AddReplicatedSubObject(Rule);
+	}
+
+	// TODO: try to resolve container links? but only on rep?
+	// ResolveAllContainerLinks();
+}
+
+void UGameItemContainerComponent::OnRuleRemoved(UGameItemContainerRule* Rule)
+{
+	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
+	{
+		RemoveReplicatedSubObject(Rule);
 	}
 }
 

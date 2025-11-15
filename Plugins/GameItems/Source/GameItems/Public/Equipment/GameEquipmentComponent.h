@@ -25,7 +25,6 @@ public:
 	virtual void InitializeComponent() override;
 	virtual void UninitializeComponent() override;
 	virtual void ReadyForReplication() override;
-	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 
 	/** Apply equipment to the owning actor. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")

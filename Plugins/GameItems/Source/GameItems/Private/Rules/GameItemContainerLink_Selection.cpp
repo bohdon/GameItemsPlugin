@@ -18,12 +18,17 @@ void UGameItemContainerLink_Selection::GetLifetimeReplicatedProps(TArray<class F
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	FDoRepLifetimeParams SharedParams;
-	SharedParams.bIsPushBased = true;
+	FDoRepLifetimeParams Params;
+	Params.bIsPushBased = true;
 
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerLink_Selection, TargetSlot, SharedParams);
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerLink_Selection, bAllowSelectingEmptySlots, SharedParams);
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerLink_Selection, SelectedSlot, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerLink_Selection, TargetSlot, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerLink_Selection, bAllowSelectingEmptySlots, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerLink_Selection, SelectedSlot, Params);
+}
+
+FString UGameItemContainerLink_Selection::GetDebugString() const
+{
+	return FString::Printf(TEXT("%s(Sel:%d)"), *Super::GetDebugString(), SelectedSlot);
 }
 
 void UGameItemContainerLink_Selection::OnRep_SelectedSlot()
@@ -54,7 +59,7 @@ void UGameItemContainerLink_Selection::SetSelectedSlot(int32 NewSlot)
 	if (SelectedSlot != NewSlot)
 	{
 		SelectedSlot = NewSlot;
-		MARK_PROPERTY_DIRTY_FROM_NAME(UGameItemContainerLink_Selection, SelectedSlot, this);
+		MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, SelectedSlot, this);
 
 		UpdateContainerForSelection();
 	}

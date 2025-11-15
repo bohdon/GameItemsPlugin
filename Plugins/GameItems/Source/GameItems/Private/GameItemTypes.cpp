@@ -155,7 +155,7 @@ FString FGameItemTagStackContainer::ToDebugString() const
 
 FString FGameItemListEntry::GetDebugString() const
 {
-	return FString::Printf(TEXT("[Slot %d]: %s"), Slot, Item ? *Item->ToDebugString() : TEXT("(invalid)"));
+	return FString::Printf(TEXT("[Slot %d]: %s"), Slot, Item ? *Item->GetDebugString() : TEXT("(invalid)"));
 }
 
 

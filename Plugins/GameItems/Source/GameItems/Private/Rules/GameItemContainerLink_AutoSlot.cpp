@@ -20,11 +20,11 @@ void UGameItemContainerLink_AutoSlot::GetLifetimeReplicatedProps(TArray<class FL
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	FDoRepLifetimeParams SharedParams;
-	SharedParams.bIsPushBased = true;
+	FDoRepLifetimeParams Params;
+	Params.bIsPushBased = true;
 
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerLink_AutoSlot, ItemQuery, SharedParams);
-	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerLink_AutoSlot, ContextTags, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerLink_AutoSlot, ItemQuery, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemContainerLink_AutoSlot, ContextTags, Params);
 }
 
 void UGameItemContainerLink_AutoSlot::OnLinkedContainerChanged(UGameItemContainer* NewContainer, UGameItemContainer* OldContainer)
@@ -49,7 +49,7 @@ void UGameItemContainerLink_AutoSlot::OnLinkedItemAdded(UGameItem* Item)
 	if (Container->CanAutoSlot(Item, ContextTags) && (ItemQuery.IsEmpty() || ItemQuery.Matches(Item->GetOwnedTags())))
 	{
 		UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Auto-slotting item from link: %s (%s)"),
-		       *Container->GetReadableName(), *Item->ToDebugString(), *LinkedContainerId.ToString());
+		       *Container->GetReadableName(), *Item->GetDebugString(), *LinkedContainerId.ToString());
 		Container->TryAutoSlot(Item, ContextTags);
 	}
 }

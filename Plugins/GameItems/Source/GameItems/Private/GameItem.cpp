@@ -20,9 +20,12 @@ void UGameItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(ThisClass, ItemDef);
-	DOREPLIFETIME(ThisClass, Count);
-	DOREPLIFETIME(ThisClass, TagStats);
+	FDoRepLifetimeParams Params;
+	Params.bIsPushBased = true;
+	
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ItemDef, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, Count, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, TagStats, Params);
 }
 
 const UGameItemDef* UGameItem::GetItemDefCDO() const
@@ -32,7 +35,11 @@ const UGameItemDef* UGameItem::GetItemDefCDO() const
 
 void UGameItem::SetItemDef(TSubclassOf<UGameItemDef> NewItemDef)
 {
-	ItemDef = NewItemDef;
+	if (ItemDef != NewItemDef)
+	{
+		ItemDef = NewItemDef;
+		MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, ItemDef, this);
+	}
 }
 
 const FGameplayTagContainer& UGameItem::GetOwnedTags() const
@@ -47,7 +54,7 @@ void UGameItem::SetCount(int32 NewCount)
 	{
 		const int32 OldCount = Count;
 		Count = NewCount;
-		MARK_PROPERTY_DIRTY_FROM_NAME(UGameItem, Count, this);
+		MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, Count, this);
 
 		OnCountChangedEvent.Broadcast(NewCount, OldCount);
 	}
@@ -62,6 +69,7 @@ void UGameItem::AddTagStat(FGameplayTag Tag, int32 DeltaValue)
 
 	const int32 OldValue = TagStats.GetStackCount(Tag);
 	TagStats.AddStack(Tag, DeltaValue);
+	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, TagStats, this);
 	const int32 NewValue = TagStats.GetStackCount(Tag);
 
 	if (OldValue != NewValue)
@@ -79,6 +87,7 @@ void UGameItem::RemoveTagStat(FGameplayTag Tag, int32 DeltaValue)
 
 	const int32 OldValue = TagStats.GetStackCount(Tag);
 	TagStats.RemoveStack(Tag, DeltaValue);
+	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, TagStats, this);
 	const int32 NewValue = TagStats.GetStackCount(Tag);
 
 	if (OldValue != NewValue)
@@ -101,9 +110,10 @@ bool UGameItem::IsMatching(const UGameItem* Item) const
 void UGameItem::CopyItemProperties(const UGameItem* Item)
 {
 	Count = Item->Count;
-	MARK_PROPERTY_DIRTY_FROM_NAME(UGameItem, Count, this);
+	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, Count, this);
 	TagStats = Item->TagStats;
 	TagStats.MarkArrayDirty();
+	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, TagStats, this);
 }
 
 TArray<UGameItemContainer*> UGameItem::GetContainers() const
@@ -115,7 +125,7 @@ TArray<UGameItemContainer*> UGameItem::GetContainers() const
 	return Result;
 }
 
-FString UGameItem::ToDebugString() const
+FString UGameItem::GetDebugString() const
 {
 	FString ItemDefName = GetNameSafe(ItemDef);
 	ItemDefName.RemoveFromEnd(TEXT("_C"));

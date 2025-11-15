@@ -58,6 +58,10 @@ public:
 	UFUNCTION(BlueprintPure)
 	int32 ClampSlot(int32 Slot, bool bLoop) const;
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	virtual FString GetDebugString() const override;
+
 public:
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
 	void ServerSetSelectedSlot(int32 NewSlot);
@@ -77,12 +81,6 @@ public:
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
 	void ServerSelectPrevItem(bool bLoop = true);
 
-public:
-	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-
-	UFUNCTION()
-	void OnRep_SelectedSlot();
-
 protected:
 	virtual void OnLinkedContainerChanged(UGameItemContainer* NewContainer, UGameItemContainer* OldContainer) override;
 
@@ -90,6 +88,9 @@ protected:
 	/** The currently selected slot in the linked container. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing = OnRep_SelectedSlot, Category = "Selection")
 	int32 SelectedSlot;
+
+	UFUNCTION()
+	void OnRep_SelectedSlot();
 
 	/** Find the next or previous slot in the linked container with a valid item. */
 	int32 FindValidItemSlot(int32 SearchDirection, bool bLoop) const;

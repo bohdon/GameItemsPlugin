@@ -9,6 +9,7 @@
 #include "GameItemStatics.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/PlayerController.h"
+#include "Rules/GameItemContainerRule.h"
 
 
 namespace GameItems::Debug
@@ -18,7 +19,7 @@ namespace GameItems::Debug
 	const TCHAR* BothColor = TEXT("{yellow}");
 	const TCHAR* ServerColor = TEXT("{cyan}");
 	const TCHAR* LocalColor = TEXT("{green}");
-	const TCHAR* NonReplicatedColor = TEXT("{violetred}");
+	const TCHAR* DesyncedColor = TEXT("{tan}");
 
 	inline FString ColorNetworkString(ENetworkStatus NetworkStatus, const FStringView DisplayString)
 	{
@@ -26,7 +27,7 @@ namespace GameItems::Debug
 			ServerColor,
 			LocalColor,
 			BothColor,
-			NonReplicatedColor
+			DesyncedColor
 		};
 
 		return FString::Printf(TEXT("%s%.*s"), Colors[ToInt(NetworkStatus)], DisplayString.Len(), DisplayString.GetData());
@@ -69,6 +70,19 @@ void FGameplayDebuggerCategory_GameItems::FRepData::Serialize(FArchive& Ar)
 		Ar << Containers[Idx].NumSlots;
 		Ar << Containers[Idx].NetworkStatus;
 
+		int32 NumRules = Containers[Idx].Rules.Num();
+		Ar << NumRules;
+		if (Ar.IsLoading())
+		{
+			Containers[Idx].Rules.SetNum(NumRules);
+		}
+
+		for (int32 RuleIdx = 0; RuleIdx < NumRules; ++RuleIdx)
+		{
+			Ar << Containers[Idx].Rules[RuleIdx].Rule;
+			Ar << Containers[Idx].Rules[RuleIdx].NetworkStatus;
+		}
+
 		int32 NumItems = Containers[Idx].Items.Num();
 		Ar << NumItems;
 		if (Ar.IsLoading())
@@ -78,7 +92,6 @@ void FGameplayDebuggerCategory_GameItems::FRepData::Serialize(FArchive& Ar)
 
 		for (int32 ItemIdx = 0; ItemIdx < NumItems; ++ItemIdx)
 		{
-			Ar << Containers[Idx].Items[ItemIdx].Slot;
 			Ar << Containers[Idx].Items[ItemIdx].Item;
 			Ar << Containers[Idx].Items[ItemIdx].ReplicationID;
 			Ar << Containers[Idx].Items[ItemIdx].NetworkStatus;
@@ -91,49 +104,63 @@ void FGameplayDebuggerCategory_GameItems::CollectData(APlayerController* OwnerPC
 	DataPack.Containers = CollectContainerData(OwnerPC, DebugActor);
 }
 
-TArray<FGameplayDebuggerCategory_GameItems::FRepData::FGameItemContainerDebug> FGameplayDebuggerCategory_GameItems::CollectContainerData(
+TArray<FGameplayDebuggerCategory_GameItems::FRepData::FContainerDebug> FGameplayDebuggerCategory_GameItems::CollectContainerData(
 	APlayerController* OwnerPC, AActor* DebugActor)
 {
 	if (!OwnerPC)
 	{
-		return TArray<FRepData::FGameItemContainerDebug>();
+		return TArray<FRepData::FContainerDebug>();
 	}
 
 	using namespace GameItems::Debug;
-	TArray<FRepData::FGameItemContainerDebug> Result;
+	TArray<FRepData::FContainerDebug> Result;
 
 	ENetworkStatus NetworkStatus = OwnerPC->HasAuthority() ? ENetworkStatus::ServerOnly : ENetworkStatus::LocalOnly;
 
 	TArray<UGameItemContainer*> Containers = UGameItemStatics::GetAllItemContainersForActor(DebugActor);
 	for (const UGameItemContainer* Container : Containers)
 	{
-		FRepData::FGameItemContainerDebug& ContainerData = Result.AddDefaulted_GetRef();
+		FRepData::FContainerDebug& ContainerData = Result.AddDefaulted_GetRef();
 		ContainerData.ContainerId = Container->ContainerId.ToString();
 		ContainerData.NumSlots = Container->GetNumSlots();
 		const UActorComponent* OuterComp = Container->GetTypedOuter<UActorComponent>();
 		ContainerData.Owner = OuterComp ? OuterComp->GetReadableName() : GetNameSafe(Container->GetOwner());
 		ContainerData.NetworkStatus = NetworkStatus;
 
-		const FGameItemList& ItemList = Container->GetInternalItemList();
+		// collect rules data
+		ContainerData.Rules.Reserve(Container->GetRules().Num());
+		for (const UGameItemContainerRule* Rule : Container->GetRules())
+		{
+			FRepData::FContainerRuleDebug& RuleData = ContainerData.Rules.AddDefaulted_GetRef();
+			RuleData.NetworkStatus = NetworkStatus;
+			if (!Rule)
+			{
+				RuleData.Rule = TEXT("(null)");
+				continue;
+			}
+			RuleData.Rule = Rule->GetDebugString();
+		}
 
 		// show * before each item, if the container is a child and doesn't store its own items
 		const FString ItemPrefix = Container->IsChild() ? TEXT("*") : TEXT("");
 
+		// collect items data
+		const FGameItemList& ItemList = Container->GetInternalItemList();
 		ContainerData.Items.Reserve(ItemList.GetEntries().Num());
 		for (const FGameItemListEntry& Entry : ItemList.GetEntries())
 		{
-			FRepData::FGameItemDebug& ItemData = ContainerData.Items.AddDefaulted_GetRef();
-			ItemData.Slot = Entry.Slot;
-
+			FRepData::FItemDebug& ItemData = ContainerData.Items.AddDefaulted_GetRef();
 			const UGameItem* Item = Entry.Item;
-			if (!Item)
-			{
-				ItemData.Item = TEXT("(invalid)");
-				continue;
-			}
-			ItemData.Item = ItemPrefix + Item->ToDebugString();
 			ItemData.ReplicationID = Entry.ReplicationID;
 			ItemData.NetworkStatus = NetworkStatus;
+			if (Item)
+			{
+				ItemData.Item = FString::Printf(TEXT("[%d] %s%s"), Entry.Slot, *ItemPrefix, *Item->GetDebugString());
+			}
+			else
+			{
+				ItemData.Item = FString::Printf(TEXT("[%d] (null)"), Entry.Slot);
+			}
 		}
 	}
 	return Result;
@@ -149,10 +176,10 @@ void FGameplayDebuggerCategory_GameItems::DrawData(APlayerController* OwnerPC, F
 		CanvasContext.CursorY -= CanvasContext.GetLineHeight();
 		const TCHAR* Active = TEXT("{green}");
 		const TCHAR* Inactive = TEXT("{grey}");
-		CanvasContext.Printf(TEXT("Items [%s%s{white}]\tRules [%s%s{white}]\tLegend:  %sBoth    %sServer    %sLocal"),
+		CanvasContext.Printf(TEXT("Items [%s%s{white}]\tRules [%s%s{white}]\tLegend:  %sBoth    %sServer    %sLocal    %sDesynced"),
 		                     bShowItems ? Active : Inactive, *GetInputHandlerDescription(0),
 		                     bShowRules ? Active : Inactive, *GetInputHandlerDescription(1),
-		                     BothColor, ServerColor, LocalColor);
+		                     BothColor, ServerColor, LocalColor, DesyncedColor);
 	}
 
 	if (LastDrawDataEndSize <= 0.0f)
@@ -160,7 +187,7 @@ void FGameplayDebuggerCategory_GameItems::DrawData(APlayerController* OwnerPC, F
 		LastDrawDataEndSize = 100.f;
 	}
 
-	float ThisDrawDataStartPos = CanvasContext.CursorY;
+	const float ThisDrawDataStartPos = CanvasContext.CursorY;
 
 	constexpr FLinearColor BackgroundColor(0.1f, 0.1f, 0.1f, 0.8f);
 	const FVector2D BackgroundPos{CanvasContext.CursorX, CanvasContext.CursorY};
@@ -194,28 +221,52 @@ void FGameplayDebuggerCategory_GameItems::DrawContainers(APlayerController* Owne
 	constexpr float Padding = 10.0f;
 
 	// gather local data to compare (or same data if standalone)
-	const TArray<FRepData::FGameItemContainerDebug> LocalContainersData = OwnerPC->IsNetMode(ENetMode::NM_Standalone)
-		                                                                      ? DataPack.Containers
-		                                                                      : CollectContainerData(OwnerPC, FindLocalDebugActor());
+	const TArray<FRepData::FContainerDebug> LocalContainersData = OwnerPC->IsNetMode(ENetMode::NM_Standalone)
+		? DataPack.Containers
+		: CollectContainerData(OwnerPC, FindLocalDebugActor());
 
 	// merge server and local containers and items update network status
-	TMap<FString, FRepData::FGameItemContainerDebug> AllContainers;
-	for (const FRepData::FGameItemContainerDebug& RemoteContainerData : DataPack.Containers)
+	TMap<FString, FRepData::FContainerDebug> AllContainers;
+	for (const FRepData::FContainerDebug& RemoteContainerData : DataPack.Containers)
 	{
 		AllContainers.Emplace(RemoteContainerData.ContainerId, RemoteContainerData);
 	}
-	for (const FRepData::FGameItemContainerDebug& LocalContainerData : LocalContainersData)
+	for (const FRepData::FContainerDebug& LocalContainerData : LocalContainersData)
 	{
-		if (FRepData::FGameItemContainerDebug* RemoteContainerData = AllContainers.Find(LocalContainerData.ContainerId))
+		if (FRepData::FContainerDebug* RemoteContainerData = AllContainers.Find(LocalContainerData.ContainerId))
 		{
 			// found matching container, do basic match check
 			const bool bIsContainerMatch = RemoteContainerData->NumSlots == LocalContainerData.NumSlots;
 			RemoteContainerData->NetworkStatus = bIsContainerMatch ? ENetworkStatus::Networked : ENetworkStatus::Detached;
 
-			// merge all items
-			for (FRepData::FGameItemDebug& RemoteItemData : RemoteContainerData->Items)
+			// merge all rules (by array index, not replication ID or anything)
+			for (int32 Idx = 0; Idx < RemoteContainerData->Rules.Num(); ++Idx)
 			{
-				const FRepData::FGameItemDebug* LocalItemData = LocalContainerData.Items.FindByPredicate([&](const FRepData::FGameItemDebug& Other)
+				if (LocalContainerData.Rules.IsValidIndex(Idx))
+				{
+					// make sure they match
+					FRepData::FContainerRuleDebug& RemoteRuleData = RemoteContainerData->Rules[Idx];
+					const FRepData::FContainerRuleDebug& LocalRuleData = LocalContainerData.Rules[Idx];
+					const bool bIsSynced = LocalRuleData.Rule == RemoteRuleData.Rule;
+					RemoteRuleData.NetworkStatus = bIsSynced ? ENetworkStatus::Networked : ENetworkStatus::Detached;
+					if (!bIsSynced)
+					{
+						// change displayed data to show local on left, remote on right
+						RemoteRuleData.Rule = FString::Printf(TEXT("%s --x-- %s"), *LocalRuleData.Rule, *RemoteRuleData.Rule);
+					}
+				}
+			}
+
+			// include any extra local rules (if there are more than remote)
+			for (int32 Idx = RemoteContainerData->Rules.Num(); Idx < LocalContainerData.Rules.Num(); ++Idx)
+			{
+				RemoteContainerData->Rules.Emplace(LocalContainerData.Rules[Idx]);
+			}
+
+			// merge all items
+			for (FRepData::FItemDebug& RemoteItemData : RemoteContainerData->Items)
+			{
+				const FRepData::FItemDebug* LocalItemData = LocalContainerData.Items.FindByPredicate([&](const FRepData::FItemDebug& Other)
 				{
 					return Other.ReplicationID == RemoteItemData.ReplicationID;
 				});
@@ -223,15 +274,20 @@ void FGameplayDebuggerCategory_GameItems::DrawContainers(APlayerController* Owne
 				if (LocalItemData)
 				{
 					// make sure they match
-					const bool bIsItemMatch = RemoteItemData.Slot == LocalItemData->Slot && RemoteItemData.Item == LocalItemData->Item;
-					RemoteItemData.NetworkStatus = bIsItemMatch ? ENetworkStatus::Networked : ENetworkStatus::Detached;
+					const bool bIsSynced = RemoteItemData.Item == LocalItemData->Item;
+					RemoteItemData.NetworkStatus = bIsSynced ? ENetworkStatus::Networked : ENetworkStatus::Detached;
+					if (!bIsSynced)
+					{
+						// change displayed data to show local on left, remote on right
+						RemoteItemData.Item = FString::Printf(TEXT("%s --x-- %s"), *LocalItemData->Item, *RemoteItemData.Item);
+					}
 				}
 			}
 
 			// include any local items not already in the list
-			for (const FRepData::FGameItemDebug& LocalItemData : LocalContainerData.Items)
+			for (const FRepData::FItemDebug& LocalItemData : LocalContainerData.Items)
 			{
-				const FRepData::FGameItemDebug* RemoteItemData = LocalContainerData.Items.FindByPredicate([&](const FRepData::FGameItemDebug& Other)
+				const FRepData::FItemDebug* RemoteItemData = RemoteContainerData->Items.FindByPredicate([&](const FRepData::FItemDebug& Other)
 				{
 					return Other.ReplicationID == LocalItemData.ReplicationID;
 				});
@@ -255,7 +311,7 @@ void FGameplayDebuggerCategory_GameItems::DrawContainers(APlayerController* Owne
 	CanvasContext.CursorY -= CanvasContext.GetLineHeight();
 	for (auto& Elem : AllContainers)
 	{
-		const FRepData::FGameItemContainerDebug& ContainerData = Elem.Value;
+		const FRepData::FContainerDebug& ContainerData = Elem.Value;
 
 		CanvasContext.MoveToNewLine();
 		CanvasContext.CursorX += Padding;
@@ -264,21 +320,39 @@ void FGameplayDebuggerCategory_GameItems::DrawContainers(APlayerController* Owne
 		float CursorY = CanvasContext.CursorY;
 
 		// container id and owner
-		const FString ContainerName = ColorNetworkString(ContainerData.NetworkStatus, *ContainerData.ContainerId);
+		const FString ContainerText = ColorNetworkString(ContainerData.NetworkStatus, *ContainerData.ContainerId);
 		CanvasContext.PrintfAt(CursorX, CursorY, TEXT("%s [%d/%d] {grey}(%s)"),
-		                       *ContainerName, ContainerData.Items.Num(), ContainerData.NumSlots, *ContainerData.Owner);
+		                       *ContainerText, ContainerData.Items.Num(), ContainerData.NumSlots, *ContainerData.Owner);
 
-		for (const FRepData::FGameItemDebug& ItemData : ContainerData.Items)
+		// rules
+		if (bShowRules)
 		{
-			CanvasContext.MoveToNewLine();
-			CanvasContext.CursorX += Padding * 2;
+			for (const FRepData::FContainerRuleDebug& RuleData : ContainerData.Rules)
+			{
+				CanvasContext.MoveToNewLine();
+				CanvasContext.CursorX += Padding * 2;
+				CursorX = CanvasContext.CursorX;
+				CursorY = CanvasContext.CursorY;
 
-			CursorX = CanvasContext.CursorX;
-			CursorY = CanvasContext.CursorY;
+				const FString RuleText = ColorNetworkString(RuleData.NetworkStatus, RuleData.Rule);
+				CanvasContext.PrintfAt(CursorX, CursorY, TEXT("+ %s"), *RuleText);
+			}
+		}
 
-			// item slot and debug name
-			const FString ItemName = ColorNetworkString(ItemData.NetworkStatus, *ItemData.Item);
-			CanvasContext.PrintfAt(CursorX, CursorY, TEXT("[%d] %s"), ItemData.Slot, *ItemName);
+		// items
+		if (bShowItems)
+		{
+			for (const FRepData::FItemDebug& ItemData : ContainerData.Items)
+			{
+				CanvasContext.MoveToNewLine();
+				CanvasContext.CursorX += Padding * 2;
+
+				CursorX = CanvasContext.CursorX;
+				CursorY = CanvasContext.CursorY;
+
+				const FString ItemText = ColorNetworkString(ItemData.NetworkStatus, *ItemData.Item);
+				CanvasContext.PrintAt(CursorX, CursorY, ItemText);
+			}
 		}
 
 		CanvasContext.MoveToNewLine();

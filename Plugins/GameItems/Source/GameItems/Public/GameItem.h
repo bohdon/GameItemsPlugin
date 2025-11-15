@@ -85,7 +85,7 @@ public:
 
 	/** Return a debug string representation of this item instance. */
 	UFUNCTION(BlueprintPure, Category = "GameItems")
-	FString ToDebugString() const;
+	FString GetDebugString() const;
 
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FCountChangedDelegate, int32 /*NewCount*/, int32 /*OldCount*/);
 	DECLARE_MULTICAST_DELEGATE_ThreeParams(FTagStatChangedDelegate, const FGameplayTag& /*Tag*/, int32 /*NewValue*/, int32 /*OldValue*/);
@@ -105,6 +105,7 @@ public:
 	FUnslottedDelegate OnUnslottedEvent;
 
 	virtual bool IsSupportedForNetworking() const override { return true; }
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	/** All containers that this item is in. */

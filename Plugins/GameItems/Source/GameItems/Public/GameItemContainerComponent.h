@@ -7,6 +7,7 @@
 #include "GameItemContainerGraph.h"
 #include "GameItemContainerInterface.h"
 #include "Components/ActorComponent.h"
+#include "Rules/GameItemContainerRule.h"
 #include "GameItemContainerComponent.generated.h"
 
 class UGameItemContainer;
@@ -38,7 +39,7 @@ struct FActiveGameItemContainerLink
 	FGameItemContainerLinkSpec LinkSpec;
 
 	/** The optional source object that created this link. */
-	UPROPERTY()
+	UPROPERTY(NotReplicated)
 	TObjectPtr<const UObject> SourceObject;
 };
 
@@ -143,7 +144,6 @@ public:
 	virtual void PostLoad() override;
 	virtual void InitializeComponent() override;
 	virtual void ReadyForReplication() override;
-	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
@@ -154,6 +154,9 @@ protected:
 	/** All containers that have been created on this component. */
 	UPROPERTY(Transient, ReplicatedUsing = OnRep_Containers)
 	TArray<TObjectPtr<UGameItemContainer>> Containers;
+
+	UFUNCTION()
+	void OnRep_Containers(const TArray<UGameItemContainer*>& PreviousContainers);
 
 	/** Links that have been created to connect different containers via rules. */
 	UPROPERTY(Transient, Replicated)
@@ -166,8 +169,11 @@ protected:
 	/** Register a newly created container. */
 	void AddContainer(UGameItemContainer* Container);
 
-	/** Called when a new container is added (only on authority). */
+	/** Called when a new container is added. */
 	virtual void OnContainerAdded(UGameItemContainer* Container);
+
+	/** Called when a container is removed. */
+	virtual void OnContainerRemoved(UGameItemContainer* Container);
 
 	/** Add new link rules to a container. */
 	void AddMatchingLinkRulesToContainer(UGameItemContainer* Container, const TArray<FActiveGameItemContainerLink>& InLinks);
@@ -175,12 +181,13 @@ protected:
 	/** Add a new link rule to a container, if the query matches. */
 	void AddLinkRuleToContainer(UGameItemContainer* Container, const FActiveGameItemContainerLink& Link);
 
-	UFUNCTION()
-	void OnRep_Containers();
-
 	virtual void OnItemAdded(UGameItem* GameItem);
 
 	virtual void OnItemRemoved(UGameItem* GameItem);
+
+	virtual void OnRuleAdded(UGameItemContainerRule* Rule);
+
+	virtual void OnRuleRemoved(UGameItemContainerRule* Rule);
 
 	FString GetNetDebugString() const;
 };
