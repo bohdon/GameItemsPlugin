@@ -116,6 +116,9 @@ TArray<FGameplayDebuggerCategory_GameItems::FRepData::FGameItemContainerDebug> F
 
 		const FGameItemList& ItemList = Container->GetInternalItemList();
 
+		// show * before each item, if the container is a child and doesn't store its own items
+		const FString ItemPrefix = Container->IsChild() ? TEXT("*") : TEXT("");
+
 		ContainerData.Items.Reserve(ItemList.GetEntries().Num());
 		for (const FGameItemListEntry& Entry : ItemList.GetEntries())
 		{
@@ -128,7 +131,7 @@ TArray<FGameplayDebuggerCategory_GameItems::FRepData::FGameItemContainerDebug> F
 				ItemData.Item = TEXT("(invalid)");
 				continue;
 			}
-			ItemData.Item = Item->ToDebugString();
+			ItemData.Item = ItemPrefix + Item->ToDebugString();
 			ItemData.ReplicationID = Entry.ReplicationID;
 			ItemData.NetworkStatus = NetworkStatus;
 		}
