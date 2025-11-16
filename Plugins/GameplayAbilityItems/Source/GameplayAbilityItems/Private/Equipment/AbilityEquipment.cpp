@@ -49,6 +49,13 @@ int32 UAbilityEquipment::GetItemLevel() const
 
 void UAbilityEquipment::GiveAbilitySets()
 {
+#if WITH_SERVER_CODE
+	// grant abilities on server only
+	if (!GetOwningActor()->HasAuthority())
+	{
+		return;
+	}
+
 	const UAbilityEquipmentDef* AbilityEquipDef = GetEquipmentDefCDO<UAbilityEquipmentDef>();
 	if (!AbilityEquipDef)
 	{
@@ -76,10 +83,17 @@ void UAbilityEquipment::GiveAbilitySets()
 
 		AbilitySetHandles = AbilitySet->GiveToAbilitySystem(AbilitySystem, Instigator, bUseItemLevel ? GetItemLevel() : -1);
 	}
+#endif
 }
 
 void UAbilityEquipment::RemoveAbilitySets()
 {
+#if WITH_SERVER_CODE
+	if (!GetOwningActor() || !GetOwningActor()->HasAuthority())
+	{
+		return;
+	}
+
 	if (UAbilitySystemComponent* AbilitySystem = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwningActor()))
 	{
 		if (AbilitySetHandles.AbilitySet)
@@ -87,4 +101,5 @@ void UAbilityEquipment::RemoveAbilitySets()
 			AbilitySetHandles.AbilitySet->RemoveFromAbilitySystem(AbilitySystem, AbilitySetHandles, bEndImmediately, bKeepAttributeSets);
 		}
 	}
+#endif
 }

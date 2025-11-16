@@ -36,7 +36,6 @@ void UGameEquipment::OnRep_Instigator()
 
 void UGameEquipment::OnRep_SpawnedActors()
 {
-	UE_LOG(LogGameItems, Verbose, TEXT("[%hs] SpawnedActors: %d"), __func__, SpawnedActors.Num());
 }
 
 UWorld* UGameEquipment::GetWorld() const
