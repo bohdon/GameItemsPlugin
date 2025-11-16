@@ -57,12 +57,12 @@ UGameItem* UGameItemSubsystem::CreateItem(UObject* Outer, TSubclassOf<UGameItemD
 
 TArray<UGameItem*> UGameItemSubsystem::CreateItemInContainer(UGameItemContainer* Container, TSubclassOf<UGameItemDef> ItemDef, int32 Count)
 {
-	if (!Container || !Container->GetOwner())
+	if (!Container || !Container->GetItemOuter())
 	{
 		return TArray<UGameItem*>();
 	}
 
-	UGameItem* NewItem = CreateItem(Container->GetOwner(), ItemDef, Count);
+	UGameItem* NewItem = CreateItem(Container->GetItemOuter(), ItemDef, Count);
 	if (!NewItem)
 	{
 		return TArray<UGameItem*>();
@@ -129,7 +129,7 @@ TArray<UGameItem*> UGameItemSubsystem::MoveItem(UGameItemContainer* FromContaine
 	if (Plan.RemainderCount > 0)
 	{
 		check(Item->GetCount() > Plan.DeltaCount);
-		ItemToAdd = SplitItem(ToContainer->GetOwner(), Item, Plan.DeltaCount);
+		ItemToAdd = SplitItem(ToContainer->GetItemOuter(), Item, Plan.DeltaCount);
 		check(ItemToAdd);
 	}
 	else

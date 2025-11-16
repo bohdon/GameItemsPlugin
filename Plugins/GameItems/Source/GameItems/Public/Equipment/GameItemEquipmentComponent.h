@@ -66,9 +66,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameEquipment")
 	void RemoveItemContainer(UGameItemContainer* ItemContainer);
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameEquipment")
-	void ReapplyAllItemEquipment();
-
 	/** Find and add all startup item containers by id. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameEquipment")
 	void AddStartupItemContainers();
@@ -102,7 +99,7 @@ protected:
 	/** Provide context references for an item equipment condition. */
 	void SetupConditionContextData(FWorldConditionContextData& ContextData, const UGameItem* Item) const;
 
-	UGameEquipment* ApplyEquipmentForItem(UGameItem* Item);
+	void ApplyEquipmentForItem(UGameItem* Item);
 	void RemoveEquipmentForItem(UGameItem* Item);
 
 	void OnItemAdded(UGameItem* Item);

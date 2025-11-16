@@ -148,6 +148,7 @@ FString UGameItemContainer::GetNetDebugString() const
 
 UObject* UGameItemContainer::GetItemOuter() const
 {
+	// use actor for replication, items are duplicated into containers when moving between actors
 	if (AActor* OwningActor = GetTypedOuter<AActor>())
 	{
 		return OwningActor;
@@ -1323,7 +1324,7 @@ void UGameItemContainer::LoadSaveData(const FGameItemContainerSaveData& Containe
 				continue;
 			}
 
-			UGameItem* NewItem = ItemSubsystem->CreateItem(GetOwner(), ItemDef);
+			UGameItem* NewItem = ItemSubsystem->CreateItem(GetItemOuter(), ItemDef);
 			check(NewItem);
 
 			// save item so it can be retrieved by children
@@ -1402,16 +1403,15 @@ void UGameItemContainer::OnPostReplicatedChange(FGameItemListEntry& Entry)
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] %s"),
 	       *GetNetDebugString(), *GetReadableName(), __func__, *Entry.GetDebugString());
 
-	// usually called when the slot of an entry has changed,
-	// treat this as adding a new item to that slot, and also broadcast slot
-	// change on the old slot if different
-
-	// TODO: this is also fallback since Item is null during OnPostReplicatedAdd, and goes from null -> valid here (there's no other type of 'change')
 	if (UGameItem* NewItem = Entry.Item)
 	{
-		FScopedSlotChanges SlotChangeScope(this);
+		// if the entry went from null -> valid, call added events
+		if (!NewItem->Containers.Contains(this))
+		{
+			FScopedSlotChanges SlotChangeScope(this);
+			OnItemAdded(NewItem, Entry.Slot);
+		}
 
-		OnItemAdded(NewItem, Entry.Slot);
 		OnSlotChanged(Entry.Slot);
 		if (Entry.LastKnownSlot != Entry.Slot && Entry.LastKnownSlot != INDEX_NONE)
 		{

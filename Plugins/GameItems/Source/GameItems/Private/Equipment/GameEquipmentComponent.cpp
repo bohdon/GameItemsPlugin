@@ -22,8 +22,11 @@ UGameEquipmentComponent::UGameEquipmentComponent(const FObjectInitializer& Objec
 void UGameEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	FDoRepLifetimeParams Params;
+	Params.bIsPushBased = true;
 
-	DOREPLIFETIME(ThisClass, EquipmentList);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, EquipmentList, Params);
 }
 
 void UGameEquipmentComponent::InitializeComponent()
@@ -40,7 +43,12 @@ void UGameEquipmentComponent::InitializeComponent()
 
 void UGameEquipmentComponent::UninitializeComponent()
 {
-	RemoveAllEquipment();
+#if WITH_SERVER_CODE
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		RemoveAllEquipment();
+	}
+#endif
 
 	Super::UninitializeComponent();
 }
@@ -64,6 +72,12 @@ void UGameEquipmentComponent::ReadyForReplication()
 
 UGameEquipment* UGameEquipmentComponent::ApplyEquipment(TSubclassOf<UGameEquipmentDef> EquipmentDef, UObject* Instigator)
 {
+#if WITH_SERVER_CODE
+	if (!ensure(GetOwner()->HasAuthority()))
+	{
+		return nullptr;
+	}
+
 	if (!EquipmentDef)
 	{
 		return nullptr;
@@ -84,7 +98,7 @@ UGameEquipment* UGameEquipmentComponent::ApplyEquipment(TSubclassOf<UGameEquipme
 
 	EquipmentList.AddEntry(NewEquipment);
 
-	if (NewEquipment && IsUsingRegisteredSubObjectList() && IsReadyForReplication())
+	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
 	{
 		AddReplicatedSubObject(NewEquipment);
 	}
@@ -93,16 +107,25 @@ UGameEquipment* UGameEquipmentComponent::ApplyEquipment(TSubclassOf<UGameEquipme
 	       *GetNetDebugString(), *GetReadableName(), *NewEquipment->GetName(), *GetNameSafe(Instigator));
 
 	return NewEquipment;
+#else
+	return nullptr;
+#endif
 }
 
 void UGameEquipmentComponent::RemoveEquipment(UGameEquipment* Equipment)
 {
+#if WITH_SERVER_CODE
+	if (!ensure(GetOwner()->HasAuthority()))
+	{
+		return;
+	}
+
 	if (!Equipment)
 	{
 		return;
 	}
 
-	if (Equipment && IsUsingRegisteredSubObjectList() && IsReadyForReplication())
+	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
 	{
 		RemoveReplicatedSubObject(Equipment);
 	}
@@ -114,10 +137,23 @@ void UGameEquipmentComponent::RemoveEquipment(UGameEquipment* Equipment)
 
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Removed equipment: %s"),
 	       *GetNetDebugString(), *GetReadableName(), *Equipment->GetName());
+#endif
 }
 
 void UGameEquipmentComponent::RemoveAllEquipment()
 {
+#if WITH_SERVER_CODE
+	if (!ensure(GetOwner()->HasAuthority()))
+	{
+		return;
+	}
+
+	TArray<UGameEquipment*> AllEquipment = GetAllEquipment();
+	for (UGameEquipment* Equipment : AllEquipment)
+	{
+		RemoveEquipment(Equipment);
+	}
+#endif
 }
 
 UGameEquipment* UGameEquipmentComponent::FindEquipment(TSubclassOf<UGameEquipment> EquipmentClass) const
@@ -150,7 +186,7 @@ TArray<UGameEquipment*> UGameEquipmentComponent::FindAllEquipment(TSubclassOf<UG
 TArray<UGameEquipment*> UGameEquipmentComponent::FindAllEquipmentByInstigator(UObject* Instigator) const
 {
 	TArray<UGameEquipment*> Result;
-	for (const auto &Entry : EquipmentList.GetEntries())
+	for (const auto& Entry : EquipmentList.GetEntries())
 	{
 		UGameEquipment* Equipment = Entry.Equipment;
 		if (IsValid(Equipment) && Equipment->GetInstigator() == Instigator)
@@ -164,7 +200,7 @@ TArray<UGameEquipment*> UGameEquipmentComponent::FindAllEquipmentByInstigator(UO
 TArray<UGameEquipment*> UGameEquipmentComponent::GetAllEquipment() const
 {
 	TArray<UGameEquipment*> Result;
-	for (const auto &Entry : EquipmentList.GetEntries())
+	for (const auto& Entry : EquipmentList.GetEntries())
 	{
 		UGameEquipment* Equipment = Entry.Equipment;
 		if (IsValid(Equipment))
@@ -183,6 +219,11 @@ void UGameEquipmentComponent::OnPreReplicatedRemove(FGameEquipmentListEntry& Ent
 	if (Entry.Equipment)
 	{
 		Entry.Equipment->OnUnequipped();
+
+		if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
+		{
+			RemoveReplicatedSubObject(Entry.Equipment);
+		}
 	}
 }
 
@@ -194,6 +235,11 @@ void UGameEquipmentComponent::OnPostReplicatedAdd(FGameEquipmentListEntry& Entry
 	if (Entry.Equipment)
 	{
 		Entry.Equipment->OnEquipped();
+
+		if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
+		{
+			AddReplicatedSubObject(Entry.Equipment);
+		}
 	}
 }
 
@@ -206,6 +252,11 @@ void UGameEquipmentComponent::OnPostReplicatedChange(FGameEquipmentListEntry& En
 	if (Entry.Equipment)
 	{
 		Entry.Equipment->OnEquipped();
+
+		if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
+		{
+			AddReplicatedSubObject(Entry.Equipment);
+		}
 	}
 }
 

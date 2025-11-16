@@ -378,6 +378,9 @@ public:
 
 	virtual UWorld* GetWorld() const override;
 
+	/** Return the object to use as the outer for new game items. */
+	virtual UObject* GetItemOuter() const;
+
 	/** Save this container's items and properties to save data. */
 	void CommitSaveData(FGameItemContainerSaveData& ContainerData, TMap<UGameItem*, FGuid>& SavedItems);
 
@@ -498,9 +501,6 @@ protected:
 
 	/** Set of slots that were changed during change operations. */
 	TArray<int32> ChangedSlots;
-
-	/** Return the object to use as the outer for new game items. */
-	virtual UObject* GetItemOuter() const;
 
 	/**
 	 * Return a plan representing how an item will be added to this container,

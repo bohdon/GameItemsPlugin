@@ -98,7 +98,7 @@ public:
 	/** Called when a tag stat of this item has changed. */
 	FTagStatChangedDelegate OnTagStatChangedEvent;
 
-	/** Called when this item is added or moved in any container. */
+	/** Called when this item is added to any container. */
 	FSlottedDelegate OnSlottedEvent;
 
 	/** Called when this item is removed from any container. */

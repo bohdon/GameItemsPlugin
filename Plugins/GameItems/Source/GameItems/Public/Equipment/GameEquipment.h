@@ -55,11 +55,11 @@ public:
 	UObject* GetInstigator() const { return Instigator; }
 
 	/** Set the instigator responsible for applying this equipment. */
-	void SetInstigator(UObject* InInstigator) { Instigator = InInstigator; }
+	void SetInstigator(UObject* InInstigator);
 
 	/** Return all actors that this equipment has spawned. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Equipment")
-	TArray<AActor*> GetSpawnedActors() const { return SpawnedActors; }
+	TArray<AActor*> GetSpawnedActors() const;
 
 	/** Return the first spawned actor of a specific class. */
 	UFUNCTION(BlueprintPure, Meta = (DeterminesOutputType = "ActorClass"), Category = "Equipment")
@@ -93,8 +93,15 @@ protected:
 	void OnRep_Instigator();
 
 	/** The actors this equipment has spawned. */
-	UPROPERTY(Replicated)
+	UPROPERTY(Transient, ReplicatedUsing = OnRep_SpawnedActors)
 	TArray<TObjectPtr<AActor>> SpawnedActors;
+
+	UFUNCTION()
+	void OnRep_SpawnedActors();
+
+	/** The unreplicated actors this equipment has spawned. */
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<AActor>> LocalSpawnedActors;
 
 	/** Called when the equipment is added to an actor. */
 	UFUNCTION(BlueprintImplementableEvent, Meta = (DisplayName = "OnEquipped"), Category = "Equipment")

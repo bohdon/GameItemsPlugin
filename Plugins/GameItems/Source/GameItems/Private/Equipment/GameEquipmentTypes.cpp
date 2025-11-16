@@ -44,7 +44,7 @@ void FGameEquipmentList::PostReplicatedChange(const TArrayView<int32>& ChangedIn
 
 void FGameEquipmentList::AddEntry(UGameEquipment* Equipment)
 {
-FGameEquipmentListEntry& NewEntry = Entries.Emplace_GetRef(Equipment);
+	FGameEquipmentListEntry& NewEntry = Entries.Emplace_GetRef(Equipment);
 	MarkItemDirty(NewEntry);
 }
 

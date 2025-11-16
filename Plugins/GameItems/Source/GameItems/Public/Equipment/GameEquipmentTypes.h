@@ -13,6 +13,20 @@ struct FGameEquipmentList;
 
 
 /**
+ * Determines how equipment actors should be spawned.
+ */
+UENUM(BlueprintType)
+enum class EGameEquipmentActorSpawnPolicy : uint8
+{
+	/** Spawn the equipment on the local owner only. */
+	LocalOnly,
+
+	/** Spawn the equipment on the server, and replicate to clients. */
+	ServerInitiated,
+};
+
+
+/**
  * Defines necessary info for spawning an actor from equipment.
  */
 USTRUCT(BlueprintType)
@@ -35,6 +49,10 @@ struct FGameEquipmentActorSpawnInfo
 	/** The relative transform to set for the actor when attached. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FTransform AttachTransform;
+
+	/** How the equipment actor should be spawned in networked games. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EGameEquipmentActorSpawnPolicy NetSpawnPolicy = EGameEquipmentActorSpawnPolicy::ServerInitiated;
 };
 
 
