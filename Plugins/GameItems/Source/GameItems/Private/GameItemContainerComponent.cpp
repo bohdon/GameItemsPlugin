@@ -63,14 +63,14 @@ void UGameItemContainerComponent::InitializeComponent()
 
 	if (GetOwner()->HasAuthority())
 	{
-		for (const UGameItemContainerGraph* Graph : ObjectPtrDecay(DefaultContainerGraphs))
+		if (bAutoAddDefaultContainers)
 		{
-			if (Graph)
-			{
-				AddContainerGraph(Graph);
-			}
+			AddDefaultContainerGraphs();
 		}
-		CreateDefaultItems();
+		if (bAutoAddDefaultItems)
+		{
+			CreateDefaultItems();
+		}
 	}
 #endif
 }
@@ -224,6 +224,24 @@ void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame)
 			Container->LoadSaveData(ContainerData, LoadedItems);
 		}
 	}
+}
+
+void UGameItemContainerComponent::AddDefaultContainerGraphs()
+{
+#if WITH_SERVER_CODE
+	if (!ensure(GetOwner()->HasAuthority()))
+	{
+		return;
+	}
+
+	for (const UGameItemContainerGraph* Graph : ObjectPtrDecay(DefaultContainerGraphs))
+	{
+		if (Graph)
+		{
+			AddContainerGraph(Graph);
+		}
+	}
+#endif
 }
 
 void UGameItemContainerComponent::CreateDefaultItems(bool bForce)

@@ -62,26 +62,34 @@ public:
 	 * The default set of containers and links to create.
 	 * Additional graphs can be added at runtime to easily add more groups of related containers.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItems")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GameItems")
 	TArray<TObjectPtr<const UGameItemContainerGraph>> DefaultContainerGraphs;
+
+	/** Automatically add the default container graphs during InitializeComponent. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GameItems")
+	bool bAutoAddDefaultContainers = true;
+
+	/** Automatically create the default items for each container during InitializeComponent. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GameItems")
+	bool bAutoAddDefaultItems = true;
 
 private:
 	/** DEPRECATED: Use DefaultContainerGraph instead. */
-	UPROPERTY(EditAnywhere, Meta = (TitleProperty = "{ContainerId}", DeprecatedProperty), Category = "GameItems")
+	UPROPERTY(EditDefaultsOnly, Meta = (TitleProperty = "{ContainerId}", DeprecatedProperty), Category = "GameItems")
 	TArray<FGameItemContainerSpec> StartupContainers;
 
 	/** DEPRECATED: Use DefaultContainerGraph instead. */
-	UPROPERTY(EditAnywhere, Meta = (TitleProperty = "{LinkedContainerId} {ContainerLinkClass}", DeprecatedProperty), Category = "GameItems")
+	UPROPERTY(EditDefaultsOnly, Meta = (TitleProperty = "{LinkedContainerId} {ContainerLinkClass}", DeprecatedProperty), Category = "GameItems")
 	TArray<FGameItemContainerLinkSpec> ContainerLinks;
 
 public:
 
 	/** Whether this container collection should be saved. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveGame")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "SaveGame")
 	bool bEnableSaveGame = false;
 
 	/** The id of this container collection for save games. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (EditCondition = "bEnableSaveGame"), Category = "SaveGame")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Meta = (EditCondition = "bEnableSaveGame"), Category = "SaveGame")
 	FName SaveCollectionId;
 
 	/** Should this game item collection be saved to player save data? */
@@ -119,6 +127,10 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
 	void ResolveAllContainerLinks(bool bForce = false);
+
+	/** Add all default container graphs to this component. Should be called when bAutoInitializeContainers is disabled. */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	void AddDefaultContainerGraphs();
 
 	/** Create and add the default items for any newly created containers. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
