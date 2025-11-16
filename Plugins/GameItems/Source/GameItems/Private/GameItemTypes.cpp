@@ -159,6 +159,18 @@ FString FGameItemListEntry::GetDebugString() const
 }
 
 
+// FGameItemList::FChange
+// ----------------------
+
+FString FGameItemList::FChange::GetDebugString() const
+{
+	return FString::Printf(TEXT("%s: [Slot %d -> %d]: %s"),
+	                       bIsRemoved ? TEXT("Removed") : TEXT("Added/Changed"),
+	                       LastKnownSlot, Slot,
+	                       Item ? *Item->GetDebugString() : TEXT("(invalid)"));
+}
+
+
 // FGameItemList
 // -------------
 
@@ -168,7 +180,7 @@ void FGameItemList::PreReplicatedRemove(const TArrayView<int32>& RemovedIndices,
 	// (even if replaced by another item, since that will be a new entry)
 	for (const int32 Idx : RemovedIndices)
 	{
-		OnPreReplicatedRemoveEvent.Broadcast(Entries[Idx]);
+		PendingChanges.Emplace(Entries[Idx], true);
 		Entries[Idx].LastKnownSlot = Entries[Idx].Slot;
 	}
 }
@@ -177,19 +189,28 @@ void FGameItemList::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int
 {
 	for (const int32 Idx : AddedIndices)
 	{
-		// TODO: Entry.Item is always null here (before UpdateUnmappedObjects is called), but should be valid 
-		OnPostReplicatedAddEvent.Broadcast(Entries[Idx]);
+		// Entry.Item is often null here (before UpdateUnmappedObjects is called),
+		// let the caller ignore it if so
+		PendingChanges.Emplace(Entries[Idx], false);
 		Entries[Idx].LastKnownSlot = Entries[Idx].Slot;
 	}
 }
 
 void FGameItemList::PostReplicatedChange(const TArrayView<int32>& ChangedIndices, int32 FinalSize)
 {
-	// TODO: currently handles when Entry.Item goes from null -> valid, which should ideally happen before PostReplicatedAdd
 	for (const int32 Idx : ChangedIndices)
 	{
-		OnPostReplicatedChangeEvent.Broadcast(Entries[Idx]);
+		PendingChanges.Emplace(Entries[Idx], false);
 		Entries[Idx].LastKnownSlot = Entries[Idx].Slot;
+	}
+}
+
+void FGameItemList::PostReplicatedReceive(const FPostReplicatedReceiveParameters& Parameters)
+{
+	if (!PendingChanges.IsEmpty())
+	{
+		OnPostReplicateChangesEvent.Broadcast(PendingChanges);
+		PendingChanges.Empty();
 	}
 }
 

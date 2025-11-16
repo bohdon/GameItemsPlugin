@@ -64,9 +64,7 @@ UGameItemContainer::UGameItemContainer(const FObjectInitializer& ObjectInitializ
 {
 	if (!HasAnyFlags(RF_ClassDefaultObject))
 	{
-		ItemList.OnPreReplicatedRemoveEvent.AddUObject(this, &UGameItemContainer::OnPreReplicatedRemove);
-		ItemList.OnPostReplicatedAddEvent.AddUObject(this, &UGameItemContainer::OnPostReplicatedAdd);
-		ItemList.OnPostReplicatedChangeEvent.AddUObject(this, &UGameItemContainer::OnPostReplicatedChange);
+		ItemList.OnPostReplicateChangesEvent.AddUObject(this, &UGameItemContainer::OnPostReplicatedChanges);
 	}
 }
 
@@ -1369,53 +1367,45 @@ void UGameItemContainer::OnItemRemoved(UGameItem* Item, int32 Slot)
 	Item->OnUnslottedEvent.Broadcast(this, Slot);
 }
 
-void UGameItemContainer::OnPreReplicatedRemove(FGameItemListEntry& Entry)
+void UGameItemContainer::OnPostReplicatedChanges(const TArray<FGameItemList::FChange>& Changes)
 {
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] %s"),
-	       *GetNetDebugString(), *GetReadableName(), __func__, *Entry.GetDebugString());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] Received %d changes..."),
+		   *GetNetDebugString(), *GetReadableName(), __func__, Changes.Num());
 
-	if (UGameItem* RemovedItem = Entry.Item)
+	FScopedSlotChanges SlotChangeScope(this);
+
+	for (int32 Idx = 0; Idx < Changes.Num(); ++Idx)
 	{
-		// should match update events from RemoveItemAt
-		FScopedSlotChanges SlotChangeScope(this);
-		const bool bPreserveIndexes = GetContainerDefCDO()->bLimitSlots;
-		OnItemRemoved(RemovedItem, Entry.Slot);
-		OnSlotRangeChanged(Entry.Slot, bPreserveIndexes ? Entry.Slot : GetNumSlots() - 1);
-	}
-}
+		const FGameItemList::FChange& Change = Changes[Idx];
 
-void UGameItemContainer::OnPostReplicatedAdd(FGameItemListEntry& Entry)
-{
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] %s"),
-	       *GetNetDebugString(), *GetReadableName(), __func__, *Entry.GetDebugString());
+		UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs]   %d: %s"),
+		       *GetNetDebugString(), *GetReadableName(), __func__, Idx, *Change.GetDebugString());
 
-	if (UGameItem* NewItem = Entry.Item)
-	{
-		// TODO: is there a way to batch these for one replication update of the array?
-		FScopedSlotChanges SlotChangeScope(this);
-		OnItemAdded(NewItem, Entry.Slot);
-		OnSlotChanged(Entry.Slot);
-	}
-}
-
-void UGameItemContainer::OnPostReplicatedChange(FGameItemListEntry& Entry)
-{
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] %s"),
-	       *GetNetDebugString(), *GetReadableName(), __func__, *Entry.GetDebugString());
-
-	if (UGameItem* NewItem = Entry.Item)
-	{
-		// if the entry went from null -> valid, call added events
-		if (!NewItem->Containers.Contains(this))
+		if (!Change.Item)
 		{
-			FScopedSlotChanges SlotChangeScope(this);
-			OnItemAdded(NewItem, Entry.Slot);
+			// ignore updates before item has replicated
+			continue;
 		}
 
-		OnSlotChanged(Entry.Slot);
-		if (Entry.LastKnownSlot != Entry.Slot && Entry.LastKnownSlot != INDEX_NONE)
+		if (Change.bIsRemoved)
 		{
-			OnSlotChanged(Entry.LastKnownSlot);
+			// should match RemoveItemAt
+			const bool bShouldCollapse = !GetContainerDefCDO()->bLimitSlots;
+			OnItemRemoved(Change.Item, Change.Slot);
+			OnSlotRangeChanged(Change.Slot, bShouldCollapse ? GetNumSlots() - 1 : Change.Slot);
+		}
+		else
+		{
+			if (!Change.Item->Containers.Contains(this))
+			{
+				OnItemAdded(Change.Item, Change.Slot);
+			}
+
+			OnSlotChanged(Change.Slot);
+			if (Change.LastKnownSlot != Change.Slot && Change.LastKnownSlot != INDEX_NONE)
+			{
+				OnSlotChanged(Change.LastKnownSlot);
+			}
 		}
 	}
 }
@@ -1485,10 +1475,13 @@ void UGameItemContainer::BroadcastSlotChanges()
 	};
 
 	// aggregate into adjacent ranges
+	TArray<int32> SlotsArray = PendingChangedSlots.Array();
+	PendingChangedSlots.Reset();
+
 	FSlotRange CurrentRange;
-	for (int32 Idx = 0; Idx < ChangedSlots.Num(); ++Idx)
+	for (int32 Idx = 0; Idx < SlotsArray.Num(); ++Idx)
 	{
-		const int32& Slot = ChangedSlots[Idx];
+		int32 Slot = SlotsArray[Idx];
 		if (!CurrentRange.IsValid())
 		{
 			CurrentRange = Slot;
@@ -1505,12 +1498,11 @@ void UGameItemContainer::BroadcastSlotChanges()
 			CurrentRange = Slot;
 		}
 
-		if (Idx == ChangedSlots.Num() - 1)
+		if (Idx == SlotsArray.Num() - 1)
 		{
 			BroadcastRange(CurrentRange);
 		}
 	}
-	ChangedSlots.Empty();
 
 	if (NumSlotsPreChange != INDEX_NONE)
 	{
@@ -1556,14 +1548,14 @@ void UGameItemContainer::OnRep_Rules(const TArray<UGameItemContainerRule*>& Prev
 
 void UGameItemContainer::OnSlotChanged(int32 Slot)
 {
-	ChangedSlots.Add(Slot);
+	PendingChangedSlots.Add(Slot);
 }
 
 void UGameItemContainer::OnSlotsChanged(const TArray<int32>& Slots)
 {
 	for (const int32& Slot : Slots)
 	{
-		ChangedSlots.Add(Slot);
+		PendingChangedSlots.Add(Slot);
 	}
 }
 
@@ -1571,7 +1563,7 @@ void UGameItemContainer::OnSlotRangeChanged(int32 StartSlot, int32 EndSlot)
 {
 	for (int32 Slot = StartSlot; Slot <= EndSlot; ++Slot)
 	{
-		ChangedSlots.Add(Slot);
+		PendingChangedSlots.Add(Slot);
 	}
 }
 

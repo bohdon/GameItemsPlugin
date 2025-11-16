@@ -448,6 +448,27 @@ public:
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
 	void ServerSetItemAt(UGameItem* Item, int32 Slot);
 
+public:
+	/** Groups multiple slot changes during the scope, and broadcasts them all when completed. */
+	struct FScopedSlotChanges
+	{
+		FScopedSlotChanges(UGameItemContainer* InContainer)
+			: Container(InContainer)
+		{
+			check(Container);
+			Container->BeginSlotChanges();
+		}
+
+		~FScopedSlotChanges()
+		{
+			if (Container)
+			{
+				Container->EndSlotChanges();
+			}
+		}
+
+		UGameItemContainer* Container;
+	};
 
 protected:
 	/** The settings for this container. */
@@ -472,27 +493,6 @@ protected:
 	/** Have the default items already been added to this container? */
 	bool bHasDefaultItems = false;
 
-	/** Used to track slot changes and broadcast after several operations are completed. */
-	struct FScopedSlotChanges
-	{
-		FScopedSlotChanges(UGameItemContainer* InContainer)
-			: Container(InContainer)
-		{
-			check(Container);
-			Container->BeginSlotChanges();
-		}
-
-		~FScopedSlotChanges()
-		{
-			if (Container)
-			{
-				Container->EndSlotChanges();
-			}
-		}
-
-		UGameItemContainer* Container;
-	};
-
 	/** Number of open change operations. */
 	int32 ActiveChangeOperations = 0;
 
@@ -500,7 +500,7 @@ protected:
 	int32 NumSlotsPreChange = INDEX_NONE;
 
 	/** Set of slots that were changed during change operations. */
-	TArray<int32> ChangedSlots;
+	TSet<int32> PendingChangedSlots;
 
 	/**
 	 * Return a plan representing how an item will be added to this container,
@@ -516,9 +516,7 @@ protected:
 	virtual void OnRuleRemoved(UGameItemContainerRule* Rule);
 
 	/** Called when the replicated item list has changed. */
-	virtual void OnPreReplicatedRemove(FGameItemListEntry& Entry);
-	virtual void OnPostReplicatedAdd(FGameItemListEntry& Entry);
-	virtual void OnPostReplicatedChange(FGameItemListEntry& Entry);
+	virtual void OnPostReplicatedChanges(const TArray<FGameItemList::FChange>& Changes);
 
 	/** Start a slot change operation, gathering slot changes to broadcast later. */
 	void BeginSlotChanges();

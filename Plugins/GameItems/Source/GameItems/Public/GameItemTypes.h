@@ -185,7 +185,7 @@ struct TStructOpsTypeTraits<FGameItemTagStackContainer> : public TStructOpsTypeT
 /**
  * A single item or item stack in a list of items.
  */
-USTRUCT(BlueprintType)
+USTRUCT()
 struct GAMEITEMS_API FGameItemListEntry : public FFastArraySerializerItem
 {
 	GENERATED_BODY()
@@ -223,7 +223,7 @@ struct GAMEITEMS_API FGameItemListEntry : public FFastArraySerializerItem
 /**
  * List of game items for use in a container.
  */
-USTRUCT(BlueprintType)
+USTRUCT()
 struct GAMEITEMS_API FGameItemList : public FFastArraySerializer
 {
 	GENERATED_BODY()
@@ -236,6 +236,7 @@ struct GAMEITEMS_API FGameItemList : public FFastArraySerializer
 	void PreReplicatedRemove(const TArrayView<int32>& RemovedIndices, int32 FinalSize);
 	void PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize);
 	void PostReplicatedChange(const TArrayView<int32>& ChangedIndices, int32 FinalSize);
+	void PostReplicatedReceive(const FPostReplicatedReceiveParameters& Parameters);
 
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
 	{
@@ -274,28 +275,44 @@ struct GAMEITEMS_API FGameItemList : public FFastArraySerializer
 	/** Return all item entries. Remember that index and order of this array is unstable. */
 	FORCEINLINE const TArray<FGameItemListEntry>& GetEntries() const { return Entries; }
 
+public:
+	struct GAMEITEMS_API FChange
+	{
+		FChange()
+		{
+		}
+
+		FChange(const FGameItemListEntry& InEntry, bool bInIsRemoved)
+			: Item(InEntry.Item)
+			, Slot(InEntry.Slot)
+			, LastKnownSlot(InEntry.LastKnownSlot)
+			, bIsRemoved(bInIsRemoved)
+		{
+		}
+
+		FString GetDebugString() const;
+
+		/** A copy of the entry that was changed. */
+		UGameItem* Item = nullptr;
+
+		int32 Slot = INDEX_NONE;
+
+		int32 LastKnownSlot = INDEX_NONE;
+
+		bool bIsRemoved = false;
+	};
+
 protected:
 	/** Replicated list of items and their stack counts. */
 	UPROPERTY()
 	TArray<FGameItemListEntry> Entries;
 
+	TArray<FChange> PendingChanges;
+
 public:
-	DECLARE_MULTICAST_DELEGATE_OneParam(FGameItemListReplicateDelegate, FGameItemListEntry& /*Entry*/);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FPostReplicateChangesDelegate, const TArray<FChange>& /*Changes*/);
 
-	FGameItemListReplicateDelegate OnPreReplicatedRemoveEvent;
-	FGameItemListReplicateDelegate OnPostReplicatedAddEvent;
-	FGameItemListReplicateDelegate OnPostReplicatedChangeEvent;
-
-	int32 MyValA = 4;
-
-	UPROPERTY()
-	int32 MyValB = 5;
-
-	UPROPERTY(NotReplicated)
-	int32 MyValC = 6;
-
-	UPROPERTY(NotReplicated)
-	TObjectPtr<class UActorComponent> OwningComponent;
+	FPostReplicateChangesDelegate OnPostReplicateChangesEvent;
 };
 
 

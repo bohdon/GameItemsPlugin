@@ -265,6 +265,8 @@ void UGameItemContainerLink_Selection::UpdateContainerForSelection()
 	UGameItem* SelectedItem = LinkedContainer->GetItemAt(SelectedSlot);
 	if (Container->GetItemAt(TargetSlot) != SelectedItem)
 	{
+		UGameItemContainer::FScopedSlotChanges ScopedSlotChanges(Container);
+
 		Container->RemoveItemAt(TargetSlot);
 
 		if (SelectedItem)
