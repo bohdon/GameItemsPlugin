@@ -36,9 +36,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bKeepAttributeSets = false;
 
-	virtual void OnEquipped() override;
-	virtual void OnUnequipped() override;
-
 	/** Return the level of the item that instigated this equipment. */
 	virtual int32 GetItemLevel() const;
 
@@ -46,6 +43,9 @@ protected:
 	/** Ability and effect handles that were granted by this equipment. */
 	UPROPERTY()
 	FExtendedAbilitySetHandles AbilitySetHandles;
+
+	virtual void OnEquipped() override;
+	virtual void OnUnequipped() override;
 
 	virtual void GiveAbilitySets();
 	virtual void RemoveAbilitySets();

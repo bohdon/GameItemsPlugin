@@ -76,16 +76,23 @@ void UGameItemEquipmentComponent::RemoveItemContainer(UGameItemContainer* ItemCo
 #endif
 }
 
-void UGameItemEquipmentComponent::AddStartupItemContainers()
+void UGameItemEquipmentComponent::FindAllItemContainers(FGameplayTagQuery Query, bool bIgnoreChildContainers)
 {
 	const UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
-	for (const FGameplayTag ContainerId : StartupContainerIds)
+	const TArray<UGameItemContainer*> AllContainers = ItemSubsystem->GetAllContainersForActor(GetOwner());
+	for (UGameItemContainer* Container : AllContainers)
 	{
-		if (UGameItemContainer* Container = ItemSubsystem->GetContainerForActor(GetOwner(), ContainerId))
+		if (bIgnoreChildContainers && Container->IsChild())
+		{
+			continue;
+		}
+		if (Query.IsEmpty() || Query.Matches(FGameplayTagContainer(Container->ContainerId)))
 		{
 			AddItemContainer(Container);
 		}
 	}
+
+	// TODO: add support for auto-adding new containers that match the query
 }
 
 const UGameItemFragment_Equipment* UGameItemEquipmentComponent::GetItemEquipmentFragment(UGameItem* Item) const
@@ -112,9 +119,9 @@ void UGameItemEquipmentComponent::BeginPlay()
 #if WITH_SERVER_CODE
 	if (GetOwner()->HasAuthority())
 	{
-		if (bAutoAddStartupContainers)
+		if (bAutoFindContainers)
 		{
-			AddStartupItemContainers();
+			FindAllItemContainers(DefaultContainerQuery, true);
 		}
 	}
 #endif

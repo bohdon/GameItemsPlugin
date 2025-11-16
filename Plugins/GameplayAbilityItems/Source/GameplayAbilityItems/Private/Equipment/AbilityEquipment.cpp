@@ -7,7 +7,6 @@
 #include "GameItem.h"
 #include "GameItemsModule.h"
 #include "Equipment/AbilityEquipmentDef.h"
-#include "Equipment/GameEquipmentComponent.h"
 #include "Equipment/GameEquipmentDef.h"
 
 
@@ -19,16 +18,16 @@ UAbilityEquipment::UAbilityEquipment(const FObjectInitializer& ObjectInitializer
 
 void UAbilityEquipment::OnEquipped()
 {
-	GiveAbilitySets();
-
 	Super::OnEquipped();
+
+	GiveAbilitySets();
 }
 
 void UAbilityEquipment::OnUnequipped()
 {
-	RemoveAbilitySets();
-
 	Super::OnUnequipped();
+
+	RemoveAbilitySets();
 }
 
 int32 UAbilityEquipment::GetItemLevel() const

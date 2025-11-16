@@ -444,6 +444,8 @@ void UGameItemContainerComponent::OnContainerAdded(UGameItemContainer* Container
 	Container->OnItemRemovedEvent.AddUObject(this, &ThisClass::OnItemRemoved);
 	Container->OnRuleAddedEvent.AddUObject(this, &ThisClass::OnRuleAdded);
 	Container->OnRuleRemovedEvent.AddUObject(this, &ThisClass::OnRuleRemoved);
+
+	OnContainerAddedEvent.Broadcast(Container);
 }
 
 void UGameItemContainerComponent::OnContainerRemoved(UGameItemContainer* Container)
@@ -467,6 +469,8 @@ void UGameItemContainerComponent::OnContainerRemoved(UGameItemContainer* Contain
 	Container->OnItemRemovedEvent.RemoveAll(this);
 	Container->OnRuleAddedEvent.RemoveAll(this);
 	Container->OnRuleRemovedEvent.RemoveAll(this);
+
+	OnContainerRemovedEvent.Broadcast(Container);
 }
 
 void UGameItemContainerComponent::AddMatchingLinkRulesToContainer(UGameItemContainer* Container, const TArray<FActiveGameItemContainerLink>& InLinks)
@@ -505,7 +509,7 @@ void UGameItemContainerComponent::AddLinkRuleToContainer(UGameItemContainer* Con
 void UGameItemContainerComponent::OnRep_Containers(const TArray<UGameItemContainer*>& PreviousContainers)
 {
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] Containers: %d"),
-		   *GetNetDebugString(), *GetReadableName(), __func__, Containers.Num());
+	       *GetNetDebugString(), *GetReadableName(), __func__, Containers.Num());
 
 	// find containers that got removed
 	for (UGameItemContainer* PreviousContainer : PreviousContainers)

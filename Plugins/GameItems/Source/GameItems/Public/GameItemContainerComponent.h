@@ -157,6 +157,15 @@ public:
 	virtual void InitializeComponent() override;
 	virtual void ReadyForReplication() override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
+public:
+	DECLARE_MULTICAST_DELEGATE_OneParam(FContainerAddOrRemoveDelegate, UGameItemContainer* /*Container*/);
+
+	/** Called when a new item container is added. */
+	FContainerAddOrRemoveDelegate OnContainerAddedEvent;
+
+	/** Called when an item container is removed. */
+	FContainerAddOrRemoveDelegate OnContainerRemovedEvent;
 
 protected:
 	/** The currently applied container graphs. */

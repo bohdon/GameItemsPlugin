@@ -43,16 +43,17 @@ class GAMEITEMS_API UGameItemEquipmentComponent : public UGameEquipmentComponent
 public:
 	UGameItemEquipmentComponent(const FObjectInitializer& ObjectInitializer);
 
-	/** Container Ids to find and add as sources during initialization. */
+	/** Query used to filter game item containers when using bAutoFindContainers is true. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (GameplayTagFilter = "GameItemContainerIdTagsCategory"))
-	FGameplayTagContainer StartupContainerIds;
+	FGameplayTagQuery DefaultContainerQuery;
 
 	/**
-	 * Automatically find and add startup containers on BeginPlay.
-	 * Disable this if the item containers won't be ready until later, and call AddStartupItemContainers when they are.
+	 * Automatically call FindAllItemContainers on BeginPlay, using the default container query,
+	 * and ignoring child containers. It's common to disable this and add containers once the character
+	 * is initialized and ready for equipment.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (GameplayTagFilter = "GameItemContainerIdTagsCategory"))
-	bool bAutoAddStartupContainers = true;
+	bool bAutoFindContainers = true;
 
 	/** Return all equipment that was granted by an item. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Equipment")
@@ -66,9 +67,14 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameEquipment")
 	void RemoveItemContainer(UGameItemContainer* ItemContainer);
 
-	/** Find and add all startup item containers by id. */
+	/**
+	 * Find and add all item containers matching a query. If the query is empty, all containers will be included.
+	 * If bIgnoreChildContainers is true, only parent containers (that store their own items) will be added.
+	 * Item slotted events allow monitoring changes that are relevant to equipment conditions, so it's often
+	 * desired to monitor only parent containers in order to detect the presence of new items.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameEquipment")
-	void AddStartupItemContainers();
+	void FindAllItemContainers(FGameplayTagQuery Query, bool bIgnoreChildContainers = true);
 
 	/** Return the equipment fragment for an item, or null if it has one or the fragment is invalid. */
 	virtual const UGameItemFragment_Equipment* GetItemEquipmentFragment(UGameItem* Item) const;

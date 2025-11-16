@@ -65,20 +65,14 @@ public:
 	UFUNCTION(BlueprintPure, Meta = (DeterminesOutputType = "ActorClass"), Category = "Equipment")
 	AActor* GetSpawnedActorOfClass(TSubclassOf<AActor> ActorClass) const;
 
-	/** Called when the equipment has been applied to an actor. */
-	virtual void OnEquipped();
+	/** Activate this equipment (if not already). */
+	virtual void Equip();
 
-	/** Called when the equipment is removed from an actor. */
-	virtual void OnUnequipped();
+	/** Deactivate this equipment. */
+	virtual void Unequip();
 
 	/** Return the component that should be used as the attach parent for spawned actors. */
 	virtual USceneComponent* GetTargetAttachComponent() const;
-
-	/** Spawn all actors for this equipment. */
-	virtual void SpawnEquipmentActors();
-
-	/** Destroy all actors that this equipment has spawned. */
-	virtual void DestroyEquipmentActors();
 
 protected:
 	/** The definition for this equipment. */
@@ -103,6 +97,15 @@ protected:
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<AActor>> LocalSpawnedActors;
 
+	/** Is this equipment currently active? True after calling Equip. */
+	bool bIsEquipped = false;
+
+	/** Called when the equipment has been applied to an actor. */
+	virtual void OnEquipped();
+
+	/** Called when the equipment is removed from an actor. */
+	virtual void OnUnequipped();
+
 	/** Called when the equipment is added to an actor. */
 	UFUNCTION(BlueprintImplementableEvent, Meta = (DisplayName = "OnEquipped"), Category = "Equipment")
 	void OnEquipped_BP();
@@ -110,4 +113,10 @@ protected:
 	/** Called when the equipment has been removed from an actor. */
 	UFUNCTION(BlueprintImplementableEvent, Meta = (DisplayName = "OnUnequipped"), Category = "Equipment")
 	void OnUnequipped_BP();
+
+	/** Spawn all actors for this equipment. */
+	virtual void SpawnEquipmentActors();
+
+	/** Destroy all actors that this equipment has spawned. */
+	virtual void DestroyEquipmentActors();
 };

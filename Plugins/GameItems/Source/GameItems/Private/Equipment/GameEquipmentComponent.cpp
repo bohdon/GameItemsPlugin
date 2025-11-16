@@ -16,6 +16,7 @@ UGameEquipmentComponent::UGameEquipmentComponent(const FObjectInitializer& Objec
 	: Super(ObjectInitializer)
 {
 	bWantsInitializeComponent = true;
+	bAutoActivate = true;
 	SetIsReplicatedByDefault(true);
 }
 
@@ -70,6 +71,47 @@ void UGameEquipmentComponent::ReadyForReplication()
 	}
 }
 
+void UGameEquipmentComponent::Activate(bool bReset)
+{
+	Super::Activate(bReset);
+	
+	if (IsActive())
+	{
+		for (UGameEquipment* Equipment : GetAllEquipment())
+		{
+			Equipment->Equip();
+		}
+	}
+}
+
+void UGameEquipmentComponent::Deactivate()
+{
+	Super::Deactivate();
+
+	// don't destroy equipment, just deactivate it
+	for (UGameEquipment* Equipment : GetAllEquipment())
+	{
+		Equipment->Unequip();
+	}
+}
+
+void UGameEquipmentComponent::OnRep_IsActive()
+{
+	Super::OnRep_IsActive();
+
+	for (UGameEquipment* Equipment : GetAllEquipment())
+	{
+		if (IsActive())
+		{
+			Equipment->Equip();
+		}
+		else
+		{
+			Equipment->Unequip();
+		}
+	}
+}
+
 UGameEquipment* UGameEquipmentComponent::ApplyEquipment(TSubclassOf<UGameEquipmentDef> EquipmentDef, UObject* Instigator)
 {
 #if WITH_SERVER_CODE
@@ -94,7 +136,11 @@ UGameEquipment* UGameEquipmentComponent::ApplyEquipment(TSubclassOf<UGameEquipme
 	UGameEquipment* NewEquipment = NewObject<UGameEquipment>(this, EquipmentDefCDO->EquipmentClass);
 	NewEquipment->SetEquipmentDef(EquipmentDef);
 	NewEquipment->SetInstigator(Instigator);
-	NewEquipment->OnEquipped();
+
+	if (IsActive())
+	{
+		NewEquipment->Equip();
+	}
 
 	EquipmentList.AddEntry(NewEquipment);
 
@@ -130,8 +176,7 @@ void UGameEquipmentComponent::RemoveEquipment(UGameEquipment* Equipment)
 		RemoveReplicatedSubObject(Equipment);
 	}
 
-	Equipment->OnUnequipped();
-	Equipment->DestroyEquipmentActors();
+	Equipment->Unequip();
 
 	EquipmentList.RemoveEntry(Equipment);
 
@@ -218,7 +263,10 @@ void UGameEquipmentComponent::OnPreReplicatedRemove(FGameEquipmentListEntry& Ent
 
 	if (Entry.Equipment)
 	{
-		Entry.Equipment->OnUnequipped();
+		if (IsActive())
+		{
+			Entry.Equipment->Unequip();
+		}
 
 		if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
 		{
@@ -234,7 +282,10 @@ void UGameEquipmentComponent::OnPostReplicatedAdd(FGameEquipmentListEntry& Entry
 
 	if (Entry.Equipment)
 	{
-		Entry.Equipment->OnEquipped();
+		if (IsActive())
+		{
+			Entry.Equipment->Equip();
+		}
 
 		if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
 		{
@@ -251,7 +302,10 @@ void UGameEquipmentComponent::OnPostReplicatedChange(FGameEquipmentListEntry& En
 	// this should only be called if the entry went from null -> valid, so treat it like OnPostReplicatedAdd
 	if (Entry.Equipment)
 	{
-		Entry.Equipment->OnEquipped();
+		if (IsActive())
+		{
+			Entry.Equipment->Equip();
+		}
 
 		if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
 		{

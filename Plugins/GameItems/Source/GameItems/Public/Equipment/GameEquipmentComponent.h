@@ -25,6 +25,9 @@ public:
 	virtual void InitializeComponent() override;
 	virtual void UninitializeComponent() override;
 	virtual void ReadyForReplication() override;
+	virtual void Activate(bool bReset = false) override;
+	virtual void Deactivate() override;
+	virtual void OnRep_IsActive() override;
 
 	/** Apply equipment to the owning actor. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
@@ -60,12 +63,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Equipment")
 	TArray<UGameEquipment*> GetAllEquipment() const;
 
+	FString GetNetDebugString() const;
+
 protected:
 	void OnPreReplicatedRemove(FGameEquipmentListEntry& Entry);
 	void OnPostReplicatedAdd(FGameEquipmentListEntry& Entry);
 	void OnPostReplicatedChange(FGameEquipmentListEntry& Entry);
-
-	FString GetNetDebugString() const;
 
 protected:
 	UPROPERTY(Transient, Replicated)

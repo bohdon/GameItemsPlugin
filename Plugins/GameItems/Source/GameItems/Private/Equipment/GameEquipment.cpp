@@ -104,6 +104,32 @@ AActor* UGameEquipment::GetSpawnedActorOfClass(TSubclassOf<AActor> ActorClass) c
 	return nullptr;
 }
 
+void UGameEquipment::Equip()
+{
+	if (!bIsEquipped)
+	{
+		bIsEquipped = true;
+
+		UE_LOG(LogGameItems, Verbose, TEXT("%s[%s] Equip"), *GetOwner()->GetNetDebugString(), *GetReadableName());
+
+		OnEquipped();
+		OnEquipped_BP();
+	}
+}
+
+void UGameEquipment::Unequip()
+{
+	if (bIsEquipped)
+	{
+		bIsEquipped = false;
+
+		UE_LOG(LogGameItems, Verbose, TEXT("%s[%s] Unequip"), *GetOwner()->GetNetDebugString(), *GetReadableName());
+
+		OnUnequipped();
+		OnUnequipped_BP();
+	}
+}
+
 void UGameEquipment::SpawnEquipmentActors()
 {
 	const UGameEquipmentDef* EquipmentCDO = GetEquipmentDefCDO();
@@ -211,15 +237,11 @@ void UGameEquipment::DestroyEquipmentActors()
 void UGameEquipment::OnEquipped()
 {
 	SpawnEquipmentActors();
-
-	OnEquipped_BP();
 }
 
 void UGameEquipment::OnUnequipped()
 {
 	DestroyEquipmentActors();
-
-	OnUnequipped_BP();
 }
 
 USceneComponent* UGameEquipment::GetTargetAttachComponent() const
