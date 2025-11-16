@@ -61,15 +61,15 @@ bool UVM_GameItemSlot::IsValidSlot() const
 	return Container && Container->IsValidSlot(Slot);
 }
 
-TArray<UGameItem*> UVM_GameItemSlot::MoveItem(UGameItemContainer* ToContainer, bool bAllowPartial)
+void UVM_GameItemSlot::MoveItem(UGameItemContainer* ToContainer, bool bAllowPartial)
 {
 	if (!Container || !Item)
 	{
-		return TArray<UGameItem*>();
+		return;
 	}
 
 	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
-	return ItemSubsystem->MoveItem(Container, ToContainer, Item, -1, bAllowPartial);
+	ItemSubsystem->MoveItem(Container, ToContainer, Item, -1, bAllowPartial);
 }
 
 void UVM_GameItemSlot::UpdateItem()

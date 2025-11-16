@@ -48,7 +48,7 @@ int32 UGameItemAutoSlotRule_Basic::GetAutoSlotPriorityForItem_Implementation(UGa
 	return CanAutoSlot(Item, ContextTags) ? Priority : 0;
 }
 
-bool UGameItemAutoSlotRule_Basic::TryAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags, TArray<UGameItem*>& OutItems) const
+void UGameItemAutoSlotRule_Basic::TryAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
 	UGameItemContainer* Container = GetContainer();
 	check(Container);
@@ -58,12 +58,11 @@ bool UGameItemAutoSlotRule_Basic::TryAutoSlot_Implementation(UGameItem* Item, co
 		{
 			// remove the already-slotted item
 			Container->RemoveItem(Item);
-			OutItems.Reset();
-			return true;
+			return;
 		}
 	}
 
-	return Super::TryAutoSlot_Implementation(Item, ContextTags, OutItems);
+	Super::TryAutoSlot_Implementation(Item, ContextTags);
 }
 
 int32 UGameItemAutoSlotRule_Basic::GetBestSlotForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const

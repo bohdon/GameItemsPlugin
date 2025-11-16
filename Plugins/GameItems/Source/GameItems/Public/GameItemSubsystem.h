@@ -42,7 +42,7 @@ public:
 	 * @return The newly created items, which may have been split depending on the container rules.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
-	TArray<UGameItem*> CreateItemInContainer(UGameItemContainer* Container, TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
+	void CreateItemInContainer(UGameItemContainer* Container, TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
 
 	/** Duplicate and return a new game item. If count is > 0, set a new count for the item, otherwise use the original item count. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
@@ -61,8 +61,7 @@ public:
 	 * @return The item or items that were moved into the target container.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
-	TArray<UGameItem*> MoveItem(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer,
-	                            UGameItem* Item, int32 TargetSlot = -1, bool bAllowPartial = true);
+	void MoveItem(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, UGameItem* Item, int32 TargetSlot = -1, bool bAllowPartial = true);
 
 	/**
 	 * Move multiple items from one container to another. If bAllowPartial is true, allow moving only some
@@ -70,15 +69,15 @@ public:
 	 * @return The item or items that were moved into the target container.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
-	TArray<UGameItem*> MoveItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, TArray<UGameItem*> Items, bool bAllowPartial = true);
+	void MoveItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, TArray<UGameItem*> Items, bool bAllowPartial = true);
 
 	/**
 	 * Move all items from one container to another. If bAllowPartial is true, allow moving only some
 	 * of each item if the target container can't receive the full amount.
 	 * @return The item or items that were moved into the target container.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
-	TArray<UGameItem*> MoveAllItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, bool bAllowPartial = true);
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
+	void MoveAllItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, bool bAllowPartial = true);
 
 	/**
 	 * Select items from a drop table.

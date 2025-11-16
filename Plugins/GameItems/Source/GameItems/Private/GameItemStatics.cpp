@@ -53,7 +53,7 @@ UGameItemContainer* UGameItemStatics::GetItemContainerById(const TArray<UGameIte
 {
 	for (UGameItemContainer* Container : Containers)
 	{
-		if (Container->ContainerId == ContainerId)
+		if (Container->GetContainerId() == ContainerId)
 		{
 			return Container;
 		}

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameItem.h"
 #include "GameItemTypes.h"
+#include "Engine/EngineTypes.h"
 #include "UObject/Object.h"
 #include "GameItemContainer.generated.h"
 
@@ -70,9 +71,15 @@ class GAMEITEMS_API UGameItemContainer : public UObject
 public:
 	UGameItemContainer(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+protected:
 	/** The unique tag identifying this container amongst others. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated, Category = "GameItemContainer")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "GameItemContainer")
 	FGameplayTag ContainerId;
+
+public:
+	void SetContainerId(FGameplayTag NewContainerId);
+
+	FORCEINLINE FGameplayTag GetContainerId() const { return ContainerId; }
 
 	/** The user-facing display name of this container. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated, Category = "GameItemContainer")
@@ -107,53 +114,55 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Meta = (AdvancedDisplay = "2"), Category = "GameItemContainer")
 	FGameItemContainerAddPlan CheckAddItem(UGameItem* Item, int32 TargetSlot = -1, UGameItemContainer* OldContainer = nullptr) const;
 
+public:
 	/**
 	 * Add an item to this container. This does not remove the item from any existing containers.
 	 * @param Item The item to add.
 	 * @param TargetSlot The slot where the item should be added, or the first available if -1.
 	 * @return The item or items (if split into multiple stacks) that were added.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
-	TArray<UGameItem*> AddItem(UGameItem* Item, int32 TargetSlot = -1);
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
+	void AddItem(UGameItem* Item, int32 TargetSlot = -1);
 
 	/** Add multiple items to this container. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
-	TArray<UGameItem*> AddItems(TArray<UGameItem*> Items, int32 TargetSlot = -1);
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
+	void AddItems(TArray<UGameItem*> Items, int32 TargetSlot = -1);
 
 	/** Remove an item from this container. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
 	void RemoveItem(UGameItem* Item);
 
 	/** Remove multiple items from this container. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
 	void RemoveItems(TArray<UGameItem*> Items);
 
 	/** Remove an item from a specific slot of this container. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
-	UGameItem* RemoveItemAt(int32 Slot);
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
+	void RemoveItemAt(int32 Slot);
 
 	/**
 	 * Remove a quantity of an item by definition. Subtracts from each stack in order, and removes items when empty.
 	 * Returns the number of items removed.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
-	int32 RemoveItemsByDef(TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
+	void RemoveItemsByDef(TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
 
 	/** Remove all items from this container. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
 	void RemoveAllItems();
 
 	/**
 	 * Swap the location of two slots in the container.
 	 * This should be used to move an item to a new empty slot as well.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer", meta = (Keywords = "Move"))
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer", meta = (Keywords = "Move"))
 	void SwapItems(int32 SlotA, int32 SlotB);
 
 	/** Stack two items in the container. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
 	void StackItems(int32 FromSlot, int32 ToSlot, bool bAllowPartial = true);
 
+public:
 	/** Return all items in the container as a map indexed by slot. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
 	TMap<int32, UGameItem*> GetAllItems() const;
@@ -204,7 +213,7 @@ public:
 	 * Doesn't verify first if the item can be added before removing.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
-	TArray<UGameItem*> SetItemAt(UGameItem* Item, int32 Slot);
+	void SetItemAt(UGameItem* Item, int32 Slot);
 
 	/** Return true if an item exists in the container. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
@@ -362,13 +371,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	virtual bool CanAutoSlot(UGameItem* Item, FGameplayTagContainer ContextTags) const;
 
-	/**
-	 * Add an item to this container, automatically selecting the best slot for it based on rules,
-	 * and potentially replacing existing items, or cancelling if desired.
-	 */
-	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
-	virtual TArray<UGameItem*> TryAutoSlot(UGameItem* Item, FGameplayTagContainer ContextTags);
-
 	/** Return the child container with the highest auto-slot priority for an item. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
 	UGameItemContainer* FindAutoSlotChildContainerForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const;
@@ -410,7 +412,7 @@ public:
 
 	/** Called when the total number of slots has changed. */
 	FNumSlotsChangedDelegate OnNumSlotsChangedEvent;
-	
+
 	/** Called when a new rule is added. */
 	FRuleAddOrRemoveDelegate OnRuleAddedEvent;
 
@@ -418,34 +420,42 @@ public:
 	FRuleAddOrRemoveDelegate OnRuleRemovedEvent;
 
 public:
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
+	virtual EGameItemContainerNetExecutionPolicy GetNetExecutionPolicy() const;
+
+	virtual ENetRole GetLocalRole() const;
+
+	virtual bool HasAuthority() const;
+
+	virtual bool CanExecuteLocally() const;
+
+	UFUNCTION(Server, Reliable)
 	void ServerAddItem(UGameItem* Item, int32 TargetSlot = -1);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
+	UFUNCTION(Server, Reliable)
 	void ServerAddItems(const TArray<UGameItem*>& Items, int32 TargetSlot = -1);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
+	UFUNCTION(Server, Reliable)
 	void ServerRemoveItem(UGameItem* Item);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
+	UFUNCTION(Server, Reliable)
 	void ServerRemoveItems(const TArray<UGameItem*>& Items);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
+	UFUNCTION(Server, Reliable)
 	void ServerRemoveItemAt(int32 Slot);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
+	UFUNCTION(Server, Reliable)
 	void ServerRemoveItemsByDef(TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
+	UFUNCTION(Server, Reliable)
 	void ServerRemoveAllItems();
 
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
+	UFUNCTION(Server, Reliable)
 	void ServerSwapItems(int32 SlotA, int32 SlotB);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
+	UFUNCTION(Server, Reliable)
 	void ServerStackItems(int32 FromSlot, int32 ToSlot, bool bAllowPartial = true);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
+	UFUNCTION(Server, Reliable)
 	void ServerSetItemAt(UGameItem* Item, int32 Slot);
 
 public:
@@ -538,7 +548,7 @@ protected:
 
 	FString GetNetDebugString() const;
 
-private:
+protected:
 	/** The replicated item list struct. */
 	UPROPERTY(Transient, Replicated)
 	FGameItemList ItemList;

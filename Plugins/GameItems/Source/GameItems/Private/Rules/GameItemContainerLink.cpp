@@ -46,9 +46,9 @@ void UGameItemContainerLink::SetLinkedContainer(UGameItemContainer* NewContainer
 			}
 
 			// update container id if this is totally new (not just a resolve)
-			if (LinkedContainerId != NewContainer->ContainerId)
+			if (LinkedContainerId != NewContainer->GetContainerId())
 			{
-				LinkedContainerId = NewContainer->ContainerId;
+				LinkedContainerId = NewContainer->GetContainerId();
 				MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, LinkedContainerId, this);
 			}
 		}

@@ -17,6 +17,21 @@ struct FGameItemTagStackContainer;
 
 
 /**
+ * The network execution policy for a game item container.
+ * Determines how clients and server have control over updating a container.
+ */
+UENUM(BlueprintType)
+enum class EGameItemContainerNetExecutionPolicy : uint8
+{
+	/** Execute changes immediately on autonomous clients, and trigger the same changes on the server. */
+	LocalPredicted,
+
+	/** Only execute changes on the server and replicate to clients. */
+	ServerInitiated,
+};
+
+
+/**
  * Defines limitations for the quantity of an item.
  */
 USTRUCT(BlueprintType)

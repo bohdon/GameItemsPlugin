@@ -79,11 +79,11 @@ public:
 
 	/** Add all items in this set to a container. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
-	virtual TArray<UGameItem*> AddToContainer(UGameItemContainer* Container) const;
+	virtual void AddToContainer(UGameItemContainer* Container) const;
 
 	/** Add each item in the set to a container, determined by finding the default container to use for each item. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
-	virtual TArray<UGameItem*> AddToDefaultContainers(TScriptInterface<IGameItemContainerInterface> ContainerInterface) const;
+	virtual void AddToDefaultContainers(TScriptInterface<IGameItemContainerInterface> ContainerInterface) const;
 
 #if WITH_EDITOR
 

@@ -121,7 +121,7 @@ TArray<FGameplayDebuggerCategory_GameItems::FRepData::FContainerDebug> FGameplay
 	for (const UGameItemContainer* Container : Containers)
 	{
 		FRepData::FContainerDebug& ContainerData = Result.AddDefaulted_GetRef();
-		ContainerData.ContainerId = Container->ContainerId.ToString();
+		ContainerData.ContainerId = Container->GetContainerId().ToString();
 		ContainerData.NumSlots = Container->GetNumSlots();
 		const UActorComponent* OuterComp = Container->GetTypedOuter<UActorComponent>();
 		ContainerData.Owner = OuterComp ? OuterComp->GetReadableName() : GetNameSafe(Container->GetOwner());

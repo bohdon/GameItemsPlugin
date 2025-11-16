@@ -18,6 +18,7 @@
 #include "Engine/NetDriver.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
 #include "Net/UnrealNetwork.h"
@@ -65,6 +66,15 @@ UGameItemContainer::UGameItemContainer(const FObjectInitializer& ObjectInitializ
 	if (!HasAnyFlags(RF_ClassDefaultObject))
 	{
 		ItemList.OnPostReplicateChangesEvent.AddUObject(this, &UGameItemContainer::OnPostReplicatedChanges);
+	}
+}
+
+void UGameItemContainer::SetContainerId(FGameplayTag NewContainerId)
+{
+	if (ContainerId != NewContainerId)
+	{
+		ContainerId = NewContainerId;
+		MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, ContainerId, this);
 	}
 }
 
@@ -332,8 +342,17 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 	return Plan;
 }
 
-TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot)
+void UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot)
 {
+	if (!HasAuthority())
+	{
+		ServerAddItem(Item, TargetSlot);
+		if (!CanExecuteLocally())
+		{
+			return;
+		}
+	}
+
 	FScopedSlotChanges SlotChangeScope(this);
 
 	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
@@ -374,30 +393,43 @@ TArray<UGameItem*> UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot
 			Result.Add(NewItem);
 		}
 	}
-
-	return Result;
 }
 
-TArray<UGameItem*> UGameItemContainer::AddItems(TArray<UGameItem*> Items, int32 TargetSlot)
+void UGameItemContainer::AddItems(TArray<UGameItem*> Items, int32 TargetSlot)
 {
+	if (!HasAuthority())
+	{
+		ServerAddItems(Items, TargetSlot);
+		if (!CanExecuteLocally())
+		{
+			return;
+		}
+	}
+
 	if (Items.IsEmpty())
 	{
-		return TArray<UGameItem*>();
+		return;
 	}
 
 	FScopedSlotChanges SlotChangeScope(this);
 
-	TArray<UGameItem*> Result;
 	for (UGameItem* Item : Items)
 	{
-		TArray<UGameItem*> AddResult = AddItem(Item, TargetSlot);
-		Result.Append(AddResult);
+		AddItem(Item, TargetSlot);
 	}
-	return Result;
 }
 
 void UGameItemContainer::RemoveItem(UGameItem* Item)
 {
+	if (!HasAuthority())
+	{
+		ServerRemoveItem(Item);
+		if (!CanExecuteLocally())
+		{
+			return;
+		}
+	}
+
 	if (!Item)
 	{
 		return;
@@ -412,6 +444,15 @@ void UGameItemContainer::RemoveItem(UGameItem* Item)
 
 void UGameItemContainer::RemoveItems(TArray<UGameItem*> Items)
 {
+	if (!HasAuthority())
+	{
+		ServerRemoveItems(Items);
+		if (!CanExecuteLocally())
+		{
+			return;
+		}
+	}
+
 	if (Items.IsEmpty())
 	{
 		return;
@@ -424,11 +465,20 @@ void UGameItemContainer::RemoveItems(TArray<UGameItem*> Items)
 	}
 }
 
-UGameItem* UGameItemContainer::RemoveItemAt(int32 Slot)
+void UGameItemContainer::RemoveItemAt(int32 Slot)
 {
+	if (!HasAuthority())
+	{
+		ServerRemoveItemAt(Slot);
+		if (!CanExecuteLocally())
+		{
+			return;
+		}
+	}
+
 	if (!ItemList.HasItemInSlot(Slot))
 	{
-		return nullptr;
+		return;
 	}
 
 	FScopedSlotChanges SlotChangeScope(this);
@@ -441,15 +491,22 @@ UGameItem* UGameItemContainer::RemoveItemAt(int32 Slot)
 		OnItemRemoved(RemovedItem, Slot);
 		OnSlotRangeChanged(Slot, bShouldCollapse ? GetNumSlots() - 1 : Slot);
 	}
-
-	return RemovedItem;
 }
 
-int32 UGameItemContainer::RemoveItemsByDef(TSubclassOf<UGameItemDef> ItemDef, int32 Count)
+void UGameItemContainer::RemoveItemsByDef(TSubclassOf<UGameItemDef> ItemDef, int32 Count)
 {
+	if (!HasAuthority())
+	{
+		ServerRemoveItemsByDef(ItemDef, Count);
+		if (!CanExecuteLocally())
+		{
+			return;
+		}
+	}
+
 	if (!ItemDef)
 	{
-		return 0;
+		return;
 	}
 	Count = FMath::Max(Count, 0);
 
@@ -474,11 +531,19 @@ int32 UGameItemContainer::RemoveItemsByDef(TSubclassOf<UGameItemDef> ItemDef, in
 			RemoveItem(Item);
 		}
 	}
-	return NumRemoved;
 }
 
 void UGameItemContainer::RemoveAllItems()
 {
+	if (!HasAuthority())
+	{
+		ServerRemoveAllItems();
+		if (!CanExecuteLocally())
+		{
+			return;
+		}
+	}
+
 	// gather items that will be removed, and record which slot they were in
 	int32 MaxSlot = 0;
 	TMap<int32, UGameItem*> RemovedItems;
@@ -514,6 +579,15 @@ void UGameItemContainer::RemoveAllItems()
 
 void UGameItemContainer::SwapItems(int32 SlotA, int32 SlotB)
 {
+	if (!HasAuthority())
+	{
+		ServerSwapItems(SlotA, SlotB);
+		if (!CanExecuteLocally())
+		{
+			return;
+		}
+	}
+
 	if (!IsValidSlot(SlotA) || !IsValidSlot(SlotB) || SlotA == SlotB)
 	{
 		return;
@@ -530,6 +604,15 @@ void UGameItemContainer::SwapItems(int32 SlotA, int32 SlotB)
 
 void UGameItemContainer::StackItems(int32 FromSlot, int32 ToSlot, bool bAllowPartial)
 {
+	if (!HasAuthority())
+	{
+		ServerStackItems(FromSlot, ToSlot);
+		if (!CanExecuteLocally())
+		{
+			return;
+		}
+	}
+
 	UGameItem* FromItem = GetItemAt(FromSlot);
 	UGameItem* ToItem = GetItemAt(ToSlot);
 
@@ -682,14 +765,22 @@ int32 UGameItemContainer::GetItemSlot(const UGameItem* Item) const
 	return INDEX_NONE;
 }
 
-TArray<UGameItem*> UGameItemContainer::SetItemAt(UGameItem* Item, int32 Slot)
+void UGameItemContainer::SetItemAt(UGameItem* Item, int32 Slot)
 {
+	if (!HasAuthority())
+	{
+		ServerSetItemAt(Item, Slot);
+		if (!CanExecuteLocally())
+		{
+			return;
+		}
+	}
+
 	if (GetItemAt(Slot) != Item)
 	{
 		RemoveItemAt(Slot);
-		return AddItem(Item, Slot);
+		AddItem(Item, Slot);
 	}
-	return TArray<UGameItem*>();
 }
 
 bool UGameItemContainer::Contains(const UGameItem* Item) const
@@ -1141,30 +1232,6 @@ bool UGameItemContainer::CanAutoSlot(UGameItem* Item, FGameplayTagContainer Cont
 	return false;
 }
 
-TArray<UGameItem*> UGameItemContainer::TryAutoSlot(UGameItem* Item, FGameplayTagContainer ContextTags)
-{
-	if (!Item)
-	{
-		return TArray<UGameItem*>();
-	}
-
-	for (const UGameItemContainerRule* Rule : Rules)
-	{
-		if (const UGameItemAutoSlotRule* AutoSlotRule = Cast<UGameItemAutoSlotRule>(Rule))
-		{
-			if (AutoSlotRule->CanAutoSlot(Item, ContextTags))
-			{
-				TArray<UGameItem*> OutItems;
-				if (AutoSlotRule->TryAutoSlot(Item, ContextTags, OutItems))
-				{
-					return OutItems;
-				}
-			}
-		}
-	}
-	return TArray<UGameItem*>();
-}
-
 UGameItemContainer* UGameItemContainer::FindAutoSlotChildContainerForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const
 {
 	UGameItemContainer* BestContainer = nullptr;
@@ -1345,6 +1412,40 @@ void UGameItemContainer::LoadSaveData(const FGameItemContainerSaveData& Containe
 	Serialize(Ar);
 }
 
+EGameItemContainerNetExecutionPolicy UGameItemContainer::GetNetExecutionPolicy() const
+{
+	if (const UGameItemContainerDef* ContainerDefCDO = GetContainerDefCDO())
+	{
+		return ContainerDefCDO->NetExecutionPolicy;
+	}
+	return EGameItemContainerNetExecutionPolicy::ServerInitiated;
+}
+
+ENetRole UGameItemContainer::GetLocalRole() const
+{
+	if (GetOwner()->GetNetMode() == NM_Client)
+	{
+		// on clients, use controlled pawn from a player state,
+		// since it will be marked as autonomous, and player state will not.
+		if (const APlayerState* PlayerState = GetTypedOuter<APlayerState>())
+		{
+			return PlayerState->GetPawn()->GetLocalRole();
+		}
+	}
+	// otherwise use direct owning actor
+	return GetOwner()->GetLocalRole();
+}
+
+bool UGameItemContainer::HasAuthority() const
+{
+	return GetLocalRole() == ROLE_Authority;
+}
+
+bool UGameItemContainer::CanExecuteLocally() const
+{
+	return GetNetExecutionPolicy() == EGameItemContainerNetExecutionPolicy::LocalPredicted && GetLocalRole() != ROLE_SimulatedProxy;
+}
+
 void UGameItemContainer::OnItemAdded(UGameItem* Item, int32 Slot)
 {
 	check(Item);
@@ -1396,14 +1497,17 @@ void UGameItemContainer::OnPostReplicatedChanges(const TArray<FGameItemList::FCh
 		}
 		else
 		{
+			// new item
 			if (!Change.Item->Containers.Contains(this))
 			{
 				OnItemAdded(Change.Item, Change.Slot);
+				OnSlotChanged(Change.Slot);
 			}
 
-			OnSlotChanged(Change.Slot);
+			// changed slots
 			if (Change.LastKnownSlot != Change.Slot && Change.LastKnownSlot != INDEX_NONE)
 			{
+				OnSlotChanged(Change.Slot);
 				OnSlotChanged(Change.LastKnownSlot);
 			}
 		}

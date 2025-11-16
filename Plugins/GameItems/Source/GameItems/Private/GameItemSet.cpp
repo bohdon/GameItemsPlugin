@@ -114,41 +114,38 @@ bool UGameItemSetAutoFill::ShouldIncludeItem_Implementation(TSubclassOf<UGameIte
 // UGameItemSet
 // ------------
 
-TArray<UGameItem*> UGameItemSet::AddToContainer(UGameItemContainer* Container) const
+void UGameItemSet::AddToContainer(UGameItemContainer* Container) const
 {
 	if (!Container)
 	{
-		return TArray<UGameItem*>();
+		return;
 	}
 
 	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(Container);
 	if (!ItemSubsystem)
 	{
-		return TArray<UGameItem*>();
+		return;
 	}
 
-	TArray<UGameItem*> Result;
 	for (const FGameItemDefStack& Item : Items)
 	{
-		Result.Append(ItemSubsystem->CreateItemInContainer(Container, Item.ItemDef, Item.Count));
+		ItemSubsystem->CreateItemInContainer(Container, Item.ItemDef, Item.Count);
 	}
-	return Result;
 }
 
-TArray<UGameItem*> UGameItemSet::AddToDefaultContainers(TScriptInterface<IGameItemContainerInterface> ContainerInterface) const
+void UGameItemSet::AddToDefaultContainers(TScriptInterface<IGameItemContainerInterface> ContainerInterface) const
 {
 	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(ContainerInterface.GetObject());
 	if (!ItemSubsystem)
 	{
-		return TArray<UGameItem*>();
+		return;
 	}
 
-	TArray<UGameItem*> Result;
 	for (const FGameItemDefStack& Item : Items)
 	{
 		if (UGameItemContainer* Container = ContainerInterface->GetDefaultContainerForItem(Item.ItemDef))
 		{
-			Result.Append(ItemSubsystem->CreateItemInContainer(Container, Item.ItemDef, Item.Count));
+			ItemSubsystem->CreateItemInContainer(Container, Item.ItemDef, Item.Count);
 		}
 #if !NO_LOGGING
 		else if (UE_LOG_ACTIVE(LogGameItems, Verbose))
@@ -160,7 +157,6 @@ TArray<UGameItem*> UGameItemSet::AddToDefaultContainers(TScriptInterface<IGameIt
 		}
 #endif
 	}
-	return Result;
 }
 
 

@@ -86,7 +86,7 @@ void UGameItemEquipmentComponent::FindAllItemContainers(FGameplayTagQuery Query,
 		{
 			continue;
 		}
-		if (Query.IsEmpty() || Query.Matches(FGameplayTagContainer(Container->ContainerId)))
+		if (Query.IsEmpty() || Query.Matches(FGameplayTagContainer(Container->GetContainerId())))
 		{
 			AddItemContainer(Container);
 		}

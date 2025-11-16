@@ -16,11 +16,8 @@ bool UGameItemAutoSlotRule::CanAutoSlot_Implementation(UGameItem* Item, const FG
 	return GetContainer()->CanContainItem(Item);
 }
 
-bool UGameItemAutoSlotRule::TryAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags, TArray<UGameItem*>& OutItems) const
+void UGameItemAutoSlotRule::TryAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
-#if WITH_SERVER_CODE
-	OutItems.Reset();
-
 	const int32 Slot = GetBestSlotForItem(Item, ContextTags);
 
 	// check for (and possibly remove) existing item
@@ -36,21 +33,16 @@ bool UGameItemAutoSlotRule::TryAutoSlot_Implementation(UGameItem* Item, const FG
 		else
 		{
 			// don't replace
-			return false;
+			return;
 		}
 	}
 
-	OutItems = Container->AddItem(Item, Slot);
-	return !OutItems.IsEmpty();
-#else
-	return false;
-#endif
+	Container->AddItem(Item, Slot);
 }
 
 void UGameItemAutoSlotRule::ServerTryAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
-	TArray<UGameItem*> OutItems;
-	TryAutoSlot(Item, ContextTags, OutItems);
+	TryAutoSlot(Item, ContextTags);
 }
 
 int32 UGameItemAutoSlotRule::GetBestSlotForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const

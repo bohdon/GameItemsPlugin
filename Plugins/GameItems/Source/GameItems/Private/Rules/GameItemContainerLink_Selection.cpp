@@ -55,7 +55,6 @@ void UGameItemContainerLink_Selection::OnLinkedContainerChanged(UGameItemContain
 
 void UGameItemContainerLink_Selection::SetSelectedSlot(int32 NewSlot)
 {
-#if WITH_SERVER_CODE
 	if (SelectedSlot != NewSlot)
 	{
 		SelectedSlot = NewSlot;
@@ -63,12 +62,10 @@ void UGameItemContainerLink_Selection::SetSelectedSlot(int32 NewSlot)
 
 		UpdateContainerForSelection();
 	}
-#endif
 }
 
 void UGameItemContainerLink_Selection::SetSelectedItem(UGameItem* Item)
 {
-#if WITH_SERVER_CODE
 	if (Item && LinkedContainer)
 	{
 		const int32 Slot = LinkedContainer->GetItemSlot(Item);
@@ -77,12 +74,10 @@ void UGameItemContainerLink_Selection::SetSelectedItem(UGameItem* Item)
 			SetSelectedSlot(Slot);
 		}
 	}
-#endif
 }
 
 void UGameItemContainerLink_Selection::SelectNextSlot(bool bLoop)
 {
-#if WITH_SERVER_CODE
 	if (bAllowSelectingEmptySlots)
 	{
 		SetSelectedSlot(ClampSlot(SelectedSlot + 1, bLoop));
@@ -91,12 +86,10 @@ void UGameItemContainerLink_Selection::SelectNextSlot(bool bLoop)
 	{
 		SelectNextItem(bLoop);
 	}
-#endif
 }
 
 void UGameItemContainerLink_Selection::SelectPrevSlot(bool bLoop)
 {
-#if WITH_SERVER_CODE
 	if (bAllowSelectingEmptySlots)
 	{
 		SetSelectedSlot(ClampSlot(SelectedSlot - 1, bLoop));
@@ -105,61 +98,26 @@ void UGameItemContainerLink_Selection::SelectPrevSlot(bool bLoop)
 	{
 		SelectPrevItem(bLoop);
 	}
-#endif
 }
 
 
 void UGameItemContainerLink_Selection::SelectNextItem(bool bLoop)
 {
-#if WITH_SERVER_CODE
 	const int32 NewSlot = FindValidItemSlot(1, bLoop);
 	if (NewSlot != INDEX_NONE)
 	{
 		SetSelectedSlot(NewSlot);
 	}
-#endif
 }
 
 
 void UGameItemContainerLink_Selection::SelectPrevItem(bool bLoop)
 {
-#if WITH_SERVER_CODE
 	const int32 NewSlot = FindValidItemSlot(-1, bLoop);
 	if (NewSlot != INDEX_NONE)
 	{
 		SetSelectedSlot(NewSlot);
 	}
-#endif
-}
-
-void UGameItemContainerLink_Selection::ServerSetSelectedSlot_Implementation(int32 NewSlot)
-{
-	SetSelectedSlot(NewSlot);
-}
-
-void UGameItemContainerLink_Selection::ServerSetSelectedItem_Implementation(UGameItem* Item)
-{
-	SetSelectedItem(Item);
-}
-
-void UGameItemContainerLink_Selection::ServerSelectNextSlot_Implementation(bool bLoop)
-{
-	SelectNextSlot(bLoop);
-}
-
-void UGameItemContainerLink_Selection::ServerSelectPrevSlot_Implementation(bool bLoop)
-{
-	SelectPrevSlot(bLoop);
-}
-
-void UGameItemContainerLink_Selection::ServerSelectNextItem_Implementation(bool bLoop)
-{
-	SelectNextItem(bLoop);
-}
-
-void UGameItemContainerLink_Selection::ServerSelectPrevItem_Implementation(bool bLoop)
-{
-	SelectPrevItem(bLoop);
 }
 
 int32 UGameItemContainerLink_Selection::FindValidItemSlot(int32 SearchDirection, bool bLoop) const

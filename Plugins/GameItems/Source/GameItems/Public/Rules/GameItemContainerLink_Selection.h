@@ -28,30 +28,30 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Selection")
 	bool bAllowSelectingEmptySlots;
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void SetSelectedSlot(int32 NewSlot);
 
 	/**
 	 * Find the slot of an item in the linked container, and set the selected slot to that.
 	 * Does nothing if the item isn't found.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void SetSelectedItem(UGameItem* Item);
 
 	/** Select the next slot, or the next item if empty slots cannot be selected. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void SelectNextSlot(bool bLoop = true);
 
 	/** Select the previous slot, or the previous item if empty slots cannot be selected. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void SelectPrevSlot(bool bLoop = true);
 
 	/** Select the next valid item in the linked container. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void SelectNextItem(bool bLoop = true);
 
 	/** Select the previous valid item in the linked container. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void SelectPrevItem(bool bLoop = true);
 
 	/** Clamp or loop a slot in the linked container. */
@@ -59,34 +59,15 @@ public:
 	int32 ClampSlot(int32 Slot, bool bLoop) const;
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
 	virtual FString GetDebugString() const override;
-
-public:
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
-	void ServerSetSelectedSlot(int32 NewSlot);
-
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
-	void ServerSetSelectedItem(UGameItem* Item);
-
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
-	void ServerSelectNextSlot(bool bLoop = true);
-
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
-	void ServerSelectPrevSlot(bool bLoop = true);
-
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
-	void ServerSelectNextItem(bool bLoop = true);
-
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
-	void ServerSelectPrevItem(bool bLoop = true);
 
 protected:
 	virtual void OnLinkedContainerChanged(UGameItemContainer* NewContainer, UGameItemContainer* OldContainer) override;
 
 protected:
 	/** The currently selected slot in the linked container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing = OnRep_SelectedSlot, Category = "Selection")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_SelectedSlot, Category = "Selection")
 	int32 SelectedSlot;
 
 	UFUNCTION()

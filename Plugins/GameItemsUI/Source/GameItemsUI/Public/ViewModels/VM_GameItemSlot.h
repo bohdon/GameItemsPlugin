@@ -43,7 +43,7 @@ public:
 
 	/** Move the item in this slot to a new container. */
 	UFUNCTION(BlueprintCallable)
-	TArray<UGameItem*> MoveItem(UGameItemContainer* ToContainer, bool bAllowPartial = true);
+	void MoveItem(UGameItemContainer* ToContainer, bool bAllowPartial = true);
 
 	virtual UWorld* GetWorld() const override;
 

@@ -36,7 +36,7 @@ public:
 	 * Try auto-slotting an item.
 	 * @return True if the auto-slotting was successful. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false, BlueprintAuthorityOnly, Category = "GameItems")
-	bool TryAutoSlot(UGameItem* Item, const FGameplayTagContainer& ContextTags, TArray<UGameItem*>& OutItems) const;
+	void TryAutoSlot(UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
 
 	/** Return the best slot to use for auto-slotting an item. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false, Category = "GameItems")

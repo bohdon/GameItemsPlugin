@@ -15,7 +15,7 @@ TArray<FGameplayTag> IGameItemContainerInterface::GetAllItemContainerIds() const
 	TArray<FGameplayTag> Result;
 	Algo::Transform(AllContainers, Result, [](const UGameItemContainer* Container)
 	{
-		return Container->ContainerId;
+		return Container->GetContainerId();
 	});
 	return Result;
 }

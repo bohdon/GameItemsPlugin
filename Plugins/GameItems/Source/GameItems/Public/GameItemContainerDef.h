@@ -61,6 +61,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "GameItemContainer")
 	TArray<TObjectPtr<UGameItemContainerRule>> Rules;
 
+	/** The policy for executing changes on this container from a client. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Network")
+	EGameItemContainerNetExecutionPolicy NetExecutionPolicy = EGameItemContainerNetExecutionPolicy::LocalPredicted;
+
 #if WITH_EDITOR
 	virtual void PreSave(FObjectPreSaveContext SaveContext) override;
 #endif

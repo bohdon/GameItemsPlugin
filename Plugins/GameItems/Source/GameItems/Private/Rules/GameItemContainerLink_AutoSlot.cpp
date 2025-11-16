@@ -50,6 +50,17 @@ void UGameItemContainerLink_AutoSlot::OnLinkedItemAdded(UGameItem* Item)
 	{
 		UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Auto-slotting item from link: %s (%s)"),
 		       *Container->GetReadableName(), *Item->GetDebugString(), *LinkedContainerId.ToString());
-		Container->TryAutoSlot(Item, ContextTags);
+
+		for (const UGameItemContainerRule* Rule : Container->GetRules())
+		{
+			if (const UGameItemAutoSlotRule* AutoSlotRule = Cast<UGameItemAutoSlotRule>(Rule))
+			{
+				if (AutoSlotRule->CanAutoSlot(Item, ContextTags))
+				{
+					AutoSlotRule->TryAutoSlot(Item, ContextTags);
+					break;
+				}
+			}
+		}
 	}
 }

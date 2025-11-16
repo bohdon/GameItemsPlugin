@@ -171,7 +171,7 @@ void UGameItemContainerComponent::CommitSaveGame(USaveGame* SaveGame)
 		UGameItemContainer* Container = ContainerElem.Value;
 		if (!Container->IsChild())
 		{
-			FGameItemContainerSaveData& ContainerData = CollectionData.Containers.FindOrAdd(Container->ContainerId);
+			FGameItemContainerSaveData& ContainerData = CollectionData.Containers.FindOrAdd(Container->GetContainerId());
 			Container->CommitSaveData(ContainerData, SavedItems);
 		}
 	}
@@ -182,7 +182,7 @@ void UGameItemContainerComponent::CommitSaveGame(USaveGame* SaveGame)
 		UGameItemContainer* Container = ContainerElem.Value;
 		if (Container->IsChild())
 		{
-			FGameItemContainerSaveData& ContainerData = CollectionData.Containers.FindOrAdd(Container->ContainerId);
+			FGameItemContainerSaveData& ContainerData = CollectionData.Containers.FindOrAdd(Container->GetContainerId());
 			Container->CommitSaveData(ContainerData, SavedItems);
 		}
 	}
@@ -209,7 +209,7 @@ void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame)
 		UGameItemContainer* Container = ContainerElem.Value;
 		if (!Container->IsChild())
 		{
-			const FGameItemContainerSaveData ContainerData = CollectionData.Containers.FindRef(Container->ContainerId);
+			const FGameItemContainerSaveData ContainerData = CollectionData.Containers.FindRef(Container->GetContainerId());
 			Container->LoadSaveData(ContainerData, LoadedItems);
 		}
 	}
@@ -220,7 +220,7 @@ void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame)
 		UGameItemContainer* Container = ContainerElem.Value;
 		if (Container->IsChild())
 		{
-			const FGameItemContainerSaveData ContainerData = CollectionData.Containers.FindRef(Container->ContainerId);
+			const FGameItemContainerSaveData ContainerData = CollectionData.Containers.FindRef(Container->GetContainerId());
 			Container->LoadSaveData(ContainerData, LoadedItems);
 		}
 	}
@@ -366,7 +366,7 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(const FGameItem
 	// create and initialize the new container
 	UGameItemContainer* NewContainer = NewObject<UGameItemContainer>(this, ContainerClass);
 	check(NewContainer);
-	NewContainer->ContainerId = ContainerSpec.ContainerId;
+	NewContainer->SetContainerId(ContainerSpec.ContainerId);
 	NewContainer->SetCollection(this);
 	NewContainer->SetContainerDef(ContainerSpec.ContainerDef);
 	NewContainer->DisplayName = ContainerSpec.DisplayName;
@@ -410,12 +410,12 @@ void UGameItemContainerComponent::AddContainer(UGameItemContainer* Container)
 {
 #if WITH_SERVER_CODE
 	check(Container);
-	ensureAlways(!ContainerMap.Contains(Container->ContainerId));
+	ensureAlways(!ContainerMap.Contains(Container->GetContainerId()));
 
 	Containers.Emplace(Container);
 	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, Containers, this);
 
-	ContainerMap.Emplace(Container->ContainerId, Container);
+	ContainerMap.Emplace(Container->GetContainerId(), Container);
 
 	OnContainerAdded(Container);
 #endif
@@ -500,7 +500,7 @@ void UGameItemContainerComponent::AddLinkRuleToContainer(UGameItemContainer* Con
 
 			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Linked %s to %s (%s)"),
 			       *GetNetDebugString(), *GetReadableName(),
-			       *Container->ContainerId.ToString(), *NewLink->LinkedContainerId.ToString(), *Link.LinkSpec.ContainerLinkClass->GetName());
+			       *Container->GetContainerId().ToString(), *NewLink->LinkedContainerId.ToString(), *Link.LinkSpec.ContainerLinkClass->GetName());
 		}
 	}
 #endif
@@ -542,7 +542,7 @@ void UGameItemContainerComponent::OnRep_Containers(const TArray<UGameItemContain
 	ContainerMap.Reset();
 	for (const TObjectPtr<UGameItemContainer>& Container : Containers)
 	{
-		ContainerMap.Emplace(Container->ContainerId, Container);
+		ContainerMap.Emplace(Container->GetContainerId(), Container);
 	}
 }
 
