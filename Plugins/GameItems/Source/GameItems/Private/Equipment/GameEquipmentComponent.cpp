@@ -44,12 +44,10 @@ void UGameEquipmentComponent::InitializeComponent()
 
 void UGameEquipmentComponent::UninitializeComponent()
 {
-#if WITH_SERVER_CODE
 	if (GetOwner() && GetOwner()->HasAuthority())
 	{
 		RemoveAllEquipment();
 	}
-#endif
 
 	Super::UninitializeComponent();
 }

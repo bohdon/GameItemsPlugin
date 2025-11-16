@@ -80,6 +80,7 @@ public:
 	virtual const UGameItemFragment_Equipment* GetItemEquipmentFragment(UGameItem* Item) const;
 
 	virtual void BeginPlay() override;
+	virtual void UninitializeComponent() override;
 
 protected:
 	/** The item containers to monitor for items with equipment. */

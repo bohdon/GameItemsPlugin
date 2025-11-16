@@ -127,6 +127,23 @@ void UGameItemEquipmentComponent::BeginPlay()
 #endif
 }
 
+void UGameItemEquipmentComponent::UninitializeComponent()
+{
+	for (auto& Elem : ItemConditionStates)
+	{
+		const UGameItemConditionSchema* DefaultSchema = GetDefault<UGameItemConditionSchema>();
+		FWorldConditionContextData ContextData(*DefaultSchema);
+
+		FGameItemEquipmentConditionState& ItemCondition = Elem.Value;
+		const FWorldConditionContext Context(ItemCondition.State, ContextData);
+		Context.Deactivate();
+	}
+	
+	ItemConditionStates.Empty();
+
+	Super::UninitializeComponent();
+}
+
 void UGameItemEquipmentComponent::ActivateItemEquipmentCondition(UGameItem* Item, const UGameItemFragment_Equipment* EquipFrag)
 {
 #if WITH_SERVER_CODE
