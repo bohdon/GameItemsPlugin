@@ -248,8 +248,8 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 
 	if (DeltaCount == 0)
 	{
-		UE_CLOG(bWarn, LogGameItems, Warning, TEXT("%s: Cant add item, max count reached: %s"),
-		        *GetNameSafe(GetOwner()), *Item->GetDebugString());
+		UE_CLOG(bWarn, LogGameItems, Warning, TEXT("%s[%s] Cant add item, max count reached: %s"),
+		        *GetNetDebugString(), *GetReadableName(), *Item->GetDebugString());
 		Plan.UpdateDerivedValues(Item->GetCount());
 		return Plan;
 	}
@@ -257,8 +257,8 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 	if (DeltaCount < Item->GetCount())
 	{
 		UE_CLOG(bWarn, LogGameItems, Warning,
-		        TEXT("%s: Adding %s, but %d will be lost due to capacity. Use CheckAddItem before adding to avoid this."),
-		        *GetNameSafe(GetOwner()), *Item->GetDebugString(), Item->GetCount() - DeltaCount);
+		        TEXT("%s[%s] Adding %s, but %d will be lost due to capacity. Use CheckAddItem before adding to avoid this."),
+		        *GetNetDebugString(), *GetReadableName(), *Item->GetDebugString(), Item->GetCount() - DeltaCount);
 	}
 
 	// repeatedly add the item, splitting and stacking as necessary
@@ -286,8 +286,8 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 		{
 			// out of space
 			UE_CLOG(bWarn, LogGameItems, Warning,
-			        TEXT("%s: Adding %s, but %d will be lost due to limited slot capacity. Use CheckAddItem before adding to avoid this."),
-			        *GetNameSafe(GetOwner()), *Item->GetDebugString(), RemainingCountToAdd);
+			        TEXT("%s[%s] Adding %s, but %d will be lost due to limited slot capacity. Use CheckAddItem before adding to avoid this."),
+			        *GetNetDebugString(), *GetReadableName(), *Item->GetDebugString(), RemainingCountToAdd);
 			break;
 		}
 
@@ -1378,14 +1378,16 @@ void UGameItemContainer::LoadSaveData(const FGameItemContainerSaveData& Containe
 			// create new item from save data
 			if (ItemData.ItemDef.IsNull())
 			{
-				UE_LOG(LogGameItems, Warning, TEXT("Found null item def when loading save game: %s.%d"), *ContainerId.ToString(), Slot);
+				UE_LOG(LogGameItems, Warning, TEXT("%s[%s] Found null item def when loading save game: %s.%d"),
+					*GetNetDebugString(), *GetReadableName(), *ContainerId.ToString(), Slot);
 				continue;
 			}
 
 			const TSubclassOf<UGameItemDef> ItemDef = ItemData.ItemDef.LoadSynchronous();
 			if (!ItemDef)
 			{
-				UE_LOG(LogGameItems, Warning, TEXT("Failed to load item def when loading save game: %s"), *ItemData.ItemDef.ToString());
+				UE_LOG(LogGameItems, Warning, TEXT("%s[%s] Failed to load item def when loading save game: %s"),
+					*GetNetDebugString(), *GetReadableName(), *ItemData.ItemDef.ToString());
 				continue;
 			}
 

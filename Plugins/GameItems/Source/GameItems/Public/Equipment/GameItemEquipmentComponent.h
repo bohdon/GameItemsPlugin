@@ -8,6 +8,7 @@
 #include "WorldConditionQuery.h"
 #include "GameItemEquipmentComponent.generated.h"
 
+class UGameItemContainerComponent;
 class UGameItem;
 class UGameItemContainer;
 class UGameItemFragment_Equipment;
@@ -43,9 +44,20 @@ class GAMEITEMS_API UGameItemEquipmentComponent : public UGameEquipmentComponent
 public:
 	UGameItemEquipmentComponent(const FObjectInitializer& ObjectInitializer);
 
-	/** Query used to filter game item containers when using bAutoFindContainers is true. */
+	/**
+	 * Query used to filter game item containers when finding or monitoring containers.
+	 * If empty, all containers are included.
+	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (GameplayTagFilter = "GameItemContainerIdTagsCategory"))
-	FGameplayTagQuery DefaultContainerQuery;
+	FGameplayTagQuery ContainerQuery;
+
+	/**
+	 * Only add parent containers (that actually store items) when finding or monitoring containers.
+	 * Item slotted events allow monitoring changes that are relevant to equipment conditions, so it's often
+	 * desired to monitor only parent containers in order to detect the presence of new items.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (GameplayTagFilter = "GameItemContainerIdTagsCategory"))
+	bool bIgnoreChildContainers = true;
 
 	/**
 	 * Automatically call FindAllItemContainers on BeginPlay, using the default container query,
@@ -67,14 +79,19 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameEquipment")
 	void RemoveItemContainer(UGameItemContainer* ItemContainer);
 
+	/** Return all currently registered containers. */
+	const TArray<TWeakObjectPtr<UGameItemContainer>>& GetRegisteredContainers() const { return RegisteredContainers; }
+
 	/**
-	 * Find and add all item containers matching a query. If the query is empty, all containers will be included.
-	 * If bIgnoreChildContainers is true, only parent containers (that store their own items) will be added.
-	 * Item slotted events allow monitoring changes that are relevant to equipment conditions, so it's often
-	 * desired to monitor only parent containers in order to detect the presence of new items.
+	 * Find and add all item containers matching the query, and optionally
+	 * listen for containers added or removed on the item component.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameEquipment")
-	void FindAllItemContainers(FGameplayTagQuery Query, bool bIgnoreChildContainers = true);
+	void FindItemContainers(bool bMonitorNewContainers = true);
+
+	/** Monitor containers being added/removed from an item component, and register any that match the container query. */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameEquipment")
+	void MonitorItemContainersFromComponent(UGameItemContainerComponent* ItemContainerComponent);
 
 	/** Return the equipment fragment for an item, or null if it has one or the fragment is invalid. */
 	virtual const UGameItemFragment_Equipment* GetItemEquipmentFragment(UGameItem* Item) const;
@@ -84,7 +101,7 @@ public:
 
 protected:
 	/** The item containers to monitor for items with equipment. */
-	TArray<TWeakObjectPtr<UGameItemContainer>> ItemContainers;
+	TArray<TWeakObjectPtr<UGameItemContainer>> RegisteredContainers;
 
 	/** Map of condition states for each item with equipment in the target containers. */
 	UPROPERTY(Transient)
@@ -92,7 +109,9 @@ protected:
 
 	/** Map of equipment that was applied, indexed by the source item. */
 	UPROPERTY(Transient)
-	TMap<TObjectPtr<UGameItem>, TObjectPtr<UGameEquipment>> ItemEquipmentMap;
+	TMap<TObjectPtr<UGameItem>, TObjectPtr<UGameEquipment>> EquipmentMap;
+
+	virtual bool ShouldIncludeContainer(UGameItemContainer* Container) const;
 
 	/** Activate the equipment conditions for an item, and apply the equipment if met. */
 	void ActivateItemEquipmentCondition(UGameItem* Item, const UGameItemFragment_Equipment* EquipFrag);

@@ -318,16 +318,16 @@ void UGameItemContainerComponent::AddContainerGraph(const UGameItemContainerGrap
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Adding container graph: %s"),
 	       *GetNetDebugString(), *GetReadableName(), *Graph->GetName());
 
+	// setup links first, so they exist for container add events
+	for (const FGameItemContainerLinkSpec& LinkSpec : Graph->Links)
+	{
+		CreateContainerLink(LinkSpec, Graph, false);
+	}
+
 	// create containers
 	for (const FGameItemContainerSpec& ContainerSpec : Graph->Containers)
 	{
 		CreateContainer(ContainerSpec, false);
-	}
-
-	// create links
-	for (const FGameItemContainerLinkSpec& LinkSpec : Graph->Links)
-	{
-		CreateContainerLink(LinkSpec, Graph, false);
 	}
 
 	ResolveAllContainerLinks();
@@ -377,6 +377,7 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(const FGameItem
 	// add any already-defined links
 	AddMatchingLinkRulesToContainer(NewContainer, Links);
 
+	// register container (and broadcast container add events)
 	AddContainer(NewContainer);
 
 	if (bResolveLinks)

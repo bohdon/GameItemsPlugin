@@ -5,6 +5,7 @@
 
 #include "GameItem.h"
 #include "GameItemContainer.h"
+#include "GameItemContainerComponent.h"
 #include "GameItemDef.h"
 #include "GameItemsModule.h"
 #include "GameItemSubsystem.h"
@@ -34,12 +35,12 @@ void UGameItemEquipmentComponent::AddItemContainer(UGameItemContainer* ItemConta
 		return;
 	}
 
-	if (!ItemContainer || ItemContainers.Contains(ItemContainer))
+	if (!ItemContainer || RegisteredContainers.Contains(ItemContainer))
 	{
 		return;
 	}
 
-	ItemContainers.Add(ItemContainer);
+	RegisteredContainers.Add(ItemContainer);
 
 	ItemContainer->OnItemAddedEvent.AddUObject(this, &UGameItemEquipmentComponent::OnItemAdded);
 	ItemContainer->OnItemRemovedEvent.AddUObject(this, &UGameItemEquipmentComponent::OnItemRemoved);
@@ -59,12 +60,12 @@ void UGameItemEquipmentComponent::RemoveItemContainer(UGameItemContainer* ItemCo
 		return;
 	}
 
-	if (!ItemContainer || !ItemContainers.Contains(ItemContainer))
+	if (!ItemContainer || !RegisteredContainers.Contains(ItemContainer))
 	{
 		return;
 	}
 
-	ItemContainers.Remove(ItemContainer);
+	RegisteredContainers.Remove(ItemContainer);
 
 	ItemContainer->OnItemAddedEvent.RemoveAll(this);
 	ItemContainer->OnItemRemovedEvent.RemoveAll(this);
@@ -76,23 +77,63 @@ void UGameItemEquipmentComponent::RemoveItemContainer(UGameItemContainer* ItemCo
 #endif
 }
 
-void UGameItemEquipmentComponent::FindAllItemContainers(FGameplayTagQuery Query, bool bIgnoreChildContainers)
+bool UGameItemEquipmentComponent::ShouldIncludeContainer(UGameItemContainer* Container) const
+{
+	if (bIgnoreChildContainers && Container->IsChild())
+	{
+		return false;
+	}
+	if (!ContainerQuery.IsEmpty() && !ContainerQuery.Matches(FGameplayTagContainer(Container->GetContainerId())))
+	{
+		return false;
+	}
+	return true;
+}
+
+void UGameItemEquipmentComponent::FindItemContainers(bool bMonitorNewContainers)
 {
 	const UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
+
+	// find all containers matching query
 	const TArray<UGameItemContainer*> AllContainers = ItemSubsystem->GetAllContainersForActor(GetOwner());
 	for (UGameItemContainer* Container : AllContainers)
 	{
-		if (bIgnoreChildContainers && Container->IsChild())
+		if (!ShouldIncludeContainer(Container))
 		{
 			continue;
 		}
-		if (Query.IsEmpty() || Query.Matches(FGameplayTagContainer(Container->GetContainerId())))
+
+		AddItemContainer(Container);
+	}
+
+	// also find item component if available, and monitor containers being added/removed
+	if (bMonitorNewContainers)
+	{
+		if (UGameItemContainerComponent* ItemsComponent = ItemSubsystem->GetContainerComponentForActor(GetOwner()))
+		{
+			MonitorItemContainersFromComponent(ItemsComponent);
+		}
+	}
+}
+
+void UGameItemEquipmentComponent::MonitorItemContainersFromComponent(UGameItemContainerComponent* ItemContainerComponent)
+{
+	if (!ItemContainerComponent)
+	{
+		return;
+	}
+
+	ItemContainerComponent->OnContainerAddedEvent.AddWeakLambda(this, [this](UGameItemContainer* Container)
+	{
+		if (ShouldIncludeContainer(Container))
 		{
 			AddItemContainer(Container);
 		}
-	}
-
-	// TODO: add support for auto-adding new containers that match the query
+	});
+	ItemContainerComponent->OnContainerRemovedEvent.AddWeakLambda(this, [this](UGameItemContainer* Container)
+	{
+		RemoveItemContainer(Container);
+	});
 }
 
 const UGameItemFragment_Equipment* UGameItemEquipmentComponent::GetItemEquipmentFragment(UGameItem* Item) const
@@ -121,7 +162,7 @@ void UGameItemEquipmentComponent::BeginPlay()
 	{
 		if (bAutoFindContainers)
 		{
-			FindAllItemContainers(DefaultContainerQuery, true);
+			FindItemContainers();
 		}
 	}
 #endif
@@ -138,7 +179,7 @@ void UGameItemEquipmentComponent::UninitializeComponent()
 		const FWorldConditionContext Context(ItemCondition.State, ContextData);
 		Context.Deactivate();
 	}
-	
+
 	ItemConditionStates.Empty();
 
 	Super::UninitializeComponent();
@@ -179,7 +220,7 @@ void UGameItemEquipmentComponent::ActivateItemEquipmentCondition(UGameItem* Item
 	if (!Context.Activate())
 	{
 		UE_LOG(LogGameItems, Error, TEXT("[%s] Failed to activate condition for item equipment: %s"),
-		       *GetReadableName(), *Item->GetName());
+			*GetReadableName(), *Item->GetName());
 		return;
 	}
 
@@ -282,7 +323,7 @@ void UGameItemEquipmentComponent::ApplyEquipmentForItem(UGameItem* Item)
 		return;
 	}
 
-	if (ItemEquipmentMap.Contains(Item))
+	if (EquipmentMap.Contains(Item))
 	{
 		// equipment already applied
 		return;
@@ -292,7 +333,7 @@ void UGameItemEquipmentComponent::ApplyEquipmentForItem(UGameItem* Item)
 	UGameEquipment* NewEquipment = ApplyEquipment(EquipFrag->EquipmentDef, Item);
 	if (NewEquipment)
 	{
-		ItemEquipmentMap.Add(Item, NewEquipment);
+		EquipmentMap.Add(Item, NewEquipment);
 	}
 #endif
 }
@@ -311,7 +352,7 @@ void UGameItemEquipmentComponent::RemoveEquipmentForItem(UGameItem* Item)
 		RemoveEquipment(Equipment);
 	}
 
-	ItemEquipmentMap.Remove(Item);
+	EquipmentMap.Remove(Item);
 #endif
 }
 
