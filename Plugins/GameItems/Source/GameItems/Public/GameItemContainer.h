@@ -371,6 +371,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
 	virtual bool CanAutoSlot(UGameItem* Item, FGameplayTagContainer ContextTags) const;
 
+	/**
+	 * Add an item to this container, automatically selecting the best slot for it based on rules,
+	 * and potentially replacing existing items, or cancelling if desired.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
+	virtual void TryAutoSlot(UGameItem* Item, FGameplayTagContainer ContextTags);
+
 	/** Return the child container with the highest auto-slot priority for an item. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
 	UGameItemContainer* FindAutoSlotChildContainerForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const;

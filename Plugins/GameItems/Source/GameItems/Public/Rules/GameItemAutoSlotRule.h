@@ -35,7 +35,7 @@ public:
 	/**
 	 * Try auto-slotting an item.
 	 * @return True if the auto-slotting was successful. */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false, BlueprintAuthorityOnly, Category = "GameItems")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	void TryAutoSlot(UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
 
 	/** Return the best slot to use for auto-slotting an item. */
@@ -47,6 +47,6 @@ public:
 	bool ShouldReplaceItem(UGameItem* NewItem, UGameItem* ExistingItem, const FGameplayTagContainer& ContextTags) const;
 
 public:
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "GameItems|Net")
+	UFUNCTION(Server, Reliable)
 	virtual void ServerTryAutoSlot(UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
 };

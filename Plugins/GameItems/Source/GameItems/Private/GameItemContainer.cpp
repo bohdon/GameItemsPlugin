@@ -1232,6 +1232,22 @@ bool UGameItemContainer::CanAutoSlot(UGameItem* Item, FGameplayTagContainer Cont
 	return false;
 }
 
+void UGameItemContainer::TryAutoSlot(UGameItem* Item, FGameplayTagContainer ContextTags)
+{
+	for (const UGameItemContainerRule* Rule : Rules)
+	{
+		if (const UGameItemAutoSlotRule* AutoSlotRule = Cast<UGameItemAutoSlotRule>(Rule))
+		{
+			if (AutoSlotRule->CanAutoSlot(Item, ContextTags))
+			{
+				AutoSlotRule->TryAutoSlot(Item, ContextTags);
+				break;
+			}
+		}
+	}
+}
+
+
 UGameItemContainer* UGameItemContainer::FindAutoSlotChildContainerForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const
 {
 	UGameItemContainer* BestContainer = nullptr;

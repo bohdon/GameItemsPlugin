@@ -34,6 +34,11 @@ void UGameItemAutoSlotRule_Basic::GetLifetimeReplicatedProps(TArray<class FLifet
 
 bool UGameItemAutoSlotRule_Basic::CanAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
+	if (!Item)
+	{
+		return false;
+	}
+
 	const FGameplayTagContainer ItemTags = Item->GetOwnedTags();
 	if (!ItemTags.HasAll(RequireTags) || ItemTags.HasAny(IgnoreTags) || !(Query.IsEmpty() || Query.Matches(ItemTags)))
 	{
@@ -52,6 +57,16 @@ void UGameItemAutoSlotRule_Basic::TryAutoSlot_Implementation(UGameItem* Item, co
 {
 	UGameItemContainer* Container = GetContainer();
 	check(Container);
+
+	if (!Container->HasAuthority())
+	{
+		ServerTryAutoSlot(Item, ContextTags);
+		if (!Container->CanExecuteLocally())
+		{
+			return;
+		}
+	}
+
 	if (Container->Contains(Item))
 	{
 		if (ContextTags.HasTag(TAG_Item_AutoSlot_Toggle))
