@@ -30,21 +30,27 @@ UGameItemContainer* UGameItemContainerProvider_Player::ProvideContainer_Implemen
 	{
 		return nullptr;
 	}
-	APlayerController* Player = Context.UserWidget->GetOwningPlayer();
+
+	const APlayerController* Player = Context.UserWidget->GetOwningPlayer();
 	if (!Player)
 	{
 		return nullptr;
 	}
 
 	const UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(Player);
-	const IGameItemContainerInterface* ContainerInterface = ItemSubsystem->GetContainerInterfaceForActor(Player->GetPawn());
+
+	// check player state first, it's common to put item container components on this directly 
+	const IGameItemContainerInterface* ContainerInterface = ContainerInterface = ItemSubsystem->GetContainerInterfaceForActor(Player->PlayerState);
+
 	if (!ContainerInterface)
 	{
-		ContainerInterface = ItemSubsystem->GetContainerInterfaceForActor(Player->PlayerState);
+		// check player controller 2nd, it's more likely to be initialized before pawn
+		ContainerInterface = ItemSubsystem->GetContainerInterfaceForActor(Player);
 	}
 	if (!ContainerInterface)
 	{
-		ContainerInterface = ItemSubsystem->GetContainerInterfaceForActor(Player);
+		// check pawn last
+		ContainerInterface = ItemSubsystem->GetContainerInterfaceForActor(Player->GetPawn());
 	}
 	if (!ContainerInterface)
 	{
