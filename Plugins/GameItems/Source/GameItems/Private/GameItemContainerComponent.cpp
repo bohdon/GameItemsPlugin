@@ -5,6 +5,7 @@
 
 #include "GameItemContainer.h"
 #include "GameItemContainerDef.h"
+#include "GameItemContainerGraph.h"
 #include "GameItemDef.h"
 #include "GameItemSaveDataInterface.h"
 #include "GameItemSettings.h"
@@ -42,9 +43,9 @@ void UGameItemContainerComponent::PostLoad()
 	Super::PostLoad();
 
 #if !NO_LOGGING
-	if (!StartupContainers.IsEmpty() || !ContainerLinks.IsEmpty())
+	if (!ContainerLinks.IsEmpty())
 	{
-		UE_LOG(LogGameItems, Error, TEXT("[%s] StartupContainers and ContainerLinks are deprecated, use DefaultContainerGraph"),
+		UE_LOG(LogGameItems, Error, TEXT("[%s] ContainerLinks set on the component are deprecated, use DefaultContainerGraphs instead"),
 		       *GetReadableName());
 	}
 #endif
@@ -65,7 +66,7 @@ void UGameItemContainerComponent::InitializeComponent()
 	{
 		if (bAutoAddDefaultContainers)
 		{
-			AddDefaultContainerGraphs();
+			AddDefaultContainers();
 		}
 		if (bAutoAddDefaultItems)
 		{
@@ -226,7 +227,7 @@ void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame)
 	}
 }
 
-void UGameItemContainerComponent::AddDefaultContainerGraphs()
+void UGameItemContainerComponent::AddDefaultContainers()
 {
 #if WITH_SERVER_CODE
 	if (!ensure(GetOwner()->HasAuthority()))
@@ -238,9 +239,16 @@ void UGameItemContainerComponent::AddDefaultContainerGraphs()
 	{
 		if (Graph)
 		{
-			AddContainerGraph(Graph);
+			AddContainerGraph(Graph, false);
 		}
 	}
+	
+	for (const FGameItemContainerSpec& ContainerSpec : DefaultContainers)
+	{
+		CreateContainer(ContainerSpec, false);
+	}
+
+	ResolveAllContainerLinks();
 #endif
 }
 
@@ -292,7 +300,7 @@ bool UGameItemContainerComponent::IsItemSlotted(UGameItem* Item, FGameplayTagCon
 	return false;
 }
 
-void UGameItemContainerComponent::AddContainerGraph(const UGameItemContainerGraph* Graph)
+void UGameItemContainerComponent::AddContainerGraph(const UGameItemContainerGraph* Graph, bool bResolveLinks)
 {
 #if WITH_SERVER_CODE
 	if (!ensure(GetOwner()->HasAuthority()))
@@ -330,7 +338,10 @@ void UGameItemContainerComponent::AddContainerGraph(const UGameItemContainerGrap
 		CreateContainer(ContainerSpec, false);
 	}
 
-	ResolveAllContainerLinks();
+	if (bResolveLinks)
+	{
+		ResolveAllContainerLinks();
+	}
 #endif
 }
 

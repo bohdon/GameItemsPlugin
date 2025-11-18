@@ -3,8 +3,10 @@
 #include "GameItemTypes.h"
 
 #include "GameItem.h"
+#include "GameItemContainerDef.h"
 #include "GameItemDef.h"
 #include "GameItemsModule.h"
+#include "Rules/GameItemContainerLink.h"
 #include "Serialization/MemoryWriter.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 
@@ -365,6 +367,24 @@ void FGameItemList::GetAllSlots(TArray<int32>& OutSlots) const
 		OutSlots.Add(Entry.Slot);
 	}
 	OutSlots.Sort();
+}
+
+
+// FGameItemContainerSpec
+// ----------------------
+
+bool FGameItemContainerSpec::IsValid() const
+{
+	return ContainerDef && ContainerId.IsValid();
+}
+
+
+// FGameItemContainerLinkSpec
+// --------------------------
+
+bool FGameItemContainerLinkSpec::IsValid() const
+{
+	return ContainerLinkClass && LinkedContainerId.IsValid() && !ContainerQuery.IsEmpty();
 }
 
 

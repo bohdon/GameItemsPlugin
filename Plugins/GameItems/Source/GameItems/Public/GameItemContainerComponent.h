@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameItemCollectionInterface.h"
-#include "GameItemContainerGraph.h"
 #include "GameItemContainerInterface.h"
+#include "GameItemTypes.h"
 #include "Components/ActorComponent.h"
 #include "Rules/GameItemContainerRule.h"
 #include "GameItemContainerComponent.generated.h"
@@ -65,6 +65,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GameItems")
 	TArray<TObjectPtr<const UGameItemContainerGraph>> DefaultContainerGraphs;
 
+	/** Default containers to create individually, when a container graph is not needed. */
+	UPROPERTY(EditDefaultsOnly, Meta = (TitleProperty = "{ContainerId}"), Category = "GameItems")
+	TArray<FGameItemContainerSpec> DefaultContainers;
+
 	/** Automatically add the default container graphs during InitializeComponent. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GameItems")
 	bool bAutoAddDefaultContainers = true;
@@ -73,17 +77,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GameItems")
 	bool bAutoAddDefaultItems = true;
 
-private:
-	/** DEPRECATED: Use DefaultContainerGraph instead. */
-	UPROPERTY(EditDefaultsOnly, Meta = (TitleProperty = "{ContainerId}", DeprecatedProperty), Category = "GameItems")
-	TArray<FGameItemContainerSpec> StartupContainers;
-
+protected:
 	/** DEPRECATED: Use DefaultContainerGraph instead. */
 	UPROPERTY(EditDefaultsOnly, Meta = (TitleProperty = "{LinkedContainerId} {ContainerLinkClass}", DeprecatedProperty), Category = "GameItems")
 	TArray<FGameItemContainerLinkSpec> ContainerLinks;
 
 public:
-
 	/** Whether this container collection should be saved. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "SaveGame")
 	bool bEnableSaveGame = false;
@@ -105,7 +104,7 @@ public:
 	 * between containers (both old and new).
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
-	void AddContainerGraph(const UGameItemContainerGraph* Graph);
+	void AddContainerGraph(const UGameItemContainerGraph* Graph, bool bResolveLinks = true);
 
 	/**
 	 * Create a new item container.
@@ -128,9 +127,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
 	void ResolveAllContainerLinks(bool bForce = false);
 
-	/** Add all default container graphs to this component. Should be called when bAutoInitializeContainers is disabled. */
+	/**
+	 * Add all default containers and graphs to this component.
+	 * Called automatically on initialize when bAutoAddDefaultContainers is set.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
-	void AddDefaultContainerGraphs();
+	void AddDefaultContainers();
 
 	/** Create and add the default items for any newly created containers. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
@@ -157,7 +159,7 @@ public:
 	virtual void InitializeComponent() override;
 	virtual void ReadyForReplication() override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
 public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FContainerAddOrRemoveDelegate, UGameItemContainer* /*Container*/);
 

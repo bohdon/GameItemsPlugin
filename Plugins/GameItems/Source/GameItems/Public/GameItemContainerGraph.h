@@ -3,57 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
+#include "GameItemTypes.h"
 #include "Engine/DataAsset.h"
 #include "GameItemContainerGraph.generated.h"
-
-class UGameItemContainerDef;
-class UGameItemContainerLink;
-
-
-/**
- * Defines a container.
- */
-USTRUCT(BlueprintType)
-struct GAMEITEMS_API FGameItemContainerSpec
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
-	FGameplayTag ContainerId;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UGameItemContainerDef> ContainerDef;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText DisplayName;
-	
-	FORCEINLINE bool IsValid() const;
-};
-
-
-/**
- * Defines a container link to add to all matching containers.
- */
-USTRUCT(BlueprintType)
-struct GAMEITEMS_API FGameItemContainerLinkSpec
-{
-	GENERATED_BODY()
-
-	/** The container link class to create for each matching container. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ContainerLink")
-	TSubclassOf<UGameItemContainerLink> ContainerLinkClass;
-
-	/** The container to link with. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ContainerLink", meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
-	FGameplayTag LinkedContainerId;
-
-	/** Apply this link to all containers matching this query. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ContainerLink", meta = (GameplayTagFilter="GameItemContainerTagsCategory"))
-	FGameplayTagQuery ContainerQuery;
-
-	FORCEINLINE bool IsValid() const;
-};
 
 
 /**
