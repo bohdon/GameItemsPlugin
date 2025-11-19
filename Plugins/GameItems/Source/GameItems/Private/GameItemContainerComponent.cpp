@@ -13,6 +13,8 @@
 #include "Engine/ActorChannel.h"
 #include "Engine/World.h"
 #include "GameFramework/SaveGame.h"
+#include "Logging/MessageLog.h"
+#include "Misc/UObjectToken.h"
 #include "Net/UnrealNetwork.h"
 #include "Rules/GameItemContainerLink.h"
 
@@ -246,6 +248,20 @@ void UGameItemContainerComponent::AddDefaultContainers()
 	for (const FGameItemContainerSpec& ContainerSpec : DefaultContainers)
 	{
 		CreateContainer(ContainerSpec, false);
+	}
+
+	if (!ContainerLinks.IsEmpty())
+	{
+#if !NO_LOGGING
+		FMessageLog("PIE").Warning()
+		                  ->AddText(INVTEXT("ContainerLinks is deprecated, create a GameItemContainerGraph to setup multiple connected containers"))
+		                  ->AddToken(FUObjectToken::Create(GetOwner()->GetClass()));
+#endif
+
+		for (const FGameItemContainerLinkSpec& Link : ContainerLinks)
+		{
+			CreateContainerLink(Link, this, false);
+		}
 	}
 
 	ResolveAllContainerLinks();
