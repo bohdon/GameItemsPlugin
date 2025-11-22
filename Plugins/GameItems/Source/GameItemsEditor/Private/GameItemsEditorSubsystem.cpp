@@ -38,7 +38,7 @@ TArray<TSubclassOf<UGameItemDef>> UGameItemsEditorSubsystem::GetSelectedItems()
 	return Result;
 }
 
-UGameItemFragment* UGameItemsEditorSubsystem::FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass)
+UGameItemFragment* UGameItemsEditorSubsystem::FindMutableFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass)
 {
 	if (!ItemDef)
 	{

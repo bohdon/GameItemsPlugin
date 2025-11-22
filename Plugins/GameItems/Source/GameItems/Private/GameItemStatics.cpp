@@ -36,17 +36,20 @@ UGameItemContainer* UGameItemStatics::GetItemContainerForActor(AActor* Actor, FG
 	return ItemSubsystem ? ItemSubsystem->GetContainerForActor(Actor, ContainerId) : nullptr;
 }
 
-const UGameItemFragment* UGameItemStatics::FindGameItemFragment(const UObject* WorldContextObject, TSubclassOf<UGameItemDef> ItemDef,
-                                                                TSubclassOf<UGameItemFragment> FragmentClass)
+const UGameItemFragment* UGameItemStatics::FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass)
 {
-	const UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(WorldContextObject);
-	return ItemSubsystem ? ItemSubsystem->FindFragment(ItemDef, FragmentClass) : nullptr;
+	if (!ItemDef || !FragmentClass)
+	{
+		return nullptr;
+	}
+
+	const UGameItemDef* ItemDefCDO = GetDefault<UGameItemDef>(ItemDef);
+	return ItemDefCDO->FindFragment(FragmentClass);
 }
 
-const UGameItemFragment* UGameItemStatics::FindGameItemFragmentFromItem(const UObject* WorldContextObject, UGameItem* Item,
-                                                                        TSubclassOf<UGameItemFragment> FragmentClass)
+const UGameItemFragment* UGameItemStatics::FindFragmentFromItem(UGameItem* Item, TSubclassOf<UGameItemFragment> FragmentClass)
 {
-	return FindGameItemFragment(WorldContextObject, Item ? Item->GetItemDef() : nullptr, FragmentClass);
+	return FindFragment(Item ? Item->GetItemDef() : nullptr, FragmentClass);
 }
 
 UGameItemContainer* UGameItemStatics::GetItemContainerById(const TArray<UGameItemContainer*>& Containers, FGameplayTag ContainerId)

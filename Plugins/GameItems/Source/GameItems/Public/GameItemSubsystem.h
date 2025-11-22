@@ -97,10 +97,12 @@ public:
 	 * Find a return an item fragment by class.
 	 * Convenience function that uses the GameItemSubsystem.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Meta = (DeterminesOutputType = "FragmentClass"), Category = "GameItems")
+	UE_DEPRECATED(5.7, "FindFragment via subsystem is deprecated, use UGameItemStatics")
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Meta = (DeterminesOutputType = "FragmentClass", DeprecatedFunction), Category = "GameItems")
 	const UGameItemFragment* FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass) const;
 
 	template <class T>
+	UE_DEPRECATED(5.7, "FindFragment via subsystem is deprecated, use UGameItemStatics")
 	const T* FindFragment(TSubclassOf<UGameItemDef> ItemDef) const
 	{
 		static_assert(TIsDerivedFrom<T, UGameItemFragment>::IsDerived, TEXT("T must derive from UGameItemFragment"));

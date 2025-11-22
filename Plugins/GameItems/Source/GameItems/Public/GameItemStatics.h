@@ -41,15 +41,26 @@ public:
 	static UGameItemContainer* GetItemContainerForActor(AActor* Actor, FGameplayTag ContainerId);
 
 	/** Find and return an item fragment by class. */
-	UFUNCTION(BlueprintCallable, Category = "GameItems", Meta = (WorldContext = "WorldContextObject", DeterminesOutputType = "FragmentClass"))
-	static const UGameItemFragment* FindGameItemFragment(const UObject* WorldContextObject, TSubclassOf<UGameItemDef> ItemDef,
-	                                                     TSubclassOf<UGameItemFragment> FragmentClass);
+	UFUNCTION(BlueprintCallable, Category = "GameItems", Meta = (DeterminesOutputType = "FragmentClass"))
+	static const UGameItemFragment* FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass);
+
+	template <class T>
+	static const T* FindFragment(TSubclassOf<UGameItemDef> ItemDef)
+	{
+		static_assert(TIsDerivedFrom<T, UGameItemFragment>::IsDerived, TEXT("T must derive from UGameItemFragment"));
+		return Cast<T>(FindFragment(ItemDef, T::StaticClass()));
+	}
 
 	/** Find and return an item fragment by class from a game item. */
-	UFUNCTION(BlueprintCallable, Category = "GameItems", Meta = (WorldContext = "WorldContextObject", DeterminesOutputType = "FragmentClass"),
-		DisplayName = "Find Fragment (Item)")
-	static const UGameItemFragment* FindGameItemFragmentFromItem(const UObject* WorldContextObject, UGameItem* Item,
-	                                                             TSubclassOf<UGameItemFragment> FragmentClass);
+	UFUNCTION(BlueprintCallable, Category = "GameItems", Meta = (DeterminesOutputType = "FragmentClass"), DisplayName = "Find Fragment (Item)")
+	static const UGameItemFragment* FindFragmentFromItem(UGameItem* Item, TSubclassOf<UGameItemFragment> FragmentClass);
+
+	template <class T>
+	static const T* FindFragmentFromItem(UGameItem* Item)
+	{
+		static_assert(TIsDerivedFrom<T, UGameItemFragment>::IsDerived, TEXT("T must derive from UGameItemFragment"));
+		return Cast<T>(FindFragmentFromItem(Item, T::StaticClass()));
+	}
 
 	/** Return an item container by id from an array of containers. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems", meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))

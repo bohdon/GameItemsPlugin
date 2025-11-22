@@ -194,13 +194,7 @@ TArray<UGameItem*> UGameItemSubsystem::CreateItemsFromDropTable(UObject* Outer, 
 
 const UGameItemFragment* UGameItemSubsystem::FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass) const
 {
-	if (!ItemDef || !FragmentClass)
-	{
-		return nullptr;
-	}
-
-	const UGameItemDef* ItemDefCDO = GetDefault<UGameItemDef>(ItemDef);
-	return ItemDefCDO->FindFragment(FragmentClass);
+	return UGameItemStatics::FindFragment(ItemDef, FragmentClass);
 }
 
 UGameItemContainerComponent* UGameItemSubsystem::GetContainerComponentForActor(const AActor* Actor) const

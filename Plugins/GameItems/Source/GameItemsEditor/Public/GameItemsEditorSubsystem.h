@@ -26,14 +26,14 @@ public:
 
 	/** Find a fragment from an item definition. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems|Editor", meta = (DeterminesOutputType = "FragmentClass"))
-	UGameItemFragment* FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass);
+	UGameItemFragment* FindMutableFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass);
 
 	/** Find a fragment from an item definition. */
 	template <class T>
-	T* FindFragment(TSubclassOf<UGameItemDef> ItemDef)
+	T* FindMutableFragment(TSubclassOf<UGameItemDef> ItemDef)
 	{
 		static_assert(TIsDerivedFrom<T, UGameItemFragment>::IsDerived, TEXT("T must derive from UGameItemFragment"));
-		return Cast<T>(FindFragment(ItemDef, T::StaticClass()));
+		return Cast<T>(FindMutableFragment(ItemDef, T::StaticClass()));
 	}
 
 	/** Find or add a fragment to an item definition. */
