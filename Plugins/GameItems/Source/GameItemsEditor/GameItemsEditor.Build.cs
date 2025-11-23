@@ -21,9 +21,12 @@ public class GameItemsEditor : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
+			"AssetTools",
+			"ContentBrowser",
 			"RenderCore",
 			"Slate",
 			"SlateCore",
+			"ToolMenus",
 		});
 	}
 }

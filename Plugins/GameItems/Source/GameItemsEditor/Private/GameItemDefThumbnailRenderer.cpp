@@ -20,7 +20,15 @@
 bool UGameItemDefThumbnailRenderer::CanVisualizeAsset(UObject* Object)
 {
 	const UBlueprint* Blueprint = Cast<UBlueprint>(Object);
-	return Blueprint && Blueprint->GeneratedClass && Blueprint->GeneratedClass->IsChildOf(UGameItemDef::StaticClass());
+	if (Blueprint && Blueprint->GeneratedClass && Blueprint->GeneratedClass->IsChildOf(UGameItemDef::StaticClass()))
+	{
+		if (UGameItemDef* ItemDefCDO = Blueprint->GeneratedClass->GetDefaultObject<UGameItemDef>())
+		{
+			const TOptional<FSlateBrush> Brush = ItemDefCDO->GetEditorIcon();
+			return Brush.IsSet();
+		}
+	}
+	return false;
 }
 
 void UGameItemDefThumbnailRenderer::Draw(UObject* Object, int32 X, int32 Y, uint32 Width, uint32 Height, FRenderTarget* RenderTarget, FCanvas* Canvas,
@@ -43,8 +51,8 @@ void UGameItemDefThumbnailRenderer::Draw(UObject* Object, int32 X, int32 Y, uint
 	FCanvasTileItem BGTile(FVector2D(X, Y), GWhiteTexture, FVector2D(Width, Height), FVector2D::ZeroVector, FVector2D::UnitVector, BGColor);
 	BGTile.Draw(Canvas);
 
-	const UGameItemDef* GameItemDef = Blueprint->GeneratedClass->GetDefaultObject<UGameItemDef>();
-	const TOptional<FSlateBrush> Brush = GameItemDef->GetEditorIcon();
+	const UGameItemDef* ItemDefCDO = Blueprint->GeneratedClass->GetDefaultObject<UGameItemDef>();
+	const TOptional<FSlateBrush> Brush = ItemDefCDO->GetEditorIcon();
 	if (!Brush.IsSet())
 	{
 		return;
