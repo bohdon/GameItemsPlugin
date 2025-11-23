@@ -29,6 +29,10 @@
 		{
 			"Name": "WorldConditions",
 			"Enabled": true
+		},
+		{
+			"Name": "EngineAssetDefinitions",
+			"Enabled": true
 		}
 	]
 }

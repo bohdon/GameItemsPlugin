@@ -3,6 +3,10 @@
 
 #include "GameItemDef.h"
 
+#if WITH_EDITOR
+#include "Fragments/GameItemFragment_UIData.h"
+#endif
+
 
 const UGameItemFragment* UGameItemDef::FindFragment(TSubclassOf<UGameItemFragment> FragmentClass) const
 {
@@ -23,3 +27,11 @@ UGameItemFragment* UGameItemDef::FindFragmentInternal(TSubclassOf<UGameItemFragm
 	}
 	return nullptr;
 }
+
+#if WITH_EDITOR
+TOptional<FSlateBrush> UGameItemDef::GetEditorIcon() const
+{
+	const UGameItemFragment_UIData* UIData = FindFragment<UGameItemFragment_UIData>();
+	return (UIData && UIData->Icon) ? UIData->Icon->Brush : TOptional<FSlateBrush>();
+}
+#endif

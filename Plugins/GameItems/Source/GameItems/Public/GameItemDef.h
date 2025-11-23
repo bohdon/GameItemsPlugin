@@ -55,6 +55,11 @@ public:
 		return (T*)FindFragment(T::StaticClass());
 	}
 
+#if WITH_EDITOR
+	/** Return the editor icon for this item. */
+	virtual TOptional<struct FSlateBrush> GetEditorIcon() const;
+#endif
+
 protected:
 	UGameItemFragment* FindFragmentInternal(TSubclassOf<UGameItemFragment> FragmentClass) const;
 };

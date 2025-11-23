@@ -8,17 +8,22 @@ public class GameItemsEditor : ModuleRules
 	{
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
+			"AssetDefinition",
 			"Core",
+			"CoreUObject",
 			"EditorSubsystem",
+			"Engine",
+			"EngineAssetDefinitions",
 			"GameItems",
+			"UMG",
+			"UnrealEd",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
-			"CoreUObject",
-			"Engine",
+			"RenderCore",
 			"Slate",
-			"SlateCore"
+			"SlateCore",
 		});
 	}
 }
