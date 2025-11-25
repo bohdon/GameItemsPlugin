@@ -19,6 +19,15 @@ class GAMEITEMS_API UGameItemDef : public UObject
 	GENERATED_BODY()
 
 public:
+	UGameItemDef(const FObjectInitializer& ObjectInitializer);
+
+	/**
+	 * The game item class to instances for this definition.
+	 * This allows extending transient or saved state per item instance.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItem", NoClear, AdvancedDisplay)
+	TSubclassOf<UGameItem> ItemClass;
+
 	/** The tags that this item has. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameItem", meta = (GameplayTagFilter="GameItemTagsCategory"))
 	FGameplayTagContainer OwnedTags;

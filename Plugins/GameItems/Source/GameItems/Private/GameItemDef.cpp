@@ -3,10 +3,18 @@
 
 #include "GameItemDef.h"
 
+#include "GameItem.h"
+
 #if WITH_EDITOR
 #include "Fragments/GameItemFragment_UIData.h"
 #endif
 
+
+UGameItemDef::UGameItemDef(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	ItemClass = UGameItem::StaticClass();
+}
 
 const UGameItemFragment* UGameItemDef::FindFragment(TSubclassOf<UGameItemFragment> FragmentClass) const
 {

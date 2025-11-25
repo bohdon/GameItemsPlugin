@@ -39,7 +39,14 @@ UGameItem* UGameItemSubsystem::CreateItem(UObject* Outer, TSubclassOf<UGameItemD
 		return nullptr;
 	}
 
-	UGameItem* NewItem = NewObject<UGameItem>(Outer);
+	const UGameItemDef* ItemDefCDO = ItemDef->GetDefaultObject<UGameItemDef>();
+	TSubclassOf<UGameItem> ItemClass = ItemDefCDO->ItemClass;
+	if (!ensureMsgf(ItemClass, TEXT("%s.ItemClass is not valid"), *ItemDef->GetName()))
+	{
+		ItemClass = UGameItem::StaticClass();
+	}
+
+	UGameItem* NewItem = NewObject<UGameItem>(Outer, ItemClass);
 	NewItem->SetItemDef(ItemDef);
 	NewItem->SetCount(Count);
 
