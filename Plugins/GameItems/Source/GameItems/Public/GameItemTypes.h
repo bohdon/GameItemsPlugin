@@ -118,10 +118,10 @@ struct GAMEITEMS_API FGameItemTagStack : public FFastArraySerializerItem
 		return Tag != Other.Tag || Count != Other.Count;
 	}
 
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	FGameplayTag Tag;
 
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	int32 Count = 0;
 };
 
@@ -181,7 +181,7 @@ struct GAMEITEMS_API FGameItemTagStackContainer : public FFastArraySerializer
 	}
 
 	/** Replicated array of gameplay tag stacks. */
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TArray<FGameItemTagStack> Stacks;
 
 	/** Cached map of stack counts by tag, for faster lookup. */
