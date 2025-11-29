@@ -406,15 +406,15 @@ struct GAMEITEMS_API FGameItemSaveData
 	FGameItemSaveData(const FGuid& InGuid);
 
 	/** The unique id of this item. */
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	FGuid Guid;
 
 	/** The item definition class. */
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TSoftClassPtr<UGameItemDef> ItemDef;
 
 	/** The item's serialized SaveGame properties. */
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TArray<uint8> ByteData;
 };
 
@@ -428,11 +428,11 @@ struct GAMEITEMS_API FGameItemContainerSaveData
 	GENERATED_BODY()
 
 	/** All items in the container by slot */
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TMap<int32, FGameItemSaveData> ItemList;
 
 	/** The container's serialized SaveGame properties. */
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TArray<uint8> ByteData;
 };
 
@@ -446,7 +446,7 @@ struct GAMEITEMS_API FGameItemContainerCollectionSaveData
 	GENERATED_BODY()
 
 	/** Save data for all containers by id. */
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TMap<FGameplayTag, FGameItemContainerSaveData> Containers;
 };
 
@@ -462,10 +462,10 @@ struct GAMEITEMS_API FPlayerAndWorldGameItemSaveData
 	GENERATED_BODY()
 
 	/** Save data for all the player's item collections. */
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TMap<FName, FGameItemContainerCollectionSaveData> PlayerItemData;
 
 	/** Save data for all world item containers. */
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TMap<FName, FGameItemContainerCollectionSaveData> WorldItemData;
 };
