@@ -190,6 +190,14 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
 	TArray<UGameItem*> FindItemsByDef(TSubclassOf<UGameItemDef> ItemDef) const;
 
+	/** Return the first item matching tag requirements. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
+	UGameItem* FindFirstItemByTag(FGameplayTagContainer RequireTags, FGameplayTagContainer IgnoreTags) const;
+
+	/** Return all items matching tag requirements. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer", meta = (GameplayTagFilter = "GameItemTagsCategory"))
+	TArray<UGameItem*> FindItemsByTag(FGameplayTagContainer RequireTags, FGameplayTagContainer IgnoreTags) const;
+
 	/**
 	 * Return the first stack of an item that matches another item.
 	 * See UGameItem::IsMatching.

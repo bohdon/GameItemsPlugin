@@ -726,6 +726,41 @@ TArray<UGameItem*> UGameItemContainer::FindItemsByDef(TSubclassOf<UGameItemDef> 
 	return Result;
 }
 
+UGameItem* UGameItemContainer::FindFirstItemByTag(FGameplayTagContainer RequireTags, FGameplayTagContainer IgnoreTags) const
+{
+	if (RequireTags.IsEmpty() && IgnoreTags.IsEmpty())
+	{
+		return nullptr;
+	}
+	for (const FGameItemListEntry& Entry : ItemList.GetEntries())
+	{
+		UGameItem* EntryItem = Entry.Item;
+		if (IsValid(EntryItem) && EntryItem->GetOwnedTags().HasAll(RequireTags) && !EntryItem->GetOwnedTags().HasAny(IgnoreTags))
+		{
+			return EntryItem;
+		}
+	}
+	return nullptr;
+}
+
+TArray<UGameItem*> UGameItemContainer::FindItemsByTag(FGameplayTagContainer RequireTags, FGameplayTagContainer IgnoreTags) const
+{
+	TArray<UGameItem*> Result;
+	if (RequireTags.IsEmpty() && IgnoreTags.IsEmpty())
+	{
+		return Result;
+	}
+	for (const FGameItemListEntry& Entry : ItemList.GetEntries())
+	{
+		UGameItem* EntryItem = Entry.Item;
+		if (IsValid(EntryItem) && EntryItem->GetOwnedTags().HasAll(RequireTags) && !EntryItem->GetOwnedTags().HasAny(IgnoreTags))
+		{
+			Result.Add(EntryItem);
+		}
+	}
+	return Result;
+}
+
 UGameItem* UGameItemContainer::FindFirstMatchingItem(const UGameItem* Item) const
 {
 	for (const FGameItemListEntry& Entry : ItemList.GetEntries())
