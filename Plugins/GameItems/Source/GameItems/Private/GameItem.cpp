@@ -60,45 +60,43 @@ void UGameItem::SetCount(int32 NewCount)
 	}
 }
 
-void UGameItem::AddTagStat(FGameplayTag Tag, int32 DeltaValue)
+bool UGameItem::HasTagStat(FGameplayTag Tag) const
 {
-	if (DeltaValue <= 0)
-	{
-		return;
-	}
-
-	const int32 OldValue = TagStats.GetStackCount(Tag);
-	TagStats.AddStack(Tag, DeltaValue);
-	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, TagStats, this);
-	const int32 NewValue = TagStats.GetStackCount(Tag);
-
-	if (OldValue != NewValue)
-	{
-		OnTagStatChangedEvent.Broadcast(Tag, NewValue, OldValue);
-	}
+	return TagStats.ContainsTag(Tag);
 }
 
-void UGameItem::RemoveTagStat(FGameplayTag Tag, int32 DeltaValue)
+void UGameItem::SetTagStat(FGameplayTag Tag, int32 NewCount)
 {
-	if (DeltaValue <= 0)
+	const int32 OldValue = TagStats.GetStackCount(Tag);
+	if (!TagStats.SetStackCount(Tag, NewCount))
 	{
 		return;
 	}
 
-	const int32 OldValue = TagStats.GetStackCount(Tag);
-	TagStats.RemoveStack(Tag, DeltaValue);
 	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, TagStats, this);
 	const int32 NewValue = TagStats.GetStackCount(Tag);
 
-	if (OldValue != NewValue)
-	{
-		OnTagStatChangedEvent.Broadcast(Tag, NewValue, OldValue);
-	}
+	OnTagStatChangedEvent.Broadcast(Tag, NewValue, OldValue);
 }
 
 int32 UGameItem::GetTagStat(FGameplayTag Tag) const
 {
 	return TagStats.GetStackCount(Tag);
+}
+
+void UGameItem::AddTagStat(FGameplayTag Tag, int32 DeltaValue)
+{
+	SetTagStat(Tag, GetTagStat(Tag) + DeltaValue);
+}
+
+void UGameItem::RemoveTagStat(FGameplayTag Tag, int32 DeltaValue)
+{
+	SetTagStat(Tag, GetTagStat(Tag) - DeltaValue);
+}
+
+const TMap<FGameplayTag, int32>& UGameItem::GetAllTagStats() const
+{
+	return TagStats.StackCountMap;
 }
 
 bool UGameItem::IsMatching(const UGameItem* Item) const

@@ -18,7 +18,7 @@ class GAMEITEMS_API UGameItemFragment_TagStats : public UGameItemFragment
 
 public:
 	/** The default stats for this item. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TagStats")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TagStats", meta = (GameplayTagFilter = "GameItemStatTagsCategory"))
 	TMap<FGameplayTag, int32> DefaultStats;
 
 	virtual void OnItemCreated(UGameItem* Item) const override;

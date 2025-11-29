@@ -54,17 +54,29 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
 	void SetCount(int32 NewCount);
 
-	/** Increase the value of a stat tag. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	/** Return true if the item has a stat. */
+	UFUNCTION(BlueprintPure, Category = "GameItems", meta = (GameplayTagFilter = "GameItemStatTagsCategory"))
+	bool HasTagStat(FGameplayTag Tag) const;
+
+	/** Set the value of a stat. */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems", meta = (GameplayTagFilter = "GameItemStatTagsCategory"))
+	void SetTagStat(FGameplayTag Tag, int32 NewCount);
+
+	/** Return the value of a stat, or 0 if it doesn't exist. */
+	UFUNCTION(BlueprintPure, Category = "GameItems", meta = (GameplayTagFilter = "GameItemStatTagsCategory"))
+	int32 GetTagStat(FGameplayTag Tag) const;
+
+	/** Increase the value of a stat. */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems", meta = (GameplayTagFilter = "GameItemStatTagsCategory"))
 	void AddTagStat(FGameplayTag Tag, int32 DeltaValue);
 
-	/** Decrease the value of a stat tag. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	/** Decrease the value of a stat. */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems", meta = (GameplayTagFilter = "GameItemStatTagsCategory"))
 	void RemoveTagStat(FGameplayTag Tag, int32 DeltaValue);
 
-	/** Return the value of a stat. */
+	/** Return a map of all tag stats and their values. */
 	UFUNCTION(BlueprintPure, Category = "GameItems")
-	int32 GetTagStat(FGameplayTag Tag) const;
+	const TMap<FGameplayTag, int32>& GetAllTagStats() const;
 
 	/**
 	 * Return true if another item matches this item. Matching items must always have the same definition,

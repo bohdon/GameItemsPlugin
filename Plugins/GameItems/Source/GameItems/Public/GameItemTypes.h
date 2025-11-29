@@ -138,20 +138,17 @@ struct GAMEITEMS_API FGameItemTagStackContainer : public FFastArraySerializer
 	{
 	}
 
-	/** Add stacks to a tag. */
-	void AddStack(FGameplayTag Tag, int32 DeltaCount);
-
-	/** Remove stacks from a tag. */
-	void RemoveStack(FGameplayTag Tag, int32 DeltaCount);
+	/** Set a new count for a tag stack. Returns true if changed. */
+	bool SetStackCount(const FGameplayTag& Tag, int32 NewCount);
 
 	/** Return the stack count for a tag, or 0 if the tag is not present. */
-	int32 GetStackCount(FGameplayTag Tag) const
+	int32 GetStackCount(const FGameplayTag& Tag) const
 	{
 		return StackCountMap.FindRef(Tag);
 	}
 
 	/** Return true if there is at least one stack of a tag. */
-	bool ContainsTag(FGameplayTag Tag) const
+	bool ContainsTag(const FGameplayTag& Tag) const
 	{
 		return StackCountMap.Contains(Tag);
 	}

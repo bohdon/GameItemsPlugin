@@ -34,72 +34,40 @@ FString FGameItemTagStack::GetDebugString() const
 // FGameItemTagStackContainer
 // --------------------------
 
-void FGameItemTagStackContainer::AddStack(FGameplayTag Tag, int32 DeltaCount)
+bool FGameItemTagStackContainer::SetStackCount(const FGameplayTag& Tag, int32 NewCount)
 {
 	if (!Tag.IsValid())
 	{
 		FFrame::KismetExecutionMessage(TEXT("An invalid tag was passed to AddStack"), ELogVerbosity::Warning);
-		return;
-	}
-
-	if (DeltaCount <= 0)
-	{
-		// nothing to add
-		return;
+		return false;
 	}
 
 	for (FGameItemTagStack& Stack : Stacks)
 	{
 		if (Stack.Tag == Tag)
 		{
-			Stack.Count += DeltaCount;
+			if (Stack.Count == NewCount)
+			{
+				// no change
+				return false;
+			}
+
+			Stack.Count = NewCount;
 			StackCountMap[Tag] = Stack.Count;
 			MarkItemDirty(Stack);
-			return;
+			return true;
 		}
 	}
 
-	FGameItemTagStack& NewStack = Stacks.Emplace_GetRef(Tag, DeltaCount);
+	// allow setting to 0 (and triggering change events),
+	// so that the presence of the tag can be found
+
+	FGameItemTagStack& NewStack = Stacks.Emplace_GetRef(Tag, NewCount);
 	MarkItemDirty(NewStack);
-	StackCountMap.Add(Tag, DeltaCount);
+	StackCountMap.Add(Tag, NewCount);
+	return true;
 }
 
-void FGameItemTagStackContainer::RemoveStack(FGameplayTag Tag, int32 DeltaCount)
-{
-	if (!Tag.IsValid())
-	{
-		FFrame::KismetExecutionMessage(TEXT("An invalid tag was passed to RemoveStack"), ELogVerbosity::Warning);
-		return;
-	}
-
-	if (DeltaCount <= 0)
-	{
-		return;
-	}
-
-	for (auto It = Stacks.CreateIterator(); It; ++It)
-	{
-		FGameItemTagStack& Stack = *It;
-		if (Stack.Tag == Tag)
-		{
-			if (Stack.Count <= DeltaCount)
-			{
-				// remove the tag entirely
-				It.RemoveCurrent();
-				StackCountMap.Remove(Tag);
-				MarkArrayDirty();
-			}
-			else
-			{
-				// decrease the stack count
-				Stack.Count -= DeltaCount;
-				StackCountMap[Tag] = Stack.Count;
-				MarkItemDirty(Stack);
-			}
-			return;
-		}
-	}
-}
 
 void FGameItemTagStackContainer::PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize)
 {
