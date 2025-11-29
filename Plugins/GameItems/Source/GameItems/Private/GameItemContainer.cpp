@@ -1443,11 +1443,14 @@ ENetRole UGameItemContainer::GetLocalRole() const
 {
 	if (GetOwner()->GetNetMode() == NM_Client)
 	{
-		// on clients, use controlled pawn from a player state,
+		// if owner is a player state, use controller role on clients,
 		// since it will be marked as autonomous, and player state will not.
 		if (const APlayerState* PlayerState = GetTypedOuter<APlayerState>())
 		{
-			return PlayerState->GetPawn()->GetLocalRole();
+			if (const AController* Controller = PlayerState->GetOwningController())
+			{
+				return Controller->GetLocalRole();
+			}
 		}
 	}
 	// otherwise use direct owning actor
