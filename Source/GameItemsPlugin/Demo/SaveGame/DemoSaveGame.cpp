@@ -4,20 +4,17 @@
 #include "DemoSaveGame.h"
 
 
-UDemoSaveGame::UDemoSaveGame()
+int32 UDemoSaveGame::GetLatestDataVersion() const
 {
-	SavedDataVersion = static_cast<uint32>(EDemoSaveGameVersion::LatestVersion);
+	return static_cast<uint32>(EDemoSaveGameVersion::LatestVersion);
 }
 
-void UDemoSaveGame::Serialize(FArchive& Ar)
+void UDemoSaveGame::HandlePostLoad()
 {
-	Super::Serialize(Ar);
-
-	constexpr uint32 LatestVersion = static_cast<uint32>(EDemoSaveGameVersion::LatestVersion);
-	if (Ar.IsLoading() && SavedDataVersion != LatestVersion)
+	if (SavedDataVersion != GetLatestDataVersion())
 	{
 		// handle save game upgrades
-
-		SavedDataVersion = LatestVersion;
 	}
+
+	Super::HandlePostLoad();
 }

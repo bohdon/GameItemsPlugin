@@ -3,45 +3,34 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Subsystems/GameInstanceSubsystem.h"
+#include "Engine/GameInstance.h"
+#include "Subsystems/LocalPlayerSubsystem.h"
 #include "Templates/SubclassOf.h"
-#include "DemoSaveGameSubsystem.generated.h"
+#include "DemoPlayerSaveSubsystem.generated.h"
 
-class USaveGame;
+class ULocalPlayerSaveGame;
 
 
 /**
  * Demo subsystem for saving and loading items and other game state.
  */
 UCLASS()
-class GAMEITEMSPLUGIN_API UDemoSaveGameSubsystem : public UGameInstanceSubsystem,
-                                                   public FSelfRegisteringExec
+class GAMEITEMSPLUGIN_API UDemoPlayerSaveSubsystem
+	: public ULocalPlayerSubsystem,
+	  public FSelfRegisteringExec
 {
 	GENERATED_BODY()
 
 public:
-	UDemoSaveGameSubsystem();
-
-	/** The save game class to create. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<USaveGame> SaveGameClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString SaveSlotName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 SaveUserIndex;
-
-	/** Write the save game when stopping play in editor. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bSaveOnStopPIE;
-
-	/** Disable writing of the save game to disk. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bIsSavingDisabled;
+	UDemoPlayerSaveSubsystem();
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
+	virtual void PlayerControllerChanged(APlayerController* NewPlayerController) override;
+
+#if WITH_EDITOR
+	void OnPIEEnded(UGameInstance* GameInstance);
+#endif
 
 	// FSelfRegisteringExec
 	virtual bool Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar) override;
@@ -52,7 +41,11 @@ public:
 
 	/** Return the current save game. */
 	UFUNCTION(BlueprintPure, Category = "Save")
-	USaveGame* GetSaveGame() const { return SaveGame; }
+	ULocalPlayerSaveGame* GetSaveGame() const { return SaveGame; }
+
+	/** Load the save game, or create a new one. */
+	UFUNCTION(Exec, BlueprintCallable, Category = "Save")
+	void LoadOrCreateSaveGame();
 
 	/**
 	 * Update the current save game with the latest data from all objects in the world, but don't write
@@ -64,15 +57,7 @@ public:
 
 	/** Commit and write the current save game to disk. */
 	UFUNCTION(Exec, BlueprintCallable, Category = "Save")
-	void WriteSaveGame();
-
-	/** Load the save game. */
-	UFUNCTION(Exec, BlueprintCallable, Category = "Save")
-	bool LoadSaveGame();
-
-	/** Create a new save game. */
-	UFUNCTION(Exec, BlueprintCallable, Category = "Save")
-	void CreateSaveGame();
+	void WriteSaveGame(bool bCommit = true);
 
 	/** Delete the save game from disk. */
 	UFUNCTION(Exec, BlueprintCallable, Category = "Save")
@@ -82,13 +67,32 @@ public:
 	UFUNCTION(Exec, BlueprintCallable, Category = "Save")
 	void DumpSaveGame();
 
-	DECLARE_MULTICAST_DELEGATE_OneParam(FCommitSaveGameDelegate, USaveGame* /*SaveGame*/);
+public:
+	DECLARE_MULTICAST_DELEGATE_OneParam(FCommitSaveGameDelegate, ULocalPlayerSaveGame* /*SaveGame*/);
 
 	/** Called when gameplay state should be committed to the save game. */
 	FCommitSaveGameDelegate OnCommitSaveGameEvent;
 
+public:
+	/** The save game class to create. */
+	UPROPERTY(BlueprintReadWrite)
+	TSubclassOf<ULocalPlayerSaveGame> SaveGameClass;
+
+	UPROPERTY(BlueprintReadWrite)
+	FString SaveSlotName;
+
+#if WITH_EDITORONLY_DATA
+	/** Write the save game when stopping play in editor. */
+	UPROPERTY(BlueprintReadWrite)
+	bool bSaveOnStopPIE;
+#endif
+
+	/** Disable writing of the save game to disk. */
+	UPROPERTY(BlueprintReadWrite)
+	bool bIsSavingDisabled;
+
 protected:
 	/** The current save game. */
 	UPROPERTY()
-	TObjectPtr<USaveGame> SaveGame;
+	TObjectPtr<ULocalPlayerSaveGame> SaveGame;
 };

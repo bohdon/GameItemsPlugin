@@ -21,24 +21,20 @@ enum class EDemoSaveGameVersion : uint32
  * Save game for the demo project.
  */
 UCLASS()
-class GAMEITEMSPLUGIN_API UDemoSaveGame : public USaveGame,
-                                          public IGameItemSaveDataInterface
+class GAMEITEMSPLUGIN_API UDemoSaveGame
+	: public ULocalPlayerSaveGame,
+	  public IGameItemSaveDataInterface
 {
 	GENERATED_BODY()
 
 public:
-	UDemoSaveGame();
-	
-	/** The version when the data was saved */
-	UPROPERTY(SaveGame)
-	uint32 SavedDataVersion;
+	virtual int32 GetLatestDataVersion() const override;
+	virtual void HandlePostLoad() override;
 
 	/** Save data for all game items and containers of both the player and world. */
-	UPROPERTY(SaveGame)
+	UPROPERTY()
 	FPlayerAndWorldGameItemSaveData ItemSaveData;
 
 	// IGameItemSaveDataInterface
 	virtual FPlayerAndWorldGameItemSaveData& GetItemSaveData() override { return ItemSaveData; }
-
-	virtual void Serialize(FArchive& Ar) override;
 };
