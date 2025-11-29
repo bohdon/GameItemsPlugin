@@ -122,12 +122,12 @@ int32 UGameItemContainerComponent::GetTotalMatchingItemCount(const UGameItem* It
 
 	// TODO: cache the counts for faster lookup
 	int32 Result = 0;
-	for (const auto& Elem : ContainerMap)
+	for (const UGameItemContainer* Container : Containers)
 	{
 		// only parent containers contribute to collection count
-		if (!Elem.Value->IsChild())
+		if (!Container->IsChild())
 		{
-			Result += Elem.Value->GetTotalMatchingItemCount(Item);
+			Result += Container->GetTotalMatchingItemCount(Item);
 		}
 	}
 	return Result;
@@ -142,12 +142,12 @@ int32 UGameItemContainerComponent::GetTotalMatchingItemCountByDef(TSubclassOf<UG
 
 	// TODO: cache the counts for faster lookup
 	int32 Result = 0;
-	for (const auto& Elem : ContainerMap)
+	for (const UGameItemContainer* Container : Containers)
 	{
 		// only parent containers contribute to collection count
-		if (!Elem.Value->IsChild())
+		if (!Container->IsChild())
 		{
-			Result += Elem.Value->GetTotalItemCountByDef(ItemDef);
+			Result += Container->GetTotalItemCountByDef(ItemDef);
 		}
 	}
 	return Result;
@@ -169,9 +169,8 @@ void UGameItemContainerComponent::CommitSaveGame(USaveGame* SaveGame)
 	TMap<UGameItem*, FGuid> SavedItems;
 
 	// save parent containers
-	for (const auto& ContainerElem : ContainerMap)
+	for (UGameItemContainer* Container : Containers)
 	{
-		UGameItemContainer* Container = ContainerElem.Value;
 		if (!Container->IsChild())
 		{
 			FGameItemContainerSaveData& ContainerData = CollectionData.Containers.FindOrAdd(Container->GetContainerId());
@@ -180,9 +179,8 @@ void UGameItemContainerComponent::CommitSaveGame(USaveGame* SaveGame)
 	}
 
 	// ...then save all children, now that item guids have been created
-	for (const auto& ContainerElem : ContainerMap)
+	for (UGameItemContainer* Container : Containers)
 	{
-		UGameItemContainer* Container = ContainerElem.Value;
 		if (Container->IsChild())
 		{
 			FGameItemContainerSaveData& ContainerData = CollectionData.Containers.FindOrAdd(Container->GetContainerId());
@@ -207,9 +205,8 @@ void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame)
 	TMap<FGuid, UGameItem*> LoadedItems;
 
 	// load parent containers
-	for (const auto& ContainerElem : ContainerMap)
+	for (UGameItemContainer* Container : Containers)
 	{
-		UGameItemContainer* Container = ContainerElem.Value;
 		if (!Container->IsChild())
 		{
 			const FGameItemContainerSaveData ContainerData = CollectionData.Containers.FindRef(Container->GetContainerId());
@@ -218,9 +215,8 @@ void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame)
 	}
 
 	// ...then load all children, now that items have been created
-	for (const auto& ContainerElem : ContainerMap)
+	for (UGameItemContainer* Container : Containers)
 	{
-		UGameItemContainer* Container = ContainerElem.Value;
 		if (Container->IsChild())
 		{
 			const FGameItemContainerSaveData ContainerData = CollectionData.Containers.FindRef(Container->GetContainerId());
@@ -279,9 +275,9 @@ void UGameItemContainerComponent::CreateDefaultItems(bool bForce)
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Creating default items..."),
 	       *GetNetDebugString(), *GetReadableName());
 
-	for (auto& Elem : ContainerMap)
+	for (UGameItemContainer* Container : Containers)
 	{
-		Elem.Value->CreateDefaultItems(bForce);
+		Container->CreateDefaultItems(bForce);
 	}
 #endif
 }
@@ -438,6 +434,7 @@ void UGameItemContainerComponent::AddContainer(UGameItemContainer* Container)
 {
 #if WITH_SERVER_CODE
 	check(Container);
+	ensureAlways(!Containers.Contains(Container));
 	ensureAlways(!ContainerMap.Contains(Container->GetContainerId()));
 
 	Containers.Emplace(Container);
