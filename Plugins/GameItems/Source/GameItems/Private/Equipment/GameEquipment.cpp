@@ -256,5 +256,11 @@ USceneComponent* UGameEquipment::GetTargetAttachComponent() const
 	{
 		return Char->GetMesh();
 	}
+
+	if (USkeletalMeshComponent* FoundSkeletalMesh = OwningActor->FindComponentByClass<USkeletalMeshComponent>())
+	{
+		return FoundSkeletalMesh;
+	}
+
 	return OwningActor->GetRootComponent();
 }
