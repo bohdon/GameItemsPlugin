@@ -34,25 +34,25 @@ public:
 	virtual void Deinitialize() override;
 
 	/** Create and return a new game item from definition. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	UGameItem* CreateItem(UObject* Outer, TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
 
 	/**
 	 * Create a new game item and add it to a container.
 	 * @return The newly created items, which may have been split depending on the container rules.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void CreateItemInContainer(UGameItemContainer* Container, TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
 
 	/** Duplicate and return a new game item. If count is > 0, set a new count for the item, otherwise use the original item count. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	UGameItem* DuplicateItem(UObject* Outer, UGameItem* Item, int32 Count = -1);
 
 	/**
 	 * Split a game item and return a new item with part of the original quantity.
 	 * The split item will not be added to any container. Will return null if the item cannot be split.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	UGameItem* SplitItem(UObject* Outer, UGameItem* Item, int32 Count = 1);
 
 	/**
@@ -60,7 +60,7 @@ public:
 	 * of the item if the target container can't receive the full amount.
 	 * @return The item or items that were moved into the target container.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void MoveItem(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, UGameItem* Item, int32 TargetSlot = -1, bool bAllowPartial = true);
 
 	/**
@@ -68,7 +68,7 @@ public:
 	 * of each item if the target container can't receive the full amount.
 	 * @return The item or items that were moved into the target container.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void MoveItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, TArray<UGameItem*> Items, bool bAllowPartial = true);
 
 	/**
@@ -83,14 +83,14 @@ public:
 	 * Select items from a drop table.
 	 * @return The item definitions and quantities that were selected.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	TArray<FGameItemDefStack> SelectItemsFromDropTable(const FGameItemDropContext& Context, FDataTableRowHandle DropTableEntry);
 
 	/**
 	 * Select and create new game items from a drop table.
 	 * @return The newly created game items.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	TArray<UGameItem*> CreateItemsFromDropTable(UObject* Outer, const FGameItemDropContext& Context, FDataTableRowHandle DropTableEntry);
 
 	/**

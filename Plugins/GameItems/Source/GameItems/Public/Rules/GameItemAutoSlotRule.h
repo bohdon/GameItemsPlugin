@@ -32,10 +32,8 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	bool CanAutoSlot(UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
 
-	/**
-	 * Try auto-slotting an item.
-	 * @return True if the auto-slotting was successful. */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false, Category = "GameItems")
+	/** Try auto-slotting an item. */
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	void TryAutoSlot(UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
 
 	/** Return the best slot to use for auto-slotting an item. */
@@ -49,4 +47,9 @@ public:
 public:
 	UFUNCTION(Server, Reliable)
 	virtual void ServerTryAutoSlot(UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
+
+protected:
+	/** Implementation of the auto-slotting logic. */
+	UFUNCTION(BlueprintNativeEvent, Category = "GameItems", DisplayName = "Try Auto Slot")
+	void TryAutoSlotInternal(UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
 };

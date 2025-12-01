@@ -120,6 +120,11 @@ TArray<FGameplayDebuggerCategory_GameItems::FRepData::FContainerDebug> FGameplay
 	TArray<UGameItemContainer*> Containers = UGameItemStatics::GetAllItemContainersForActor(DebugActor);
 	for (const UGameItemContainer* Container : Containers)
 	{
+		if (!Container)
+		{
+			continue;
+		}
+
 		FRepData::FContainerDebug& ContainerData = Result.AddDefaulted_GetRef();
 		ContainerData.ContainerId = Container->GetContainerId().ToString();
 		ContainerData.NumSlots = Container->GetNumSlots();

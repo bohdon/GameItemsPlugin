@@ -16,19 +16,35 @@ bool UGameItemAutoSlotRule::CanAutoSlot_Implementation(UGameItem* Item, const FG
 	return GetContainer()->CanContainItem(Item);
 }
 
-void UGameItemAutoSlotRule::TryAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
+void UGameItemAutoSlotRule::TryAutoSlot(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
 	UGameItemContainer* Container = GetContainer();
 	check(Container);
 
-	if (!Container->HasAuthority())
+	bool bExecuteServer;
+	bool bExecuteLocal;
+	Container->GetNetExecutionPlan(bExecuteServer, bExecuteLocal);
+	if (bExecuteServer)
 	{
 		ServerTryAutoSlot(Item, ContextTags);
-		if (!Container->CanExecuteLocally())
-		{
-			return;
-		}
 	}
+	if (!bExecuteLocal)
+	{
+		return;
+	}
+
+	TryAutoSlotInternal(Item, ContextTags);
+}
+
+void UGameItemAutoSlotRule::ServerTryAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
+{
+	TryAutoSlot(Item, ContextTags);
+}
+
+void UGameItemAutoSlotRule::TryAutoSlotInternal_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
+{
+	UGameItemContainer* Container = GetContainer();
+	check(Container);
 
 	const int32 Slot = GetBestSlotForItem(Item, ContextTags);
 
@@ -48,11 +64,6 @@ void UGameItemAutoSlotRule::TryAutoSlot_Implementation(UGameItem* Item, const FG
 	}
 
 	Container->AddItem(Item, Slot);
-}
-
-void UGameItemAutoSlotRule::ServerTryAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
-{
-	TryAutoSlot(Item, ContextTags);
 }
 
 int32 UGameItemAutoSlotRule::GetBestSlotForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const

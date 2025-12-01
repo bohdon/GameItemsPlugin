@@ -12,6 +12,7 @@
 
 class UGameItemContainer;
 class UGameItemContainerDef;
+class UGameItemContainerGraph;
 class UGameItemDef;
 class USaveGame;
 
@@ -79,7 +80,7 @@ public:
 
 protected:
 	/** DEPRECATED: Use DefaultContainerGraph instead. */
-	UPROPERTY(EditDefaultsOnly, Meta = (TitleProperty = "{LinkedContainerId} {ContainerLinkClass}", DeprecatedProperty), Category = "GameItems")
+	UPROPERTY(EditDefaultsOnly, Meta = (DeprecatedProperty), Category = "GameItems", AdvancedDisplay)
 	TArray<FGameItemContainerLinkSpec> ContainerLinks;
 
 public:
@@ -135,7 +136,7 @@ public:
 	void AddDefaultContainers();
 
 	/** Create and add the default items for any newly created containers. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void CreateDefaultItems(bool bForce = false);
 
 
@@ -192,10 +193,10 @@ protected:
 	/** Register a newly created container. */
 	void AddContainer(UGameItemContainer* Container);
 
-	/** Called when a new container is added. */
+	/** Called when a new container is added (both on authority or when replicated). */
 	virtual void OnContainerAdded(UGameItemContainer* Container);
 
-	/** Called when a container is removed. */
+	/** Called when a container is removed (both on authority or when replicated). */
 	virtual void OnContainerRemoved(UGameItemContainer* Container);
 
 	/** Add new link rules to a container. */
@@ -212,5 +213,5 @@ protected:
 
 	virtual void OnRuleRemoved(UGameItemContainerRule* Rule);
 
-	FString GetNetDebugString() const;
+	FString GetDebugPrefix() const;
 };

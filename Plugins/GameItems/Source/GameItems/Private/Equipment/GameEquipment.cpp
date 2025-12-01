@@ -110,7 +110,7 @@ void UGameEquipment::Equip()
 	{
 		bIsEquipped = true;
 
-		UE_LOG(LogGameItems, Verbose, TEXT("%s[%s] Equip"), *GetOwner()->GetNetDebugString(), *GetReadableName());
+		UE_LOG(LogGameItems, Verbose, TEXT("%s[%s] Equip"), *GetOwner()->GetDebugPrefix(), *GetReadableName());
 
 		OnEquipped();
 		OnEquipped_BP();
@@ -123,7 +123,7 @@ void UGameEquipment::Unequip()
 	{
 		bIsEquipped = false;
 
-		UE_LOG(LogGameItems, Verbose, TEXT("%s[%s] Unequip"), *GetOwner()->GetNetDebugString(), *GetReadableName());
+		UE_LOG(LogGameItems, Verbose, TEXT("%s[%s] Unequip"), *GetOwner()->GetDebugPrefix(), *GetReadableName());
 
 		OnUnequipped();
 		OnUnequipped_BP();

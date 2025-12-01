@@ -54,7 +54,7 @@ public:
 
 	virtual bool CanAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;
 	virtual int32 GetAutoSlotPriorityForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;
-	virtual void TryAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;
+	virtual void TryAutoSlotInternal_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;
 	virtual int32 GetBestSlotForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;
 	virtual bool ShouldReplaceItem_Implementation(UGameItem* NewItem, UGameItem* ExistingItem, const FGameplayTagContainer& ContextTags) const override;
 

@@ -320,7 +320,7 @@ public:
 	 * Create and add the default items defined for this container.
 	 * @param bForce If true, add the items even if they had previously been added.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
 	virtual void CreateDefaultItems(bool bForce = false);
 
 	/** Return all rules applied to this container. */
@@ -407,6 +407,9 @@ public:
 	/** Return the internal ItemList for debugging. */
 	const FGameItemList& GetInternalItemList() const { return ItemList; }
 
+	FString GetDebugPrefix() const;
+
+public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FItemAddOrRemoveDelegate, UGameItem* /*Item*/);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FItemSlotChangedDelegate, int32 /*Slot*/);
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FItemSlotsChangedDelegate, int32 /*StartSlot*/, int32 /*EndSlot*/);
@@ -437,11 +440,17 @@ public:
 public:
 	virtual EGameItemContainerNetExecutionPolicy GetNetExecutionPolicy() const;
 
-	virtual ENetRole GetLocalRole() const;
+	/** Return the actor that should be used for network role / authority checks. */
+	virtual AActor* GetNetworkOwner() const;
 
-	virtual bool HasAuthority() const;
+	/** Return true if the network owner is locally controlled. */ 
+	virtual bool IsLocallyControlled() const;
 
-	virtual bool CanExecuteLocally() const;
+	/** Return whether we should execute a function via Server rps and/or locally. */ 
+	virtual void GetNetExecutionPlan(bool& bOutExecuteServer, bool& bOutExecuteLocal) const;
+
+	/** Return true if this container has authority to save and load items. */ 
+	virtual bool HasSaveAndLoadAuthority() const;
 
 	UFUNCTION(Server, Reliable)
 	void ServerAddItem(UGameItem* Item, int32 TargetSlot = -1);
@@ -472,6 +481,9 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void ServerSetItemAt(UGameItem* Item, int32 Slot);
+
+	UFUNCTION(Server, Reliable)
+	void ServerCreateDefaultItems(bool bForce = false);
 
 public:
 	/** Groups multiple slot changes during the scope, and broadcasts them all when completed. */
@@ -516,6 +528,7 @@ protected:
 	TScriptInterface<IGameItemCollectionInterface> Collection;
 
 	/** Have the default items already been added to this container? */
+	UPROPERTY(Transient, Replicated)
 	bool bHasDefaultItems = false;
 
 	/** Number of open change operations. */
@@ -556,12 +569,10 @@ protected:
 	virtual void BroadcastSlotChanges();
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual bool IsSupportedForNetworking() const override { return true; }
+	virtual bool IsSupportedForNetworking() const override;
 	virtual int32 GetFunctionCallspace(UFunction* Function, FFrame* Stack) override;
 	virtual bool CallRemoteFunction(UFunction* Function, void* Parms, struct FOutParmRec* OutParms, FFrame* Stack) override;
 	virtual void RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Context, UE::Net::EFragmentRegistrationFlags RegistrationFlags) override;
-
-	FString GetNetDebugString() const;
 
 protected:
 	/** The replicated item list struct. */

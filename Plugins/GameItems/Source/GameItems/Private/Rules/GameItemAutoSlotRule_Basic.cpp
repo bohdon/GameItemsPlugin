@@ -53,19 +53,10 @@ int32 UGameItemAutoSlotRule_Basic::GetAutoSlotPriorityForItem_Implementation(UGa
 	return CanAutoSlot(Item, ContextTags) ? Priority : 0;
 }
 
-void UGameItemAutoSlotRule_Basic::TryAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
+void UGameItemAutoSlotRule_Basic::TryAutoSlotInternal_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
 	UGameItemContainer* Container = GetContainer();
 	check(Container);
-
-	if (!Container->HasAuthority())
-	{
-		ServerTryAutoSlot(Item, ContextTags);
-		if (!Container->CanExecuteLocally())
-		{
-			return;
-		}
-	}
 
 	if (Container->Contains(Item))
 	{
@@ -77,7 +68,7 @@ void UGameItemAutoSlotRule_Basic::TryAutoSlot_Implementation(UGameItem* Item, co
 		}
 	}
 
-	Super::TryAutoSlot_Implementation(Item, ContextTags);
+	Super::TryAutoSlotInternal_Implementation(Item, ContextTags);
 }
 
 int32 UGameItemAutoSlotRule_Basic::GetBestSlotForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const

@@ -48,8 +48,8 @@ void UGameItemContainerLink_AutoSlot::OnLinkedItemAdded(UGameItem* Item)
 	check(Container);
 	if (Container->CanAutoSlot(Item, ContextTags) && (ItemQuery.IsEmpty() || ItemQuery.Matches(Item->GetOwnedTags())))
 	{
-		UE_LOG(LogGameItems, VeryVerbose, TEXT("[%s] Auto-slotting item from link: %s (%s)"),
-		       *Container->GetReadableName(), *Item->GetDebugString(), *LinkedContainerId.ToString());
+		UE_LOG(LogGameItems, VeryVerbose, TEXT("%s Auto-slotting item from link: %s (%s)"),
+			*Container->GetDebugPrefix(), *Item->GetDebugString(), *LinkedContainerId.ToString());
 
 		Container->TryAutoSlot(Item, ContextTags);
 	}

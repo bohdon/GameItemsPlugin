@@ -62,7 +62,7 @@ public:
 	TArray<TObjectPtr<UGameItemContainerRule>> Rules;
 
 	/** The policy for executing changes on this container from a client. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Network")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Network")
 	EGameItemContainerNetExecutionPolicy NetExecutionPolicy = EGameItemContainerNetExecutionPolicy::LocalPredicted;
 
 #if WITH_EDITOR

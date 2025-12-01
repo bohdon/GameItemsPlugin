@@ -9,6 +9,7 @@
 #include "GameItemDef.h"
 #include "GameItemSet.h"
 #include "GameItemsModule.h"
+#include "GameItemStatics.h"
 #include "GameItemSubsystem.h"
 #include "Algo/AnyOf.h"
 #include "Engine/ActorChannel.h"
@@ -35,6 +36,24 @@
 #endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemContainer)
+
+// used in generic "DoAction" functions to:
+// - check if we have network authority, and call ServerDoAction if local-predicted or server-initiated
+// - execute locally if local-only or local-predicted
+#define CONDITIONAL_EXECUTE(FuncName, ...) \
+	{ \
+		bool bExecuteServer; \
+		bool bExecuteLocal; \
+		GetNetExecutionPlan(bExecuteServer, bExecuteLocal); \
+		if (bExecuteServer) \
+		{ \
+			Server##FuncName(__VA_ARGS__); \
+		} \
+		if (!bExecuteLocal) \
+		{ \
+			return; \
+		} \
+	}
 
 
 // FGameItemContainerAddPlan
@@ -85,13 +104,21 @@ void UGameItemContainer::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	FDoRepLifetimeParams Params;
 	Params.bIsPushBased = true;
 
+	// TODO: replace UGameItemContainerDef with just UGameItemContainer subclasses so we can condition these out based on net execution
 	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ContainerId, Params);
 	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, DisplayName, Params);
 	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ContainerDef, Params);
 	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, Rules, Params);
 	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ChildContainers, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, bHasDefaultItems, Params);
 
 	DOREPLIFETIME(ThisClass, ItemList);
+}
+
+bool UGameItemContainer::IsSupportedForNetworking() const
+{
+	// TODO: should be false for local only, but we need to replicate some core properties for now
+	return true;
 }
 
 int32 UGameItemContainer::GetFunctionCallspace(UFunction* Function, FFrame* Stack)
@@ -136,22 +163,9 @@ void UGameItemContainer::RegisterReplicationFragments(UE::Net::FFragmentRegistra
 }
 #endif
 
-FString UGameItemContainer::GetNetDebugString() const
+FString UGameItemContainer::GetDebugPrefix() const
 {
-	if (ensure(GetWorld()))
-	{
-		switch (GetWorld()->GetNetMode())
-		{
-		case NM_DedicatedServer:
-		case NM_ListenServer:
-			return TEXT("Server: ");
-		case NM_Client:
-			return FString::Printf(TEXT("Client %d: "), UE::GetPlayInEditorID());
-		case NM_Standalone:
-		default: ;
-		}
-	}
-	return FString();
+	return FString::Printf(TEXT("%s[%s]"), *UGameItemStatics::GetNetDebugPrefix(this), *GetReadableName());
 }
 
 UObject* UGameItemContainer::GetItemOuter() const
@@ -248,8 +262,8 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 
 	if (DeltaCount == 0)
 	{
-		UE_CLOG(bWarn, LogGameItems, Warning, TEXT("%s[%s] Cant add item, max count reached: %s"),
-		        *GetNetDebugString(), *GetReadableName(), *Item->GetDebugString());
+		UE_CLOG(bWarn, LogGameItems, Warning, TEXT("%s Cant add item, max count reached: %s"),
+		        *GetDebugPrefix(), *Item->GetDebugString());
 		Plan.UpdateDerivedValues(Item->GetCount());
 		return Plan;
 	}
@@ -257,8 +271,8 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 	if (DeltaCount < Item->GetCount())
 	{
 		UE_CLOG(bWarn, LogGameItems, Warning,
-		        TEXT("%s[%s] Adding %s, but %d will be lost due to capacity. Use CheckAddItem before adding to avoid this."),
-		        *GetNetDebugString(), *GetReadableName(), *Item->GetDebugString(), Item->GetCount() - DeltaCount);
+		        TEXT("%s Adding %s, but %d will be lost due to capacity. Use CheckAddItem before adding to avoid this."),
+		        *GetDebugPrefix(), *Item->GetDebugString(), Item->GetCount() - DeltaCount);
 	}
 
 	// repeatedly add the item, splitting and stacking as necessary
@@ -286,8 +300,8 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 		{
 			// out of space
 			UE_CLOG(bWarn, LogGameItems, Warning,
-			        TEXT("%s[%s] Adding %s, but %d will be lost due to limited slot capacity. Use CheckAddItem before adding to avoid this."),
-			        *GetNetDebugString(), *GetReadableName(), *Item->GetDebugString(), RemainingCountToAdd);
+			        TEXT("%s Adding %s, but %d will be lost due to limited slot capacity. Use CheckAddItem before adding to avoid this."),
+			        *GetDebugPrefix(), *Item->GetDebugString(), RemainingCountToAdd);
 			break;
 		}
 
@@ -344,14 +358,7 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 
 void UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot)
 {
-	if (!HasAuthority())
-	{
-		ServerAddItem(Item, TargetSlot);
-		if (!CanExecuteLocally())
-		{
-			return;
-		}
-	}
+	CONDITIONAL_EXECUTE(AddItem, Item, TargetSlot)
 
 	FScopedSlotChanges SlotChangeScope(this);
 
@@ -397,14 +404,7 @@ void UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot)
 
 void UGameItemContainer::AddItems(TArray<UGameItem*> Items, int32 TargetSlot)
 {
-	if (!HasAuthority())
-	{
-		ServerAddItems(Items, TargetSlot);
-		if (!CanExecuteLocally())
-		{
-			return;
-		}
-	}
+	CONDITIONAL_EXECUTE(AddItems, Items, TargetSlot)
 
 	if (Items.IsEmpty())
 	{
@@ -421,14 +421,7 @@ void UGameItemContainer::AddItems(TArray<UGameItem*> Items, int32 TargetSlot)
 
 void UGameItemContainer::RemoveItem(UGameItem* Item)
 {
-	if (!HasAuthority())
-	{
-		ServerRemoveItem(Item);
-		if (!CanExecuteLocally())
-		{
-			return;
-		}
-	}
+	CONDITIONAL_EXECUTE(RemoveItem, Item)
 
 	if (!Item)
 	{
@@ -444,14 +437,7 @@ void UGameItemContainer::RemoveItem(UGameItem* Item)
 
 void UGameItemContainer::RemoveItems(TArray<UGameItem*> Items)
 {
-	if (!HasAuthority())
-	{
-		ServerRemoveItems(Items);
-		if (!CanExecuteLocally())
-		{
-			return;
-		}
-	}
+	CONDITIONAL_EXECUTE(RemoveItems, Items)
 
 	if (Items.IsEmpty())
 	{
@@ -467,14 +453,7 @@ void UGameItemContainer::RemoveItems(TArray<UGameItem*> Items)
 
 void UGameItemContainer::RemoveItemAt(int32 Slot)
 {
-	if (!HasAuthority())
-	{
-		ServerRemoveItemAt(Slot);
-		if (!CanExecuteLocally())
-		{
-			return;
-		}
-	}
+	CONDITIONAL_EXECUTE(RemoveItemAt, Slot)
 
 	if (!ItemList.HasItemInSlot(Slot))
 	{
@@ -495,14 +474,7 @@ void UGameItemContainer::RemoveItemAt(int32 Slot)
 
 void UGameItemContainer::RemoveItemsByDef(TSubclassOf<UGameItemDef> ItemDef, int32 Count)
 {
-	if (!HasAuthority())
-	{
-		ServerRemoveItemsByDef(ItemDef, Count);
-		if (!CanExecuteLocally())
-		{
-			return;
-		}
-	}
+	CONDITIONAL_EXECUTE(RemoveItemsByDef, ItemDef, Count)
 
 	if (!ItemDef)
 	{
@@ -535,14 +507,7 @@ void UGameItemContainer::RemoveItemsByDef(TSubclassOf<UGameItemDef> ItemDef, int
 
 void UGameItemContainer::RemoveAllItems()
 {
-	if (!HasAuthority())
-	{
-		ServerRemoveAllItems();
-		if (!CanExecuteLocally())
-		{
-			return;
-		}
-	}
+	CONDITIONAL_EXECUTE(RemoveAllItems)
 
 	// gather items that will be removed, and record which slot they were in
 	int32 MaxSlot = 0;
@@ -579,14 +544,7 @@ void UGameItemContainer::RemoveAllItems()
 
 void UGameItemContainer::SwapItems(int32 SlotA, int32 SlotB)
 {
-	if (!HasAuthority())
-	{
-		ServerSwapItems(SlotA, SlotB);
-		if (!CanExecuteLocally())
-		{
-			return;
-		}
-	}
+	CONDITIONAL_EXECUTE(SwapItems, SlotA, SlotB)
 
 	if (!IsValidSlot(SlotA) || !IsValidSlot(SlotB) || SlotA == SlotB)
 	{
@@ -604,14 +562,7 @@ void UGameItemContainer::SwapItems(int32 SlotA, int32 SlotB)
 
 void UGameItemContainer::StackItems(int32 FromSlot, int32 ToSlot, bool bAllowPartial)
 {
-	if (!HasAuthority())
-	{
-		ServerStackItems(FromSlot, ToSlot);
-		if (!CanExecuteLocally())
-		{
-			return;
-		}
-	}
+	CONDITIONAL_EXECUTE(StackItems, FromSlot, ToSlot, bAllowPartial)
 
 	UGameItem* FromItem = GetItemAt(FromSlot);
 	UGameItem* ToItem = GetItemAt(ToSlot);
@@ -802,14 +753,7 @@ int32 UGameItemContainer::GetItemSlot(const UGameItem* Item) const
 
 void UGameItemContainer::SetItemAt(UGameItem* Item, int32 Slot)
 {
-	if (!HasAuthority())
-	{
-		ServerSetItemAt(Item, Slot);
-		if (!CanExecuteLocally())
-		{
-			return;
-		}
-	}
+	CONDITIONAL_EXECUTE(SetItemAt, Item, Slot)
 
 	if (GetItemAt(Slot) != Item)
 	{
@@ -1077,6 +1021,8 @@ int32 UGameItemContainer::GetRemainingCollectionSpaceForItem(const UGameItem* It
 
 void UGameItemContainer::CreateDefaultItems(bool bForce)
 {
+	CONDITIONAL_EXECUTE(CreateDefaultItems, bForce)
+
 	if (bHasDefaultItems && !bForce)
 	{
 		return;
@@ -1090,8 +1036,8 @@ void UGameItemContainer::CreateDefaultItems(bool bForce)
 			continue;
 		}
 
-		UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Creating default item: %s (x%d)"),
-		       *GetNetDebugString(), *GetReadableName(), *DefaultItem.ItemDef->GetName(), DefaultItem.Count);
+		UE_LOG(LogGameItems, VeryVerbose, TEXT("%s Creating default item: %s (x%d)"),
+		       *GetDebugPrefix(), *DefaultItem.ItemDef->GetName(), DefaultItem.Count);
 		ItemSubsystem->CreateItemInContainer(this, DefaultItem.ItemDef, DefaultItem.Count);
 	}
 
@@ -1102,8 +1048,8 @@ void UGameItemContainer::CreateDefaultItems(bool bForce)
 			continue;
 		}
 
-		UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Creating default items from set: %s"),
-		       *GetNetDebugString(), *GetReadableName(), *ItemSet->GetName());
+		UE_LOG(LogGameItems, VeryVerbose, TEXT("%s Creating default items from set: %s"),
+		       *GetDebugPrefix(), *ItemSet->GetName());
 		ItemSet->AddToContainer(this);
 	}
 
@@ -1112,13 +1058,14 @@ void UGameItemContainer::CreateDefaultItems(bool bForce)
 		FGameItemDropContext Context;
 		Context.TargetActor = GetOwner();
 
-		UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Creating default items from drop content: %s"),
-		       *GetNetDebugString(), *GetReadableName(), *GetContainerDefCDO()->DefaultDropContent.ToDebugString());
+		UE_LOG(LogGameItems, VeryVerbose, TEXT("%s Creating default items from drop content: %s"),
+		       *GetDebugPrefix(), *GetContainerDefCDO()->DefaultDropContent.ToDebugString());
 		const TArray<UGameItem*> NewItems = ItemSubsystem->CreateItemsFromDropTable(this, Context, GetContainerDefCDO()->DefaultDropContent);
 		AddItems(NewItems);
 	}
 
 	bHasDefaultItems = true;
+	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, bHasDefaultItems, this);
 }
 
 UGameItemContainerRule* UGameItemContainer::GetRule(TSubclassOf<UGameItemContainerRule> RuleClass) const
@@ -1216,21 +1163,17 @@ TArray<UGameItemContainer*> UGameItemContainer::GetChildren() const
 
 void UGameItemContainer::RegisterChild(UGameItemContainer* ChildContainer)
 {
-#if WITH_SERVER_CODE
 	if (ChildContainer)
 	{
 		ChildContainers.AddUnique(ChildContainer);
 		MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, ChildContainers, this);
 	}
-#endif
 }
 
 void UGameItemContainer::UnregisterChild(UGameItemContainer* ChildContainer)
 {
-#if WITH_SERVER_CODE
 	ChildContainers.Remove(ChildContainer);
 	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, ChildContainers, this);
-#endif
 }
 
 int32 UGameItemContainer::GetAutoSlotPriorityForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const
@@ -1367,6 +1310,13 @@ void UGameItemContainer::ServerSetItemAt_Implementation(UGameItem* Item, int32 S
 
 void UGameItemContainer::CommitSaveData(FGameItemContainerSaveData& ContainerData, TMap<UGameItem*, FGuid>& SavedItems)
 {
+	if (!ensureAlwaysMsgf(HasSaveAndLoadAuthority(),
+		TEXT("Attempted to commit item save data without authority: %s (NetExecutionPolicy: %s)"),
+		*GetReadableName(), *UEnum::GetValueAsString(GetNetExecutionPolicy())))
+	{
+		return;
+	}
+
 	// serialize all items
 	bool bIsChild = IsChild();
 	ContainerData.ItemList.Reset();
@@ -1405,6 +1355,13 @@ void UGameItemContainer::CommitSaveData(FGameItemContainerSaveData& ContainerDat
 
 void UGameItemContainer::LoadSaveData(const FGameItemContainerSaveData& ContainerData, TMap<FGuid, UGameItem*>& LoadedItems)
 {
+	if (!ensureAlwaysMsgf(HasSaveAndLoadAuthority(),
+		TEXT("Attempted to load item save data without authority: %s (NetExecutionPolicy: %s)"),
+		*GetReadableName(), *UEnum::GetValueAsString(GetNetExecutionPolicy())))
+	{
+		return;
+	}
+
 	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
 
 	RemoveAllItems();
@@ -1429,16 +1386,16 @@ void UGameItemContainer::LoadSaveData(const FGameItemContainerSaveData& Containe
 			// create new item from save data
 			if (ItemData.ItemDef.IsNull())
 			{
-				UE_LOG(LogGameItems, Warning, TEXT("%s[%s] Found null item def when loading save game: %s.%d"),
-					*GetNetDebugString(), *GetReadableName(), *ContainerId.ToString(), Slot);
+				UE_LOG(LogGameItems, Warning, TEXT("%s Found null item def when loading save game: %s.%d"),
+					*GetDebugPrefix(), *ContainerId.ToString(), Slot);
 				continue;
 			}
 
 			const TSubclassOf<UGameItemDef> ItemDef = ItemData.ItemDef.LoadSynchronous();
 			if (!ItemDef)
 			{
-				UE_LOG(LogGameItems, Warning, TEXT("%s[%s] Failed to load item def when loading save game: %s"),
-					*GetNetDebugString(), *GetReadableName(), *ItemData.ItemDef.ToString());
+				UE_LOG(LogGameItems, Warning, TEXT("%s Failed to load item def when loading save game: %s"),
+					*GetDebugPrefix(), *ItemData.ItemDef.ToString());
 				continue;
 			}
 
@@ -1467,46 +1424,92 @@ void UGameItemContainer::LoadSaveData(const FGameItemContainerSaveData& Containe
 
 EGameItemContainerNetExecutionPolicy UGameItemContainer::GetNetExecutionPolicy() const
 {
-	if (const UGameItemContainerDef* ContainerDefCDO = GetContainerDefCDO())
-	{
-		return ContainerDefCDO->NetExecutionPolicy;
-	}
-	return EGameItemContainerNetExecutionPolicy::ServerInitiated;
+	const UGameItemContainerDef* ContainerDefCDO = GetContainerDefCDO();
+	ensureAlways(ContainerDefCDO);
+	return ContainerDefCDO ? ContainerDefCDO->NetExecutionPolicy : EGameItemContainerNetExecutionPolicy::LocalPredicted;
 }
 
-ENetRole UGameItemContainer::GetLocalRole() const
+AActor* UGameItemContainer::GetNetworkOwner() const
 {
-	if (GetOwner()->GetNetMode() == NM_Client)
+	// if owner is a player state, use controller role on clients,
+	// since it will be marked as autonomous, and player state will not.
+	if (const APlayerState* PlayerState = GetTypedOuter<APlayerState>())
 	{
-		// if owner is a player state, use controller role on clients,
-		// since it will be marked as autonomous, and player state will not.
-		if (const APlayerState* PlayerState = GetTypedOuter<APlayerState>())
+		if (AController* Controller = PlayerState->GetOwningController())
 		{
-			if (const AController* Controller = PlayerState->GetOwningController())
-			{
-				return Controller->GetLocalRole();
-			}
+			return Controller;
 		}
 	}
-	// otherwise use direct owning actor
-	return GetOwner()->GetLocalRole();
+	return GetOwner();
 }
 
-bool UGameItemContainer::HasAuthority() const
+bool UGameItemContainer::IsLocallyControlled() const
 {
-	return GetLocalRole() == ROLE_Authority;
+	AActor* Owner = GetNetworkOwner();
+	if (const APlayerController* PC = Cast<APlayerController>(Owner))
+	{
+		return PC->IsLocalController();
+	}
+	else if (const APawn* Pawn = Cast<APawn>(Owner))
+	{
+		if (Pawn->IsLocallyControlled())
+		{
+			return true;
+		}
+		if (Pawn->GetController())
+		{
+			return false;
+		}
+	}
+	return Owner->HasAuthority();
 }
 
-bool UGameItemContainer::CanExecuteLocally() const
+void UGameItemContainer::GetNetExecutionPlan(bool& bOutExecuteServer, bool& bOutExecuteLocal) const
 {
-	return GetNetExecutionPolicy() == EGameItemContainerNetExecutionPolicy::LocalPredicted && GetLocalRole() != ROLE_SimulatedProxy;
+	const AActor* Owner = GetNetworkOwner();
+	const ENetRole LocalRole = Owner->GetLocalRole();
+	const bool bIsAuthority = LocalRole == ROLE_Authority;
+	const bool bIsLocallyControlled = IsLocallyControlled();
+
+	switch (GetNetExecutionPolicy())
+	{
+	case EGameItemContainerNetExecutionPolicy::LocalOnly:
+		bOutExecuteServer = false;
+		bOutExecuteLocal = bIsLocallyControlled;
+		break;
+	case EGameItemContainerNetExecutionPolicy::LocalPredicted:
+		bOutExecuteServer = !bIsAuthority && bIsLocallyControlled;
+		bOutExecuteLocal = bIsAuthority || bIsLocallyControlled;
+		break;
+	case EGameItemContainerNetExecutionPolicy::ServerInitiated:
+		bOutExecuteServer = bIsLocallyControlled;
+		bOutExecuteLocal = bIsAuthority;
+	default:
+		check(false);
+		bOutExecuteServer = false;
+		bOutExecuteLocal = false;
+		break;
+	}
+}
+
+bool UGameItemContainer::HasSaveAndLoadAuthority() const
+{
+	switch (GetNetExecutionPolicy())
+	{
+	case EGameItemContainerNetExecutionPolicy::LocalOnly:
+		return IsLocallyControlled();
+	case EGameItemContainerNetExecutionPolicy::LocalPredicted:
+	case EGameItemContainerNetExecutionPolicy::ServerInitiated:
+	default:
+		return GetNetworkOwner()->HasAuthority();
+	}
 }
 
 void UGameItemContainer::OnItemAdded(UGameItem* Item, int32 Slot)
 {
 	check(Item);
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] [Slot %d] %s"),
-	       *GetNetDebugString(), *GetReadableName(), __func__, Slot, *Item->GetDebugString());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] [Slot %d] %s"),
+	       *GetDebugPrefix(), __func__, Slot, *Item->GetDebugString());
 
 	Item->Containers.AddUnique(this);
 	OnItemAddedEvent.Broadcast(Item);
@@ -1516,8 +1519,8 @@ void UGameItemContainer::OnItemAdded(UGameItem* Item, int32 Slot)
 void UGameItemContainer::OnItemRemoved(UGameItem* Item, int32 Slot)
 {
 	check(Item);
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] [Slot %d] %s"),
-	       *GetNetDebugString(), *GetReadableName(), __func__, Slot, *Item->GetDebugString());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] [Slot %d] %s"),
+	       *GetDebugPrefix(), __func__, Slot, *Item->GetDebugString());
 
 	Item->Containers.Remove(this);
 	OnItemRemovedEvent.Broadcast(Item);
@@ -1526,8 +1529,8 @@ void UGameItemContainer::OnItemRemoved(UGameItem* Item, int32 Slot)
 
 void UGameItemContainer::OnPostReplicatedChanges(const TArray<FGameItemList::FChange>& Changes)
 {
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] Received %d changes..."),
-		   *GetNetDebugString(), *GetReadableName(), __func__, Changes.Num());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] Received %d changes..."),
+		   *GetDebugPrefix(), __func__, Changes.Num());
 
 	FScopedSlotChanges SlotChangeScope(this);
 
@@ -1535,8 +1538,8 @@ void UGameItemContainer::OnPostReplicatedChanges(const TArray<FGameItemList::FCh
 	{
 		const FGameItemList::FChange& Change = Changes[Idx];
 
-		UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs]   %d: %s"),
-		       *GetNetDebugString(), *GetReadableName(), __func__, Idx, *Change.GetDebugString());
+		UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs]   %d: %s"),
+		       *GetDebugPrefix(), __func__, Idx, *Change.GetDebugString());
 
 		if (!Change.Item)
 		{
@@ -1622,14 +1625,14 @@ void UGameItemContainer::BroadcastSlotChanges()
 	{
 		if (Range.Start == Range.End)
 		{
-			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] OnItemSlotChanged [Slot %d]"),
-			       *GetNetDebugString(), *GetReadableName(), Range.Start);
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s OnItemSlotChanged [Slot %d]"),
+			       *GetDebugPrefix(), Range.Start);
 			OnItemSlotChangedEvent.Broadcast(Range.Start);
 		}
 		else
 		{
-			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] OnItemSlotsChanged [Slot %d..%d]"),
-			       *GetNetDebugString(), *GetReadableName(), Range.Start, Range.End);
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s OnItemSlotsChanged [Slot %d..%d]"),
+			       *GetDebugPrefix(), Range.Start, Range.End);
 			OnItemSlotsChangedEvent.Broadcast(Range.Start, Range.End);
 		}
 	};
@@ -1669,17 +1672,22 @@ void UGameItemContainer::BroadcastSlotChanges()
 		const int32 NewNumSlots = GetNumSlots();
 		if (NumSlotsPreChange != NewNumSlots)
 		{
-			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] OnNumSlotsChanged %d -> %d"),
-			       *GetNetDebugString(), *GetReadableName(), NumSlotsPreChange, NewNumSlots);
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s OnNumSlotsChanged %d -> %d"),
+			       *GetDebugPrefix(), NumSlotsPreChange, NewNumSlots);
 			OnNumSlotsChangedEvent.Broadcast(NewNumSlots, NumSlotsPreChange);
 		}
 	}
 }
 
+void UGameItemContainer::ServerCreateDefaultItems_Implementation(bool bForce)
+{
+	CreateDefaultItems(bForce);
+}
+
 void UGameItemContainer::OnRep_Rules(const TArray<UGameItemContainerRule*>& PreviousRules)
 {
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] Rules: %s"),
-	       *GetNetDebugString(), *GetReadableName(), __func__, *GetRulesDebugString());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] Rules: %s"),
+	       *GetDebugPrefix(), __func__, *GetRulesDebugString());
 
 	// find rules that got removed
 	for (UGameItemContainerRule* PreviousRule : PreviousRules)

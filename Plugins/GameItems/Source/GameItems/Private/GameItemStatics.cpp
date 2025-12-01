@@ -7,12 +7,12 @@
 #include "GameItemContainerComponent.h"
 #include "GameItemDef.h"
 #include "GameItemSubsystem.h"
+#include "UnrealEngine.h"
 #include "WorldConditionContext.h"
 #include "Algo/Accumulate.h"
 #include "Conditions/GameItemConditionSchema.h"
 #include "DropTable/GameItemDropContent.h"
 #include "Engine/Engine.h"
-#include "Engine/GameInstance.h"
 #include "Equipment/GameItemFragment_Equipment.h"
 #include "Fragments/GameItemFragment_DropRules.h"
 #include "GameFramework/Actor.h"
@@ -150,4 +150,22 @@ bool UGameItemStatics::EvaluateWorldCondition(const UObject* Owner, const FWorld
 	Context.Deactivate();
 
 	return bIsTrue;
+}
+
+FString UGameItemStatics::GetNetDebugPrefix(const UObject* WorldContextObject)
+{
+	if (const UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	{
+		switch (World->GetNetMode())
+		{
+		case NM_DedicatedServer:
+		case NM_ListenServer:
+			return TEXT("Server: ");
+		case NM_Client:
+			return GetDebugStringForWorld(World) + TEXT(": ");
+		case NM_Standalone:
+		default: ;
+		}
+	}
+	return FString();
 }

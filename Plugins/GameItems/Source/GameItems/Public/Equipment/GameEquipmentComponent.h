@@ -63,7 +63,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Equipment")
 	TArray<UGameEquipment*> GetAllEquipment() const;
 
-	FString GetNetDebugString() const;
+	FString GetDebugPrefix() const;
 
 protected:
 	void OnPreReplicatedRemove(FGameEquipmentListEntry& Entry);

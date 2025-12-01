@@ -25,6 +25,9 @@ struct FGameItemTagStackContainer;
 UENUM(BlueprintType)
 enum class EGameItemContainerNetExecutionPolicy : uint8
 {
+	/** The container only updates on the client or server that has local control. */
+	LocalOnly,
+
 	/** Execute changes immediately on autonomous clients, and trigger the same changes on the server. */
 	LocalPredicted,
 

@@ -4,6 +4,7 @@
 #include "Equipment/GameEquipmentComponent.h"
 
 #include "GameItemsModule.h"
+#include "GameItemStatics.h"
 #include "Engine/ActorChannel.h"
 #include "Engine/World.h"
 #include "Equipment/GameEquipment.h"
@@ -126,8 +127,8 @@ UGameEquipment* UGameEquipmentComponent::ApplyEquipment(TSubclassOf<UGameEquipme
 	const UGameEquipmentDef* EquipmentDefCDO = GetDefault<UGameEquipmentDef>(EquipmentDef);
 	if (EquipmentDefCDO->EquipmentClass == nullptr)
 	{
-		UE_LOG(LogGameItems, Error, TEXT("%s[%s] Cant apply equipment, %s.EquipmentClass is not set"),
-		       *GetNetDebugString(), *GetReadableName(), *EquipmentDef->GetName());
+		UE_LOG(LogGameItems, Error, TEXT("%s Cant apply equipment, %s.EquipmentClass is not set"),
+		       *GetDebugPrefix(), *EquipmentDef->GetName());
 		return nullptr;
 	}
 
@@ -147,8 +148,8 @@ UGameEquipment* UGameEquipmentComponent::ApplyEquipment(TSubclassOf<UGameEquipme
 		AddReplicatedSubObject(NewEquipment);
 	}
 
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Applied equipment: %s (Instigator: %s)"),
-	       *GetNetDebugString(), *GetReadableName(), *NewEquipment->GetName(), *GetNameSafe(Instigator));
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s Applied equipment: %s (Instigator: %s)"),
+	       *GetDebugPrefix(), *NewEquipment->GetName(), *GetNameSafe(Instigator));
 
 	return NewEquipment;
 #else
@@ -178,8 +179,8 @@ void UGameEquipmentComponent::RemoveEquipment(UGameEquipment* Equipment)
 
 	EquipmentList.RemoveEntry(Equipment);
 
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] Removed equipment: %s"),
-	       *GetNetDebugString(), *GetReadableName(), *Equipment->GetName());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s Removed equipment: %s"),
+	       *GetDebugPrefix(), *Equipment->GetName());
 #endif
 }
 
@@ -256,8 +257,8 @@ TArray<UGameEquipment*> UGameEquipmentComponent::GetAllEquipment() const
 
 void UGameEquipmentComponent::OnPreReplicatedRemove(FGameEquipmentListEntry& Entry)
 {
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] %s"),
-	       *GetNetDebugString(), *GetReadableName(), __func__, *Entry.GetDebugString());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] %s"),
+	       *GetDebugPrefix(), __func__, *Entry.GetDebugString());
 
 	if (Entry.Equipment)
 	{
@@ -275,8 +276,8 @@ void UGameEquipmentComponent::OnPreReplicatedRemove(FGameEquipmentListEntry& Ent
 
 void UGameEquipmentComponent::OnPostReplicatedAdd(FGameEquipmentListEntry& Entry)
 {
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] %s"),
-	       *GetNetDebugString(), *GetReadableName(), __func__, *Entry.GetDebugString());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] %s"),
+	       *GetDebugPrefix(), __func__, *Entry.GetDebugString());
 
 	if (Entry.Equipment)
 	{
@@ -294,8 +295,8 @@ void UGameEquipmentComponent::OnPostReplicatedAdd(FGameEquipmentListEntry& Entry
 
 void UGameEquipmentComponent::OnPostReplicatedChange(FGameEquipmentListEntry& Entry)
 {
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s[%s] [%hs] %s"),
-	       *GetNetDebugString(), *GetReadableName(), __func__, *Entry.GetDebugString());
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] %s"),
+	       *GetDebugPrefix(), __func__, *Entry.GetDebugString());
 
 	// this should only be called if the entry went from null -> valid, so treat it like OnPostReplicatedAdd
 	if (Entry.Equipment)
@@ -312,20 +313,7 @@ void UGameEquipmentComponent::OnPostReplicatedChange(FGameEquipmentListEntry& En
 	}
 }
 
-FString UGameEquipmentComponent::GetNetDebugString() const
+FString UGameEquipmentComponent::GetDebugPrefix() const
 {
-	if (ensure(GetWorld()))
-	{
-		switch (GetWorld()->GetNetMode())
-		{
-		case NM_DedicatedServer:
-		case NM_ListenServer:
-			return TEXT("Server: ");
-		case NM_Client:
-			return FString::Printf(TEXT("Client %d: "), UE::GetPlayInEditorID());
-		case NM_Standalone:
-		default: ;
-		}
-	}
-	return FString();
+	return FString::Printf(TEXT("%s[%s]"), *UGameItemStatics::GetNetDebugPrefix(this), *GetReadableName());
 }

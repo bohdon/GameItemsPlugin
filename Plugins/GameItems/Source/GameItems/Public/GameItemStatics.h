@@ -82,4 +82,7 @@ public:
 
 	static bool EvaluateWorldCondition(const UObject* Owner, const FWorldConditionQueryDefinition& Condition,
 	                                   const FWorldConditionContextData& ContextData);
+
+	/** Return a string to use as a logging prefix which distinguishes between Server/Client (or empty if standalone). */
+	static FString GetNetDebugPrefix(const UObject* WorldContextObject);
 };
