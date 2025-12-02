@@ -20,13 +20,16 @@ class GAMEPLAYABILITYITEMS_API UAbilityEquipment : public UGameEquipment
 public:
 	UAbilityEquipment(const FObjectInitializer& ObjectInitializer);
 
-	/** If true, use the level of the item that granted this equipment as the level for granted abilities and effects. */
+	/** If true, apply abilities and effects at a level defined by the tag stats of this equipment. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bUseItemLevel;
+	bool bUseLevelStat;
 
-	/** The stat tag that represents the item level to use. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (EditCondition = "bUseItemLevel"))
-	FGameplayTag ItemLevelTag;
+	/**
+	 * If set, apply abilities/effects at a level defined by this equipment's tag stats.
+	 * If granted by game items, the tag stats are copied from the item.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (EditCondition = "bUseLevelStat", GameplayTagFilter = "GameItemStatTagsCategory"))
+	FGameplayTag LevelStatTag;
 
 	/** End abilities immediately when this equipment is removed. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -36,8 +39,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bKeepAttributeSets = false;
 
-	/** Return the level of the item that instigated this equipment. */
-	virtual int32 GetItemLevel() const;
+	/** Return the level of the abilities/effects to apply. */
+	virtual int32 GetAbilityLevel() const;
 
 protected:
 	/** Ability and effect handles that were granted by this equipment. */
@@ -49,4 +52,8 @@ protected:
 
 	virtual void GiveAbilitySets();
 	virtual void RemoveAbilitySets();
+
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
+#endif
 };

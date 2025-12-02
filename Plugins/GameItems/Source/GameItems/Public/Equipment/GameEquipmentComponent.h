@@ -29,35 +29,44 @@ public:
 	virtual void Deactivate() override;
 	virtual void OnRep_IsActive() override;
 
-	/** Apply equipment to the owning actor. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
-	virtual UGameEquipment* ApplyEquipment(TSubclassOf<UGameEquipmentDef> EquipmentDef, UObject* Instigator = nullptr);
+	/** Create and apply equipment. */
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	virtual void ApplyEquipment(TSubclassOf<UGameEquipmentDef> EquipmentDef);
 
-	/** Remove equipment from the owning actor. */
+	/** Create and apply equipment using a spec, which allows setting dynamic stats for this instance. */
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	virtual void ApplyEquipmentSpec(const FGameEquipmentSpec& EquipmentSpec);
+
+	/** Remove equipment by definition. */
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	virtual void RemoveEquipmentByDef(TSubclassOf<UGameEquipmentDef> EquipmentDef);
+
+	/** Remove an equipment instance. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
 	virtual void RemoveEquipment(UGameEquipment* Equipment);
 
 	/** Remove all applied equipment from the owning actor. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	virtual void RemoveAllEquipment();
 
 	/** Return the first instance of applied equipment by class. */
 	UFUNCTION(BlueprintPure, Meta = (DeterminesOutputType = EquipmentClass), Category = "Equipment")
 	UGameEquipment* FindEquipment(TSubclassOf<UGameEquipment> EquipmentClass) const;
 
-	/** Return all instances of applied equipment by class. */
-	UFUNCTION(BlueprintPure, Meta = (DeterminesOutputType = EquipmentClass), Category = "Equipment")
-	TArray<UGameEquipment*> FindAllEquipment(TSubclassOf<UGameEquipment> EquipmentClass) const;
-
-	/** Return all instances of applied equipment by instigator. */
-	UFUNCTION(BlueprintPure, Category = "Equipment")
-	TArray<UGameEquipment*> FindAllEquipmentByInstigator(UObject* Instigator) const;
-
 	template <class T>
 	T* FindEquipment()
 	{
-		return (T*)FindEquipment(T::StaticClass());
+		static_assert(TIsDerivedFrom<T, UGameEquipment>::IsDerived, TEXT("T must derive from UGameEquipment"));
+		return Cast<T>(FindEquipment(T::StaticClass()));
 	}
+
+	/** Find applied equipment by definition. */
+	UFUNCTION(BlueprintPure, Category = "Equipment")
+	UGameEquipment* FindEquipmentByDef(TSubclassOf<UGameEquipmentDef> EquipmentDef) const;
+
+	/** Return all instances of applied equipment by class. */
+	UFUNCTION(BlueprintPure, Meta = (DeterminesOutputType = EquipmentClass), Category = "Equipment")
+	TArray<UGameEquipment*> FindAllEquipment(TSubclassOf<UGameEquipment> EquipmentClass) const;
 
 	/** Return all equipment instances. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Equipment")
@@ -66,6 +75,19 @@ public:
 	FString GetDebugPrefix() const;
 
 protected:
+	UFUNCTION(Server, Reliable)
+	void ServerApplyEquipmentSpec(const FGameEquipmentSpec& EquipmentSpec);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRemoveEquipmentByDef(TSubclassOf<UGameEquipmentDef> EquipmentDef);
+
+protected:
+	virtual void OnEquipmentApplied(UGameEquipment* Equipment);
+	virtual void OnEquipmentRemoved(UGameEquipment* Equipment);
+
+	/** Return whether we should apply/remove equipment via Server rpc and/or locally. */
+	virtual void GetNetExecutionPlan(bool& bOutExecuteServer, bool& bOutExecuteLocal) const;
+
 	void OnPreReplicatedRemove(FGameEquipmentListEntry& Entry);
 	void OnPostReplicatedAdd(FGameEquipmentListEntry& Entry);
 	void OnPostReplicatedChange(FGameEquipmentListEntry& Entry);

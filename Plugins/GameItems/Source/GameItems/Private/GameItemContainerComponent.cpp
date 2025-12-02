@@ -462,6 +462,19 @@ void UGameItemContainerComponent::CreateContainerLink(const FGameItemContainerLi
 	}
 }
 
+bool UGameItemContainerComponent::ContainsItemInAnyContainer(const UGameItem* Item) const
+{
+	// reverse look-up by the item's containers
+	for (const UGameItemContainer* Container : Item->GetContainers())
+	{
+		if (Containers.Contains(Container))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 void UGameItemContainerComponent::AddContainer(UGameItemContainer* Container)
 {
 	if (!ensure(GetOwner()->HasAuthority()))
@@ -500,8 +513,8 @@ void UGameItemContainerComponent::OnContainerAdded(UGameItemContainer* Container
 	}
 
 	// monitor for item and rule changes so that all subobjects can be replicated
-	Container->OnItemAddedEvent.AddUObject(this, &ThisClass::OnItemAdded);
-	Container->OnItemRemovedEvent.AddUObject(this, &ThisClass::OnItemRemoved);
+	Container->OnItemAddedEvent.AddUObject(this, &ThisClass::OnItemAddedToContainer, Container);
+	Container->OnItemRemovedEvent.AddUObject(this, &ThisClass::OnItemRemovedFromContainer, Container);
 	Container->OnRuleAddedEvent.AddUObject(this, &ThisClass::OnRuleAdded);
 	Container->OnRuleRemovedEvent.AddUObject(this, &ThisClass::OnRuleRemoved);
 
@@ -610,19 +623,33 @@ void UGameItemContainerComponent::OnRep_Containers(const TArray<UGameItemContain
 	}
 }
 
-void UGameItemContainerComponent::OnItemAdded(UGameItem* GameItem)
+void UGameItemContainerComponent::OnItemAddedToContainer(UGameItem* GameItem, UGameItemContainer* Container)
 {
 	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && GameItem)
 	{
 		AddReplicatedSubObject(GameItem);
 	}
+
+	if (!Container->IsChild())
+	{
+		OnItemAddedEvent.Broadcast(GameItem);
+	}
 }
 
-void UGameItemContainerComponent::OnItemRemoved(UGameItem* GameItem)
+void UGameItemContainerComponent::OnItemRemovedFromContainer(UGameItem* GameItem, UGameItemContainer* Container)
 {
 	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && GameItem && GameItem->GetContainers().IsEmpty())
 	{
 		RemoveReplicatedSubObject(GameItem);
+	}
+
+	if (!Container->IsChild())
+	{
+		// items should never belong to more than one parent container
+		if (ensure(!ContainsItemInAnyContainer(GameItem)))
+		{
+			OnItemRemovedEvent.Broadcast(GameItem);
+		}
 	}
 }
 

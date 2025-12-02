@@ -78,6 +78,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "GameItems")
 	const TMap<FGameplayTag, int32>& GetAllTagStats() const;
 
+	/** Return the tag stats container. */
+	const FGameItemTagStackContainer& GetTagStatsContainer() const { return TagStats; }
+
 	/**
 	 * Return true if another item matches this item. Matching items must always have the same definition,
 	 * but additional requirements can be defined to prevent items from stacking where undesired.

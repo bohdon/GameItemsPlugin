@@ -4,15 +4,18 @@
 #include "Equipment/AbilityEquipment.h"
 
 #include "AbilitySystemGlobals.h"
-#include "GameItem.h"
 #include "GameItemsModule.h"
 #include "Equipment/AbilityEquipmentDef.h"
+#include "Equipment/GameEquipmentComponent.h"
 #include "Equipment/GameEquipmentDef.h"
+#include "Misc/DataValidation.h"
 
+
+#define LOCTEXT_NAMESPACE "GameplayAbilityItemsEditor"
 
 UAbilityEquipment::UAbilityEquipment(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, bUseItemLevel(false)
+	, bUseLevelStat(false)
 {
 }
 
@@ -30,25 +33,13 @@ void UAbilityEquipment::OnUnequipped()
 	RemoveAbilitySets();
 }
 
-int32 UAbilityEquipment::GetItemLevel() const
+int32 UAbilityEquipment::GetAbilityLevel() const
 {
-	if (!ItemLevelTag.IsValid())
-	{
-		return -1;
-	}
-
-	const UGameItem* Item = Cast<UGameItem>(Instigator);
-	if (!Item)
-	{
-		return -1;
-	}
-
-	return Item->GetTagStat(ItemLevelTag);
+	return (bUseLevelStat && LevelStatTag.IsValid()) ? EquipmentSpec.TagStats.GetStackCount(LevelStatTag) : -1;
 }
 
 void UAbilityEquipment::GiveAbilitySets()
 {
-#if WITH_SERVER_CODE
 	// grant abilities on server only
 	if (!GetOwningActor()->HasAuthority())
 	{
@@ -58,36 +49,37 @@ void UAbilityEquipment::GiveAbilitySets()
 	const UAbilityEquipmentDef* AbilityEquipDef = GetEquipmentDefCDO<UAbilityEquipmentDef>();
 	if (!AbilityEquipDef)
 	{
-		UE_LOG(LogGameItems, Error, TEXT("[%s] %s must be a UAbilityEquipmentDef"),
-		       *GetReadableName(), *GetEquipmentDef()->GetName());
+		UE_LOG(LogGameItems, Error, TEXT("%s[%s] %s must be a UAbilityEquipmentDef"),
+			*GetOwner()->GetDebugPrefix(), *GetReadableName(), *GetEquipmentDef()->GetName());
 		return;
 	}
 
 	UAbilitySystemComponent* AbilitySystem = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwningActor());
 	if (!AbilitySystem)
 	{
-		UE_LOG(LogGameItems, Error, TEXT("[%s] No AbilitySystem found"),
-		       *GetReadableName());
+		UE_LOG(LogGameItems, Error, TEXT("%s[%s] No AbilitySystem found"),
+			*GetOwner()->GetDebugPrefix(), *GetReadableName());
 		return;
 	}
+
+	UE_LOG(LogGameItems, Verbose, TEXT("%s[%s] Giving %d ability sets"),
+		*GetOwner()->GetDebugPrefix(), *GetReadableName(), AbilityEquipDef->AbilitySets.Num());
 
 	for (const UExtendedAbilitySet* AbilitySet : AbilityEquipDef->AbilitySets)
 	{
 		if (!AbilitySet)
 		{
-			UE_LOG(LogGameItems, Error, TEXT("[%s] %s has invalid AbilitySet"),
-			       *GetReadableName(), *GetNameSafe(AbilityEquipDef));
+			UE_LOG(LogGameItems, Error, TEXT("%s[%s] %s has invalid AbilitySet"),
+				*GetOwner()->GetDebugPrefix(), *GetReadableName(), *GetNameSafe(AbilityEquipDef));
 			continue;
 		}
 
-		AbilitySetHandles = AbilitySet->GiveToAbilitySystem(AbilitySystem, Instigator, bUseItemLevel ? GetItemLevel() : -1);
+		AbilitySetHandles = AbilitySet->GiveToAbilitySystem(AbilitySystem, this, GetAbilityLevel());
 	}
-#endif
 }
 
 void UAbilityEquipment::RemoveAbilitySets()
 {
-#if WITH_SERVER_CODE
 	if (!GetOwningActor() || !GetOwningActor()->HasAuthority())
 	{
 		return;
@@ -100,5 +92,21 @@ void UAbilityEquipment::RemoveAbilitySets()
 			AbilitySetHandles.AbilitySet->RemoveFromAbilitySystem(AbilitySystem, AbilitySetHandles, bEndImmediately, bKeepAttributeSets);
 		}
 	}
-#endif
 }
+
+#if WITH_EDITOR
+EDataValidationResult UAbilityEquipment::IsDataValid(FDataValidationContext& Context) const
+{
+	EDataValidationResult Result = CombineDataValidationResults(Super::IsDataValid(Context), EDataValidationResult::Valid);
+
+	if (!LevelStatTag.IsValid())
+	{
+		Result = EDataValidationResult::Invalid;
+		Context.AddError(LOCTEXT("LevelStatTagNotSet", "LevelStatTag is not set"));
+	}
+
+	return Result;
+}
+#endif
+
+#undef LOCTEXT_NAMESPACE

@@ -446,7 +446,7 @@ public:
 	/** Return true if the network owner is locally controlled. */ 
 	virtual bool IsLocallyControlled() const;
 
-	/** Return whether we should execute a function via Server rps and/or locally. */ 
+	/** Return whether we should execute a function via Server rpc and/or locally. */ 
 	virtual void GetNetExecutionPlan(bool& bOutExecuteServer, bool& bOutExecuteLocal) const;
 
 	/** Return true if this container has authority to save and load items. */ 

@@ -37,9 +37,10 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemContainer)
 
+
 // used in generic "DoAction" functions to:
-// - check if we have network authority, and call ServerDoAction if local-predicted or server-initiated
-// - execute locally if local-only or local-predicted
+// - call ServerDoAction if we are local owner (but not authority)
+// - execute locally if authority, local-only or local-predicted
 #define CONDITIONAL_EXECUTE(FuncName, ...) \
 	{ \
 		bool bExecuteServer; \

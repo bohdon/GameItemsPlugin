@@ -25,13 +25,8 @@ void UGameEquipment::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	FDoRepLifetimeParams Params;
 	Params.bIsPushBased = true;
 
-	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, EquipmentDef, Params);
-	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, Instigator, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, EquipmentSpec, Params);
 	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, SpawnedActors, Params);
-}
-
-void UGameEquipment::OnRep_Instigator()
-{
 }
 
 void UGameEquipment::OnRep_SpawnedActors()
@@ -49,21 +44,18 @@ UWorld* UGameEquipment::GetWorld() const
 
 FString UGameEquipment::GetReadableName() const
 {
-	return FString::Printf(TEXT("%s.%s"), GetOwner() ? *GetOwner()->GetReadableName() : TEXT("(null)"), *GetName());
+	return FString::Printf(TEXT("%s(%s)"), *GetNameSafe(EquipmentSpec.EquipmentDef), *GetName());
 }
 
-void UGameEquipment::SetEquipmentDef(TSubclassOf<UGameEquipmentDef> InEquipmentDef)
+void UGameEquipment::SetEquipmentSpec(const FGameEquipmentSpec& InSpec)
 {
-	if (EquipmentDef != InEquipmentDef)
-	{
-		EquipmentDef = InEquipmentDef;
-		MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, EquipmentDef, this);
-	}
+	EquipmentSpec = InSpec;
+	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, EquipmentSpec, this);
 }
 
 const UGameEquipmentDef* UGameEquipment::GetEquipmentDefCDO() const
 {
-	return GetDefault<UGameEquipmentDef>(EquipmentDef);
+	return GetDefault<UGameEquipmentDef>(EquipmentSpec.EquipmentDef);
 }
 
 UGameEquipmentComponent* UGameEquipment::GetOwner() const
@@ -74,15 +66,6 @@ UGameEquipmentComponent* UGameEquipment::GetOwner() const
 AActor* UGameEquipment::GetOwningActor() const
 {
 	return GetTypedOuter<AActor>();
-}
-
-void UGameEquipment::SetInstigator(UObject* InInstigator)
-{
-	if (Instigator != InInstigator)
-	{
-		Instigator = InInstigator;
-		MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, Instigator, this);
-	}
 }
 
 TArray<AActor*> UGameEquipment::GetSpawnedActors() const
@@ -186,6 +169,11 @@ void UGameEquipment::SpawnEquipmentActors()
 			}
 		}
 
+		UE_LOG(LogGameItems, Verbose, TEXT("%s[%s] Spawning equipment actor: %s (NetSpawnPolicy: %s)"),
+			*GetOwner()->GetDebugPrefix(), *GetReadableName(),
+			*SpawnInfo.ActorClass->GetName(),
+			*UEnum::GetDisplayValueAsText(SpawnInfo.NetSpawnPolicy).ToString());
+
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		SpawnParams.Owner = OwningActor;
@@ -195,7 +183,7 @@ void UGameEquipment::SpawnEquipmentActors()
 
 		if (bIsReplicatedSpawn)
 		{
-			// require for the actor to be spawned on clients
+			// required for the actor to be spawned on clients
 			NewActor->SetReplicates(true);
 
 			SpawnedActors.Add(NewActor);

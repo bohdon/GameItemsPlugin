@@ -79,7 +79,7 @@ public:
 	bool bAutoAddDefaultItems = true;
 
 protected:
-	/** DEPRECATED: Use DefaultContainerGraph instead. */
+	/** DEPRECATED: Use UGameItemContainerGraph assets instead. */
 	UPROPERTY(EditDefaultsOnly, Meta = (DeprecatedProperty), Category = "GameItems", AdvancedDisplay)
 	TArray<FGameItemContainerLinkSpec> ContainerLinks;
 
@@ -139,7 +139,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void CreateDefaultItems(bool bForce = false);
 
-
 	// IGameItemContainerInterface
 	virtual TArray<UGameItemContainer*> GetAllItemContainers() const override;
 	virtual UGameItemContainer* GetItemContainer(FGameplayTag ContainerId) const override;
@@ -163,12 +162,25 @@ public:
 
 public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FContainerAddOrRemoveDelegate, UGameItemContainer* /*Container*/);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FItemAddOrRemoveDelegate, UGameItem* /*Item*/);
 
 	/** Called when a new item container is added. */
 	FContainerAddOrRemoveDelegate OnContainerAddedEvent;
 
 	/** Called when an item container is removed. */
 	FContainerAddOrRemoveDelegate OnContainerRemovedEvent;
+
+	/**
+	 * Called when a new item is added to this collection (in any container).
+	 * Use the delegates in UGameItemContainer for container-specific events.
+	 */
+	FItemAddOrRemoveDelegate OnItemAddedEvent;
+
+	/**
+	 * Called when an item is removed from this collection (no longer in any container).
+	 * Use the delegates in UGameItemContainer for container-specific events.
+	 */
+	FItemAddOrRemoveDelegate OnItemRemovedEvent;
 
 protected:
 	/** The currently applied container graphs. */
@@ -189,6 +201,9 @@ protected:
 	/** Non-replicated map of containers by id, for faster lookup. */
 	UPROPERTY(Transient)
 	TMap<FGameplayTag, TObjectPtr<UGameItemContainer>> ContainerMap;
+	
+	/** Return true if an item exists in this collection. */
+	bool ContainsItemInAnyContainer(const UGameItem* Item) const;
 
 	/** Register a newly created container. */
 	void AddContainer(UGameItemContainer* Container);
@@ -205,9 +220,9 @@ protected:
 	/** Add a new link rule to a container, if the query matches. */
 	void AddLinkRuleToContainer(UGameItemContainer* Container, const FActiveGameItemContainerLink& Link);
 
-	virtual void OnItemAdded(UGameItem* GameItem);
+	virtual void OnItemAddedToContainer(UGameItem* GameItem, UGameItemContainer* Container);
 
-	virtual void OnItemRemoved(UGameItem* GameItem);
+	virtual void OnItemRemovedFromContainer(UGameItem* GameItem, UGameItemContainer* Container);
 
 	virtual void OnRuleAdded(UGameItemContainerRule* Rule);
 

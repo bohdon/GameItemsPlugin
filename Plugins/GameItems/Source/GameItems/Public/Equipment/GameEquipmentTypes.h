@@ -3,13 +3,34 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameItemTypes.h"
 #include "Net/Serialization/FastArraySerializer.h"
 #include "Templates/SubclassOf.h"
 #include "GameEquipmentTypes.generated.h"
 
-class UGameEquipmentComponent;
 class UGameEquipment;
+class UGameEquipmentComponent;
+class UGameEquipmentDef;
 struct FGameEquipmentList;
+
+
+/**
+ * Defines an equipment definition and dynamic stats used
+ * to create and apply new equipment.
+ */
+USTRUCT(BlueprintType)
+struct FGameEquipmentSpec
+{
+	GENERATED_BODY()
+
+	/** The equipment definition, defining the equipment class and other info. */
+	UPROPERTY()
+	TSubclassOf<UGameEquipmentDef> EquipmentDef;
+
+	/** Unique stats for this equipment such as level, rarity, etc, usually pulled from granting game items. */
+	UPROPERTY()
+	FGameItemTagStackContainer TagStats;
+};
 
 
 /**

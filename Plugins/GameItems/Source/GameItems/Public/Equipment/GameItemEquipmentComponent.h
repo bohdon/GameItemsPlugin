@@ -4,13 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameEquipmentComponent.h"
-#include "GameplayTagContainer.h"
 #include "WorldConditionQuery.h"
 #include "GameItemEquipmentComponent.generated.h"
 
-class UGameItemContainerComponent;
 class UGameItem;
 class UGameItemContainer;
+class UGameItemContainerComponent;
 class UGameItemFragment_Equipment;
 
 
@@ -35,6 +34,7 @@ struct FGameItemEquipmentConditionState
 
 /**
  * A UGameEquipmentComponent that handles applying equipment granted by items.
+ * Monitors items in a UGameItemContainerComponent/collection (rather than individual containers).
  */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GAMEITEMS_API UGameItemEquipmentComponent : public UGameEquipmentComponent
@@ -44,74 +44,38 @@ class GAMEITEMS_API UGameItemEquipmentComponent : public UGameEquipmentComponent
 public:
 	UGameItemEquipmentComponent(const FObjectInitializer& ObjectInitializer);
 
-	/**
-	 * Query used to filter game item containers when finding or monitoring containers.
-	 * If empty, all containers are included.
-	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (GameplayTagFilter = "GameItemContainerIdTagsCategory"))
-	FGameplayTagQuery ContainerQuery;
+	virtual void InitializeComponent() override;
+	virtual void UninitializeComponent() override;
+
+	/** Monitor all items in a component, and apply any equipment from existing items whose conditions are met. */
+	UFUNCTION(BlueprintCallable, Category = "GameEquipment")
+	void RegisterItemContainerComponent(UGameItemContainerComponent* ItemContainerComponent);
+
+	/** Stop monitoring an item container component, and remove any equipment applied by its items. */
+	UFUNCTION(BlueprintCallable, Category = "GameEquipment")
+	void UnregisterItemContainerComponent(UGameItemContainerComponent* ItemContainerComponent);
+
+	/** Return all currently registered container components. */
+	const TArray<TWeakObjectPtr<UGameItemContainerComponent>>& GetRegisteredContainerComponents() const { return RegisteredContainerComponents; }
 
 	/**
-	 * Only add parent containers (that actually store items) when finding or monitoring containers.
-	 * Item slotted events allow monitoring changes that are relevant to equipment conditions, so it's often
-	 * desired to monitor only parent containers in order to detect the presence of new items.
+	 * Return the equipment fragment to use for an item.
+	 * Can be overridden to find a specific fragment if there are potentially multiple on one item.
 	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (GameplayTagFilter = "GameItemContainerIdTagsCategory"))
-	bool bIgnoreChildContainers = true;
-
-	/**
-	 * Automatically call FindAllItemContainers on BeginPlay, using the default container query,
-	 * and ignoring child containers. It's common to disable this and add containers once the character
-	 * is initialized and ready for equipment.
-	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (GameplayTagFilter = "GameItemContainerIdTagsCategory"))
-	bool bAutoFindContainers = true;
+	UFUNCTION(BlueprintNativeEvent, Category = "Equipment")
+	const UGameItemFragment_Equipment* GetItemEquipmentFragment(UGameItem* Item) const;
 
 	/** Return all equipment that was granted by an item. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Equipment")
-	TArray<UGameEquipment*> FindAllEquipmentFromItem(UGameItem* Item) const;
-
-	/** Add an item container as a source of items for providing equipment. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameEquipment")
-	void AddItemContainer(UGameItemContainer* ItemContainer);
-
-	/** Remove an item container as a source of items for providing equipment. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameEquipment")
-	void RemoveItemContainer(UGameItemContainer* ItemContainer);
-
-	/** Return all currently registered containers. */
-	const TArray<TWeakObjectPtr<UGameItemContainer>>& GetRegisteredContainers() const { return RegisteredContainers; }
-
-	/**
-	 * Find and add all item containers matching the query, and optionally
-	 * listen for containers added or removed on the item component.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameEquipment")
-	void FindItemContainers(bool bMonitorNewContainers = true);
-
-	/** Monitor containers being added/removed from an item component, and register any that match the container query. */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameEquipment")
-	void MonitorItemContainersFromComponent(UGameItemContainerComponent* ItemContainerComponent);
-
-	/** Return the equipment fragment for an item, or null if it has one or the fragment is invalid. */
-	virtual const UGameItemFragment_Equipment* GetItemEquipmentFragment(UGameItem* Item) const;
-
-	virtual void BeginPlay() override;
-	virtual void UninitializeComponent() override;
+	UGameEquipment* FindAllEquipmentFromItem(UGameItem* Item) const;
 
 protected:
-	/** The item containers to monitor for items with equipment. */
-	TArray<TWeakObjectPtr<UGameItemContainer>> RegisteredContainers;
-
-	/** Map of condition states for each item with equipment in the target containers. */
-	UPROPERTY(Transient)
-	TMap<TObjectPtr<UGameItem>, FGameItemEquipmentConditionState> ItemConditionStates;
-
-	/** Map of equipment that was applied, indexed by the source item. */
-	UPROPERTY(Transient)
-	TMap<TObjectPtr<UGameItem>, TObjectPtr<UGameEquipment>> EquipmentMap;
-
-	virtual bool ShouldIncludeContainer(UGameItemContainer* Container) const;
+	/**
+	 * Return true if this component should handle applying equipment for an item.
+	 * Useful for filtering items in case multiple equipment components should handle different types of items.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category = "Equipment")
+	bool ShouldHandleItemEquipment(UGameItem* Item) const;
 
 	/** Activate the equipment conditions for an item, and apply the equipment if met. */
 	void ActivateItemEquipmentCondition(UGameItem* Item, const UGameItemFragment_Equipment* EquipFrag);
@@ -132,4 +96,21 @@ protected:
 	void OnItemRemoved(UGameItem* Item);
 	void OnExistingItemSlotted(const UGameItemContainer* Container, int32 NewSlot, int32 OldSlot, UGameItem* Item);
 	void OnExistingItemUnslotted(const UGameItemContainer* Container, int32 OldSlot, UGameItem* Item);
+
+public:
+	/** Automatically register any UGameItemContainerComponent found on the owner during InitializeComponent. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	bool bAutoFindContainerComponent = true;
+
+protected:
+	/** The item containers to monitor for items with equipment. */
+	TArray<TWeakObjectPtr<UGameItemContainerComponent>> RegisteredContainerComponents;
+
+	/** Map of condition states for each item with equipment in the target containers. */
+	UPROPERTY(Transient)
+	TMap<TObjectPtr<UGameItem>, FGameItemEquipmentConditionState> ItemConditionStates;
+
+	/** Map of equipment definitions that were applied by source item, for removal. */
+	UPROPERTY(Transient)
+	TMap<TObjectPtr<UGameItem>, TSubclassOf<UGameEquipmentDef>> ItemEquipmentDefs;
 };
