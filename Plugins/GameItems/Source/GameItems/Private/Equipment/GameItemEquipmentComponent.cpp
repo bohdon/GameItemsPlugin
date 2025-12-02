@@ -78,7 +78,8 @@ void UGameItemEquipmentComponent::RegisterItemContainerComponent(UGameItemContai
 	// activate any existing items
 	for (const UGameItemContainer* Container : ItemContainerComponent->GetAllItemContainers())
 	{
-		if (Container)
+		// only add items from parent containers, to avoid duplicate calls
+		if (Container && !Container->IsChild())
 		{
 			for (const auto& Elem : Container->GetAllItems())
 			{
@@ -106,7 +107,7 @@ void UGameItemEquipmentComponent::UnregisterItemContainerComponent(UGameItemCont
 	// remove all items
 	for (const UGameItemContainer* Container : ItemContainerComponent->GetAllItemContainers())
 	{
-		if (Container)
+		if (Container && !Container->IsChild())
 		{
 			for (const auto& Elem : Container->GetAllItems())
 			{
@@ -128,10 +129,16 @@ void UGameItemEquipmentComponent::ActivateItemEquipmentCondition(UGameItem* Item
 		return;
 	}
 
+	if (!ensure(!ItemConditionStates.Contains(Item)))
+	{
+		// condition is already activated
+		return;
+	}
+
 	Item->OnSlottedEvent.Add(UGameItem::FSlottedDelegate::FDelegate::CreateUObject(this, &ThisClass::OnExistingItemSlotted, Item));
 	Item->OnUnslottedEvent.Add(UGameItem::FUnslottedDelegate::FDelegate::CreateUObject(this, &ThisClass::OnExistingItemUnslotted, Item));
 
-	FGameItemEquipmentConditionState& ItemCondition = ItemConditionStates.FindOrAdd(Item);
+	FGameItemEquipmentConditionState& ItemCondition = ItemConditionStates.Emplace(Item);
 
 	// setup condition context
 	const UGameItemConditionSchema* DefaultSchema = GetDefault<UGameItemConditionSchema>();
