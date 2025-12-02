@@ -34,6 +34,12 @@ void UGameItemEquipmentComponent::InitializeComponent()
 		{
 			RegisterItemContainerComponent(ItemsComponent);
 		}
+		else
+		{
+			UE_LOG(LogGameItems, Warning,
+			       TEXT("%s Couldn't find item component from owner, disable bAutoFindContainerComponent if you need to register manually"),
+			       *GetDebugPrefix());
+		}
 	}
 }
 
