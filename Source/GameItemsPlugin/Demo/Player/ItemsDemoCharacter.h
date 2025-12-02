@@ -11,6 +11,7 @@
 #include "ItemsDemoCharacter.generated.h"
 
 class UDemoInteractorComponent;
+class UGameItemEquipmentComponent;
 
 
 UCLASS()
@@ -21,17 +22,14 @@ class GAMEITEMSPLUGIN_API AItemsDemoCharacter : public ACharacter,
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UDemoInteractorComponent> InteractorComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UGameItemEquipmentComponent> EquipmentComponent;
 
 public:
 	AItemsDemoCharacter(const FObjectInitializer& ObjectInitializer);
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TObjectPtr<UInputAction> MoveInputAction;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TObjectPtr<UInputAction> LookInputAction;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -44,4 +42,14 @@ public:
 
 	// IGameItemContainerComponentInterface
 	virtual UGameItemContainerComponent* GetItemContainerComponent() const override;
+
+protected:
+	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
+
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TObjectPtr<UInputAction> MoveInputAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TObjectPtr<UInputAction> LookInputAction;
 };

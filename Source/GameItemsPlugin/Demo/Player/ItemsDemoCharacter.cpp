@@ -4,8 +4,10 @@
 #include "ItemsDemoCharacter.h"
 
 #include "EnhancedInputComponent.h"
+#include "GameItemStatics.h"
 #include "ItemsDemoPlayerState.h"
 #include "Demo/Interaction/DemoInteractorComponent.h"
+#include "Equipment/GameItemEquipmentComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -15,6 +17,10 @@ AItemsDemoCharacter::AItemsDemoCharacter(const FObjectInitializer& ObjectInitial
 {
 	InteractorComponent = CreateDefaultSubobject<UDemoInteractorComponent>(TEXT("InteractorComponent"));
 	InteractorComponent->SetupAttachment(RootComponent);
+
+	EquipmentComponent = CreateDefaultSubobject<UGameItemEquipmentComponent>(TEXT("EquipmentComponent"));
+	// register item component once we have a player state (where it's stored)
+	EquipmentComponent->bAutoFindContainerComponent = false;
 }
 
 void AItemsDemoCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -55,14 +61,21 @@ TArray<UGameItemContainer*> AItemsDemoCharacter::GetAllItemContainers() const
 
 UGameItemContainer* AItemsDemoCharacter::GetItemContainer(FGameplayTag ContainerId) const
 {
-	// use the item containers from the player state
-	const AItemsDemoPlayerState* DemoPlayerState = GetPlayerState<AItemsDemoPlayerState>();
-	return DemoPlayerState ? DemoPlayerState->GetItemContainer(ContainerId) : nullptr;
+	return UGameItemStatics::GetItemContainerForActor(GetPlayerState(), ContainerId);
 }
 
 UGameItemContainerComponent* AItemsDemoCharacter::GetItemContainerComponent() const
 {
-	// use the container component on the player state
-	const AItemsDemoPlayerState* DemoPlayerState = GetPlayerState<AItemsDemoPlayerState>();
-	return DemoPlayerState ? DemoPlayerState->GetItemContainerComponent() : nullptr;
+	return UGameItemStatics::GetItemContainerComponentForActor(GetPlayerState());
+}
+
+void AItemsDemoCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
+{
+	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
+
+	// now that we have a player state, we have an item component
+	if (UGameItemContainerComponent* ItemComponent = GetItemContainerComponent())
+	{
+		EquipmentComponent->RegisterItemContainerComponent(ItemComponent);
+	}
 }
