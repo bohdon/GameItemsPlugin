@@ -98,7 +98,7 @@ public:
 
 	/** Return the CDO of the container definition. */
 	UFUNCTION(BlueprintPure, DisplayName = "GetContainerDef", Category = "GameItemContainer")
-	FORCEINLINE const UGameItemContainerDef* GetContainerDefCDO() const;
+	const UGameItemContainerDef* GetContainerDefCDO() const;
 
 	/** Get all tags that this container has. */
 	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")

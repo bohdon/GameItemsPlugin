@@ -33,7 +33,7 @@ public:
 
 	/** Return the owning container. */
 	UFUNCTION(BlueprintPure, Category = "GameItems")
-	FORCEINLINE UGameItemContainer* GetContainer() const;
+	UGameItemContainer* GetContainer() const;
 
 	/** Return true if this rule makes the container a child of another container, such that it cannot store its own items. */
 	UFUNCTION(BlueprintNativeEvent)
