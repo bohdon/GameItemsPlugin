@@ -31,6 +31,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void SetSelectedSlot(int32 NewSlot);
 
+	/** Clear the selected slot / item. */
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
+	void ClearSelectedSlot();
+
 	/**
 	 * Find the slot of an item in the linked container, and set the selected slot to that.
 	 * Does nothing if the item isn't found.

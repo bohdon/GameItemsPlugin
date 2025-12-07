@@ -64,6 +64,11 @@ void UGameItemContainerLink_Selection::SetSelectedSlot(int32 NewSlot)
 	}
 }
 
+void UGameItemContainerLink_Selection::ClearSelectedSlot()
+{
+	SetSelectedSlot(INDEX_NONE);
+}
+
 void UGameItemContainerLink_Selection::SetSelectedItem(UGameItem* Item)
 {
 	if (Item && LinkedContainer)
