@@ -234,6 +234,12 @@ void UGameItemEquipmentComponent::ApplyEquipmentForItem(UGameItem* Item)
 		return;
 	}
 
+	if (ItemEquipmentDefs.Contains(Item))
+	{
+		// item equipment already applied
+		return;
+	}
+
 	ItemEquipmentDefs.Add(Item, EquipFrag->EquipmentDef);
 
 	// copy all tag stats from the item, this allows applying equipment on the server
@@ -245,7 +251,7 @@ void UGameItemEquipmentComponent::ApplyEquipmentForItem(UGameItem* Item)
 void UGameItemEquipmentComponent::RemoveEquipmentForItem(UGameItem* Item)
 {
 	// items must have unique equipment defs (there's no other association between item and equipment),
-	// this limitation also exists allow local-only items but server-spawned equipment.
+	// this limitation also exists to allow local-only items but server-spawned equipment.
 
 	if (const TSubclassOf<UGameEquipmentDef>* EquipmentDef = ItemEquipmentDefs.Find(Item))
 	{
