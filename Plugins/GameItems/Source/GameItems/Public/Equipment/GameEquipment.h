@@ -47,7 +47,7 @@ public:
 		return Cast<T>(GetEquipmentDefCDO());
 	}
 
-	const FGameItemTagStackContainer& GetTagStats() const { return EquipmentSpec.TagStats; }
+	const TMap<FGameplayTag, int32>& GetTagStats() const { return EquipmentSpec.GetTagStatsMap(); }
 
 	/** Return the owning equipment component. */
 	UFUNCTION(BlueprintPure, Category = "Equipment")

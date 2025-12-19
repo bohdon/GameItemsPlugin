@@ -35,7 +35,7 @@ void UAbilityEquipment::OnUnequipped()
 
 int32 UAbilityEquipment::GetAbilityLevel() const
 {
-	return (bUseLevelStat && LevelStatTag.IsValid()) ? EquipmentSpec.TagStats.GetStackCount(LevelStatTag) : -1;
+	return (bUseLevelStat && LevelStatTag.IsValid()) ? GetTagStats().FindRef(LevelStatTag, 0) : -1;
 }
 
 void UAbilityEquipment::GiveAbilitySets()

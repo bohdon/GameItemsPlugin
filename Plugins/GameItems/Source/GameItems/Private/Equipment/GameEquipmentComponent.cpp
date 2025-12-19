@@ -134,7 +134,7 @@ void UGameEquipmentComponent::OnRep_IsActive()
 
 void UGameEquipmentComponent::ApplyEquipment(TSubclassOf<UGameEquipmentDef> EquipmentDef)
 {
-	ApplyEquipmentSpec(FGameEquipmentSpec(EquipmentDef, FGameItemTagStackContainer()));
+	ApplyEquipmentSpec(FGameEquipmentSpec(EquipmentDef, {}));
 }
 
 void UGameEquipmentComponent::ApplyEquipmentSpec(const FGameEquipmentSpec& EquipmentSpec)

@@ -23,13 +23,36 @@ struct FGameEquipmentSpec
 {
 	GENERATED_BODY()
 
+	FGameEquipmentSpec()
+	{
+	}
+
+	FGameEquipmentSpec(const TSubclassOf<UGameEquipmentDef>& InEquipmentDef, const TArray<FGameItemTagStack>& InTagStats);
+
+	const TMap<FGameplayTag, int32>& GetTagStatsMap() const { return TagStatsMap; }
+
+	void PostSerialize(const FArchive& Ar);
+
 	/** The equipment definition, defining the equipment class and other info. */
 	UPROPERTY()
 	TSubclassOf<UGameEquipmentDef> EquipmentDef;
 
+protected:
 	/** Unique stats for this equipment such as level, rarity, etc, usually pulled from granting game items. */
 	UPROPERTY()
-	FGameItemTagStackContainer TagStats;
+	TArray<FGameItemTagStack> TagStats;
+
+	/** Cached map of stats by tag, for faster lookup. */
+	TMap<FGameplayTag, int32> TagStatsMap;
+};
+
+template <>
+struct TStructOpsTypeTraits<FGameEquipmentSpec> : public TStructOpsTypeTraitsBase2<FGameEquipmentSpec>
+{
+	enum
+	{
+		WithPostSerialize = true,
+	};
 };
 
 

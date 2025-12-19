@@ -6,6 +6,33 @@
 #include "Equipment/GameEquipment.h"
 
 
+// FGameEquipmentSpec
+// ------------------
+
+FGameEquipmentSpec::FGameEquipmentSpec(const TSubclassOf<UGameEquipmentDef>& InEquipmentDef, const TArray<FGameItemTagStack>& InTagStats)
+	: EquipmentDef(InEquipmentDef)
+	, TagStats(InTagStats)
+{
+	TagStatsMap.Reserve(TagStats.Num());
+	for (const FGameItemTagStack& Stack : TagStats)
+	{
+		TagStatsMap.Add(Stack.Tag, Stack.Count);
+	}
+}
+
+void FGameEquipmentSpec::PostSerialize(const FArchive& Ar)
+{
+	if (Ar.IsLoading())
+	{
+		TagStatsMap.Reset();
+		for (const FGameItemTagStack& Stack : TagStats)
+		{
+			TagStatsMap.Add(Stack.Tag, Stack.Count);
+		}
+	}
+}
+
+
 // FGameEquipmentListEntry
 // -----------------------
 

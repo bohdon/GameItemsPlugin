@@ -244,7 +244,7 @@ void UGameItemEquipmentComponent::ApplyEquipmentForItem(UGameItem* Item)
 
 	// copy all tag stats from the item, this allows applying equipment on the server
 	// without having to replicate local-only items.
-	const FGameEquipmentSpec Spec = FGameEquipmentSpec(EquipFrag->EquipmentDef, Item->GetTagStatsContainer());
+	const FGameEquipmentSpec Spec = FGameEquipmentSpec(EquipFrag->EquipmentDef, Item->GetTagStatsContainer().Stacks);
 	ApplyEquipmentSpec(Spec);
 }
 
