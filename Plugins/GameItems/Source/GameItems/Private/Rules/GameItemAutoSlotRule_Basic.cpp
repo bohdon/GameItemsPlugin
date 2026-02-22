@@ -49,11 +49,42 @@ bool UGameItemAutoSlotRule_Basic::CanAutoSlot_Implementation(const UGameItem* It
 		return false;
 	}
 
+	// if NoReplace option is given, return false if we have an existing item we don't want to replace.
+	// this is checked here so that auto slot priority can be demoted to 0,
+	// making room for a potentially better slot, based on availability
+	if (ContextTags.HasTag(GameItems::GameplayTags::Item_AutoSlot_NoReplace))
+	{
+		const UGameItemContainer* Container = GetContainer();
+		check(Container);
+
+		const int32 Slot = GetBestSlotForItem(Item, ContextTags);
+
+		if (const UGameItem* ExistingItem = Container->GetItemAt(Slot))
+		{
+			if (Item != ExistingItem && !ShouldReplaceItem(Item, ExistingItem, ContextTags))
+			{
+				return false;
+			}
+		}
+	}
+
 	return Super::CanAutoSlot_Implementation(Item, ContextTags);
 }
 
 int32 UGameItemAutoSlotRule_Basic::GetAutoSlotPriorityForItem_Implementation(const UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
+	if (ContextTags.HasTag(GameItems::GameplayTags::Item_AutoSlot_Toggle))
+	{
+		// return a super high priority if we have the item equipped and want to toggle
+		const UGameItemContainer* Container = GetContainer();
+		check(Container);
+
+		if (Container->Contains(Item))
+		{
+			return INT_MAX;
+		}
+	}
+
 	return CanAutoSlot(Item, ContextTags) ? Priority : 0;
 }
 
@@ -75,7 +106,7 @@ void UGameItemAutoSlotRule_Basic::TryAutoSlotInternal_Implementation(UGameItem* 
 	Super::TryAutoSlotInternal_Implementation(Item, ContextTags);
 }
 
-int32 UGameItemAutoSlotRule_Basic::GetBestSlotForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
+int32 UGameItemAutoSlotRule_Basic::GetBestSlotForItem_Implementation(const UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
 	const int32 NextEmptySlot = GetContainer()->GetNextEmptySlot();
 	if (NextEmptySlot != INDEX_NONE)
@@ -88,7 +119,8 @@ int32 UGameItemAutoSlotRule_Basic::GetBestSlotForItem_Implementation(UGameItem* 
 	return 0;
 }
 
-bool UGameItemAutoSlotRule_Basic::ShouldReplaceItem_Implementation(UGameItem* NewItem, UGameItem* ExistingItem, const FGameplayTagContainer& ContextTags) const
+bool UGameItemAutoSlotRule_Basic::ShouldReplaceItem_Implementation(const UGameItem* NewItem, const UGameItem* ExistingItem,
+                                                                   const FGameplayTagContainer& ContextTags) const
 {
 	return (bReplaceByDefault || ContextTags.HasTag(GameItems::GameplayTags::Item_AutoSlot_Replace)) &&
 		!ContextTags.HasTag(GameItems::GameplayTags::Item_AutoSlot_NoReplace);

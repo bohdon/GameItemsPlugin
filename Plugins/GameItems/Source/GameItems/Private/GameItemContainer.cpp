@@ -1242,7 +1242,8 @@ void UGameItemContainer::TryAutoSlot(UGameItem* Item, FGameplayTagContainer Cont
 }
 
 
-UGameItemContainer* UGameItemContainer::FindAutoSlotChildContainerForItem(const UGameItem* Item, FGameplayTagContainer ContextTags) const
+UGameItemContainer* UGameItemContainer::FindAutoSlotChildContainerForItem(const UGameItem* Item, FGameplayTagContainer ContextTags,
+                                                                          const FGameplayTagQuery ContainerQuery) const
 {
 	UGameItemContainer* BestContainer = nullptr;
 	int32 BestPriority = -1;
@@ -1250,6 +1251,12 @@ UGameItemContainer* UGameItemContainer::FindAutoSlotChildContainerForItem(const 
 	for (UGameItemContainer* Container : ChildContainers)
 	{
 		check(Container);
+
+		if (!ContainerQuery.IsEmpty() && !ContainerQuery.Matches(FGameplayTagContainer(Container->GetContainerId())))
+		{
+			continue;
+		}
+
 		const int32 Priority = Container->GetAutoSlotPriorityForItem(Item, ContextTags);
 		if (!BestContainer || Priority > BestPriority)
 		{

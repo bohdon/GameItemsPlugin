@@ -66,12 +66,12 @@ void UGameItemAutoSlotRule::TryAutoSlotInternal_Implementation(UGameItem* Item, 
 	Container->AddItem(Item, Slot);
 }
 
-int32 UGameItemAutoSlotRule::GetBestSlotForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
+int32 UGameItemAutoSlotRule::GetBestSlotForItem_Implementation(const UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
 	return INDEX_NONE;
 }
 
-bool UGameItemAutoSlotRule::ShouldReplaceItem_Implementation(UGameItem* NewItem, UGameItem* ExistingItem, const FGameplayTagContainer& ContextTags) const
+bool UGameItemAutoSlotRule::ShouldReplaceItem_Implementation(const UGameItem* NewItem, const UGameItem* ExistingItem, const FGameplayTagContainer& ContextTags) const
 {
 	return false;
 }

@@ -59,8 +59,9 @@ public:
 	virtual bool CanAutoSlot_Implementation(const UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;
 	virtual int32 GetAutoSlotPriorityForItem_Implementation(const UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;
 	virtual void TryAutoSlotInternal_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;
-	virtual int32 GetBestSlotForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;
-	virtual bool ShouldReplaceItem_Implementation(UGameItem* NewItem, UGameItem* ExistingItem, const FGameplayTagContainer& ContextTags) const override;
+	virtual int32 GetBestSlotForItem_Implementation(const UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;
+	virtual bool ShouldReplaceItem_Implementation(const UGameItem* NewItem, const UGameItem* ExistingItem,
+	                                              const FGameplayTagContainer& ContextTags) const override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 };

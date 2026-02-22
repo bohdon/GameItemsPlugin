@@ -391,7 +391,8 @@ public:
 
 	/** Return the child container with the highest auto-slot priority for an item. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
-	UGameItemContainer* FindAutoSlotChildContainerForItem(const UGameItem* Item, FGameplayTagContainer ContextTags) const;
+	UGameItemContainer* FindAutoSlotChildContainerForItem(const UGameItem* Item, FGameplayTagContainer ContextTags,
+	                                                      const FGameplayTagQuery ContainerQuery = FGameplayTagQuery()) const;
 
 	/** Return the owning actor of this container. */
 	virtual AActor* GetOwner() const;
