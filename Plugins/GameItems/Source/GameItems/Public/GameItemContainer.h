@@ -362,6 +362,9 @@ public:
 	/** Return true if a container is a parent of this container. */
 	virtual bool HasParent(UGameItemContainer* ParentContainer) const;
 
+	/** Return the parent of this container. If multiple parents exist (unusual), returns the first. */
+	virtual UGameItemContainer* GetParent() const;
+
 	/** Return all children containers. */
 	virtual TArray<UGameItemContainer*> GetChildren() const;
 
@@ -373,7 +376,7 @@ public:
 
 	/** Return the priority of this container when selecting the 'best' container for auto-slotting an item. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
-	virtual int32 GetAutoSlotPriorityForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const;
+	virtual int32 GetAutoSlotPriorityForItem(const UGameItem* Item, FGameplayTagContainer ContextTags) const;
 
 	/** Return true if this container has rules allowing it to auto-slot an item. */
 	UFUNCTION(BlueprintPure, Category = "GameItemContainer")
@@ -388,7 +391,7 @@ public:
 
 	/** Return the child container with the highest auto-slot priority for an item. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItemContainer")
-	UGameItemContainer* FindAutoSlotChildContainerForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const;
+	UGameItemContainer* FindAutoSlotChildContainerForItem(const UGameItem* Item, FGameplayTagContainer ContextTags) const;
 
 	/** Return the owning actor of this container. */
 	virtual AActor* GetOwner() const;
@@ -443,13 +446,13 @@ public:
 	/** Return the actor that should be used for network role / authority checks. */
 	virtual AActor* GetNetworkOwner() const;
 
-	/** Return true if the network owner is locally controlled. */ 
+	/** Return true if the network owner is locally controlled. */
 	virtual bool IsLocallyControlled() const;
 
-	/** Return whether we should execute a function via Server rpc and/or locally. */ 
+	/** Return whether we should execute a function via Server rpc and/or locally. */
 	virtual void GetNetExecutionPlan(bool& bOutExecuteServer, bool& bOutExecuteLocal) const;
 
-	/** Return true if this container has authority to save and load items. */ 
+	/** Return true if this container has authority to save and load items. */
 	virtual bool HasSaveAndLoadAuthority() const;
 
 	UFUNCTION(Server, Reliable)

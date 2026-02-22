@@ -1157,6 +1157,21 @@ bool UGameItemContainer::HasParent(UGameItemContainer* ParentContainer) const
 	});
 }
 
+UGameItemContainer* UGameItemContainer::GetParent() const
+{
+	for (const TObjectPtr<UGameItemContainerRule>& Rule : Rules)
+	{
+		if (const UGameItemContainerLink* LinkRule = Cast<UGameItemContainerLink>(Rule))
+		{
+			if (LinkRule->IsChild())
+			{
+				return LinkRule->GetLinkedContainer();
+			}
+		}
+	}
+	return nullptr;
+}
+
 TArray<UGameItemContainer*> UGameItemContainer::GetChildren() const
 {
 	return ChildContainers;
@@ -1177,7 +1192,7 @@ void UGameItemContainer::UnregisterChild(UGameItemContainer* ChildContainer)
 	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, ChildContainers, this);
 }
 
-int32 UGameItemContainer::GetAutoSlotPriorityForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const
+int32 UGameItemContainer::GetAutoSlotPriorityForItem(const UGameItem* Item, FGameplayTagContainer ContextTags) const
 {
 	if (!Item)
 	{
@@ -1227,7 +1242,7 @@ void UGameItemContainer::TryAutoSlot(UGameItem* Item, FGameplayTagContainer Cont
 }
 
 
-UGameItemContainer* UGameItemContainer::FindAutoSlotChildContainerForItem(UGameItem* Item, FGameplayTagContainer ContextTags) const
+UGameItemContainer* UGameItemContainer::FindAutoSlotChildContainerForItem(const UGameItem* Item, FGameplayTagContainer ContextTags) const
 {
 	UGameItemContainer* BestContainer = nullptr;
 	int32 BestPriority = -1;

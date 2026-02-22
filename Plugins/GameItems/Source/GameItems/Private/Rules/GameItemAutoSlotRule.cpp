@@ -6,12 +6,12 @@
 #include "GameItemContainer.h"
 
 
-int32 UGameItemAutoSlotRule::GetAutoSlotPriorityForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
+int32 UGameItemAutoSlotRule::GetAutoSlotPriorityForItem_Implementation(const UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
 	return 0;
 }
 
-bool UGameItemAutoSlotRule::CanAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
+bool UGameItemAutoSlotRule::CanAutoSlot_Implementation(const UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
 	return GetContainer()->CanContainItem(Item);
 }

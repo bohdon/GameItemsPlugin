@@ -26,11 +26,11 @@ class GAMEITEMS_API UGameItemAutoSlotRule : public UGameItemContainerRule
 public:
 	/** Return the priority of this container when selecting the 'best' container for auto-slotting an item. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false, Category = "GameItems")
-	int32 GetAutoSlotPriorityForItem(UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
+	int32 GetAutoSlotPriorityForItem(const UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
 
 	/** Return true if this rule can handle auto-slotting an item. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure = false, Category = "GameItems")
-	bool CanAutoSlot(UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
+	bool CanAutoSlot(const UGameItem* Item, const FGameplayTagContainer& ContextTags) const;
 
 	/** Try auto-slotting an item. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")

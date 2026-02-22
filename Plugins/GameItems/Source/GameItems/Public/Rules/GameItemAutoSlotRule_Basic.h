@@ -7,9 +7,13 @@
 #include "NativeGameplayTags.h"
 #include "GameItemAutoSlotRule_Basic.generated.h"
 
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_AutoSlot_NoReplace);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_AutoSlot_Replace);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_AutoSlot_Toggle);
+
+namespace GameItems::GameplayTags
+{
+	GAMEITEMS_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_AutoSlot_NoReplace);
+	GAMEITEMS_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_AutoSlot_Replace);
+	GAMEITEMS_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_AutoSlot_Toggle);
+}
 
 
 /**
@@ -52,8 +56,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Tag Requirements", meta = (GameplayTagFilter="GameItemTagsCategory"))
 	FGameplayTagQuery Query;
 
-	virtual bool CanAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;
-	virtual int32 GetAutoSlotPriorityForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;
+	virtual bool CanAutoSlot_Implementation(const UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;
+	virtual int32 GetAutoSlotPriorityForItem_Implementation(const UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;
 	virtual void TryAutoSlotInternal_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;
 	virtual int32 GetBestSlotForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const override;
 	virtual bool ShouldReplaceItem_Implementation(UGameItem* NewItem, UGameItem* ExistingItem, const FGameplayTagContainer& ContextTags) const override;

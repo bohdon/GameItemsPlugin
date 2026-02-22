@@ -12,7 +12,7 @@
 
 
 UGameItemContainerLink_AutoSlot::UGameItemContainerLink_AutoSlot()
-	: ContextTags(TAG_Item_AutoSlot_NoReplace)
+	: ContextTags(GameItems::GameplayTags::Item_AutoSlot_NoReplace)
 {
 }
 

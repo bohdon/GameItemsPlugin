@@ -7,9 +7,13 @@
 #include "NativeGameplayTags.h"
 #include "Net/UnrealNetwork.h"
 
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Item_AutoSlot_NoReplace, "Item.AutoSlot.NoReplace", "Don't replace existing items when auto-slotting");
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Item_AutoSlot_Replace, "Item.AutoSlot.Replace", "Replace existing items when auto-slotting");
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Item_AutoSlot_Toggle, "Item.AutoSlot.Toggle", "Remove the item if it already exists in the container when auto-slotting");
+
+namespace GameItems::GameplayTags
+{
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Item_AutoSlot_NoReplace, "Item.AutoSlot.NoReplace", "Don't replace existing items when auto-slotting");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Item_AutoSlot_Replace, "Item.AutoSlot.Replace", "Replace existing items when auto-slotting");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Item_AutoSlot_Toggle, "Item.AutoSlot.Toggle", "Remove the item if it already exists in the container when auto-slotting");
+}
 
 
 UGameItemAutoSlotRule_Basic::UGameItemAutoSlotRule_Basic()
@@ -32,7 +36,7 @@ void UGameItemAutoSlotRule_Basic::GetLifetimeReplicatedProps(TArray<class FLifet
 	DOREPLIFETIME_WITH_PARAMS_FAST(UGameItemAutoSlotRule_Basic, Query, Params);
 }
 
-bool UGameItemAutoSlotRule_Basic::CanAutoSlot_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
+bool UGameItemAutoSlotRule_Basic::CanAutoSlot_Implementation(const UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
 	if (!Item)
 	{
@@ -48,7 +52,7 @@ bool UGameItemAutoSlotRule_Basic::CanAutoSlot_Implementation(UGameItem* Item, co
 	return Super::CanAutoSlot_Implementation(Item, ContextTags);
 }
 
-int32 UGameItemAutoSlotRule_Basic::GetAutoSlotPriorityForItem_Implementation(UGameItem* Item, const FGameplayTagContainer& ContextTags) const
+int32 UGameItemAutoSlotRule_Basic::GetAutoSlotPriorityForItem_Implementation(const UGameItem* Item, const FGameplayTagContainer& ContextTags) const
 {
 	return CanAutoSlot(Item, ContextTags) ? Priority : 0;
 }
@@ -60,7 +64,7 @@ void UGameItemAutoSlotRule_Basic::TryAutoSlotInternal_Implementation(UGameItem* 
 
 	if (Container->Contains(Item))
 	{
-		if (ContextTags.HasTag(TAG_Item_AutoSlot_Toggle))
+		if (ContextTags.HasTag(GameItems::GameplayTags::Item_AutoSlot_Toggle))
 		{
 			// remove the already-slotted item
 			Container->RemoveItem(Item);
@@ -86,5 +90,6 @@ int32 UGameItemAutoSlotRule_Basic::GetBestSlotForItem_Implementation(UGameItem* 
 
 bool UGameItemAutoSlotRule_Basic::ShouldReplaceItem_Implementation(UGameItem* NewItem, UGameItem* ExistingItem, const FGameplayTagContainer& ContextTags) const
 {
-	return (bReplaceByDefault || ContextTags.HasTag(TAG_Item_AutoSlot_Replace)) && !ContextTags.HasTag(TAG_Item_AutoSlot_NoReplace);
+	return (bReplaceByDefault || ContextTags.HasTag(GameItems::GameplayTags::Item_AutoSlot_Replace)) &&
+		!ContextTags.HasTag(GameItems::GameplayTags::Item_AutoSlot_NoReplace);
 }
