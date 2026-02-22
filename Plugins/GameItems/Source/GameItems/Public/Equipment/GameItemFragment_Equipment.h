@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameEquipmentTypes.h"
 #include "GameItemFragment.h"
 #include "WorldConditionQuery.h"
 #include "GameItemFragment_Equipment.generated.h"
@@ -27,4 +28,10 @@ public:
 	/** Conditions that must be met for the equipment to be applied. */
 	UPROPERTY(EditAnywhere, Category = "Equipment")
 	FWorldConditionQueryDefinition Condition;
+
+	/**
+	 * Create the equipment spec to use for applying the equipment of this fragment.
+	 * Copies in item tag stats or other info as needed.
+	 */
+	virtual FGameEquipmentSpec CreateEquipmentSpecForItem(UGameItem* Item) const;
 };

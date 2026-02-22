@@ -20,6 +20,21 @@ FGameEquipmentSpec::FGameEquipmentSpec(const TSubclassOf<UGameEquipmentDef>& InE
 	}
 }
 
+FGameEquipmentSpec::FGameEquipmentSpec(
+	const TSubclassOf<UGameEquipmentDef>& InEquipmentDef,
+	const TArray<FGameItemTagStack>& InTagStats,
+	const FGameplayTagContainer& InContextTags)
+	: EquipmentDef(InEquipmentDef)
+	, ContextTags(InContextTags)
+	, TagStats(InTagStats)
+{
+	TagStatsMap.Reserve(TagStats.Num());
+	for (const FGameItemTagStack& Stack : TagStats)
+	{
+		TagStatsMap.Add(Stack.Tag, Stack.Count);
+	}
+}
+
 void FGameEquipmentSpec::PostSerialize(const FArchive& Ar)
 {
 	if (Ar.IsLoading())

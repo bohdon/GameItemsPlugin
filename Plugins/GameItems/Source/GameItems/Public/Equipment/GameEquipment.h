@@ -11,6 +11,7 @@
 
 class UGameEquipmentComponent;
 class UGameEquipmentDef;
+class USceneComponent;
 
 
 /**
@@ -109,6 +110,9 @@ protected:
 
 	/** Spawn all actors for this equipment. */
 	virtual void SpawnEquipmentActors();
+
+	/** Attach a new equipment actor to the owner. */
+	virtual void AttachEquipmentActor(AActor* NewActor, USceneComponent* AttachTarget, const FGameEquipmentActorSpawnInfo& SpawnInfo);
 
 	/** Destroy all actors that this equipment has spawned. */
 	virtual void DestroyEquipmentActors();

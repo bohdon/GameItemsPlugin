@@ -28,6 +28,7 @@ struct FGameEquipmentSpec
 	}
 
 	FGameEquipmentSpec(const TSubclassOf<UGameEquipmentDef>& InEquipmentDef, const TArray<FGameItemTagStack>& InTagStats);
+	FGameEquipmentSpec(const TSubclassOf<UGameEquipmentDef>& InEquipmentDef, const TArray<FGameItemTagStack>& InTagStats, const FGameplayTagContainer& InContextTags);
 
 	const TMap<FGameplayTag, int32>& GetTagStatsMap() const { return TagStatsMap; }
 
@@ -36,6 +37,10 @@ struct FGameEquipmentSpec
 	/** The equipment definition, defining the equipment class and other info. */
 	UPROPERTY()
 	TSubclassOf<UGameEquipmentDef> EquipmentDef;
+
+	/** Additional tags to contain contextual information. Commonly includes which slot an item is equipped to or other traits. */
+	UPROPERTY()
+	FGameplayTagContainer ContextTags;
 
 protected:
 	/** Unique stats for this equipment such as level, rarity, etc, usually pulled from granting game items. */
@@ -89,6 +94,10 @@ struct FGameEquipmentActorSpawnInfo
 	/** The socket to attach to. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName AttachSocket;
+
+	/** Optional map of context tag to attach socket names. If there's no matching context, AttachSocket will be used. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TMap<FGameplayTag, FName> ContextualAttachSockets;
 
 	/** The relative transform to set for the actor when attached. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

@@ -121,25 +121,25 @@ void UGameEquipment::SpawnEquipmentActors()
 		return;
 	}
 
-	USceneComponent* AttachTarget = GetTargetAttachComponent();
-	check(AttachTarget);
-
 	auto IsLocallyControlled = [](const AActor* Actor)
-	{
-		if (Actor->GetNetMode() == NM_Client && Actor->GetLocalRole() == ROLE_AutonomousProxy)
 		{
-			// networked client in control
-			return true;
-		}
-		if (Actor->HasAuthority() && Actor->GetRemoteRole() != ROLE_AutonomousProxy)
-		{
-			// local authority in control
-			return true;
-		}
-		return false;
-	};
+			if (Actor->GetNetMode() == NM_Client && Actor->GetLocalRole() == ROLE_AutonomousProxy)
+			{
+				// networked client in control
+				return true;
+			}
+			if (Actor->HasAuthority() && Actor->GetRemoteRole() != ROLE_AutonomousProxy)
+			{
+				// local authority in control
+				return true;
+			}
+			return false;
+		};
 
 	AActor* OwningActor = GetOwningActor();
+
+	USceneComponent* AttachTarget = GetTargetAttachComponent();
+	check(AttachTarget);
 
 	for (const FGameEquipmentActorSpawnInfo& SpawnInfo : EquipmentCDO->ActorsToSpawn)
 	{
@@ -178,8 +178,7 @@ void UGameEquipment::SpawnEquipmentActors()
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		SpawnParams.Owner = OwningActor;
 		AActor* NewActor = GetWorld()->SpawnActor<AActor>(SpawnInfo.ActorClass, SpawnInfo.AttachTransform, SpawnParams);
-		NewActor->AttachToComponent(AttachTarget, FAttachmentTransformRules::KeepRelativeTransform, SpawnInfo.AttachSocket);
-		NewActor->SetActorRelativeTransform(SpawnInfo.AttachTransform);
+		AttachEquipmentActor(NewActor, AttachTarget, SpawnInfo);
 
 		if (bIsReplicatedSpawn)
 		{
@@ -194,6 +193,24 @@ void UGameEquipment::SpawnEquipmentActors()
 			LocalSpawnedActors.Add(NewActor);
 		}
 	}
+}
+
+void UGameEquipment::AttachEquipmentActor(AActor* NewActor, USceneComponent* AttachTarget, const FGameEquipmentActorSpawnInfo& SpawnInfo)
+{
+	FName AttachSocket = SpawnInfo.AttachSocket;
+
+	// look for context-specific attach socket if any
+	for (const FGameplayTag& Tag : EquipmentSpec.ContextTags)
+	{
+		if (SpawnInfo.ContextualAttachSockets.Contains(Tag))
+		{
+			AttachSocket = SpawnInfo.ContextualAttachSockets.FindChecked(Tag);
+			break;
+		}
+	}
+
+	NewActor->AttachToComponent(AttachTarget, FAttachmentTransformRules::KeepRelativeTransform, AttachSocket);
+	NewActor->SetActorRelativeTransform(SpawnInfo.AttachTransform);
 }
 
 void UGameEquipment::DestroyEquipmentActors()
