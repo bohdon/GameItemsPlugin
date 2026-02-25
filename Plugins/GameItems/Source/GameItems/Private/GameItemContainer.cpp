@@ -1505,8 +1505,9 @@ void UGameItemContainer::GetNetExecutionPlan(bool& bOutExecuteServer, bool& bOut
 		bOutExecuteLocal = bIsAuthority || bIsLocallyControlled;
 		break;
 	case EGameItemContainerNetExecutionPolicy::ServerInitiated:
-		bOutExecuteServer = bIsLocallyControlled;
+		bOutExecuteServer = false;
 		bOutExecuteLocal = bIsAuthority;
+		break;
 	default:
 		check(false);
 		bOutExecuteServer = false;
