@@ -78,6 +78,36 @@ void UGameItemSubsystem::CreateItemInContainer(UGameItemContainer* Container, TS
 	Container->AddItem(NewItem);
 }
 
+bool UGameItemSubsystem::HasItemStacks(UGameItemContainer* Container, TArray<FGameItemDefStack> ItemStacks) const
+{
+	for (const FGameItemDefStack& ItemStack : ItemStacks)
+	{
+		if (Container->GetTotalItemCountByDef(ItemStack.ItemDef) < ItemStack.Count)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool UGameItemSubsystem::RemoveItemStacks(UGameItemContainer* Container, TArray<FGameItemDefStack> ItemStacks, bool bAllowPartial) const
+{
+	if (!bAllowPartial)
+	{
+		if (!HasItemStacks(Container, ItemStacks))
+		{
+			return false;
+		}
+	}
+	
+	for (const FGameItemDefStack& ItemStack : ItemStacks)
+	{
+		Container->RemoveItemsByDef(ItemStack.ItemDef, ItemStack.Count);
+	}
+
+	return true;
+}
+
 UGameItem* UGameItemSubsystem::DuplicateItem(UObject* Outer, UGameItem* Item, int32 Count)
 {
 	if (!Item)

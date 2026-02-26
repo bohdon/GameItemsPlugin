@@ -44,6 +44,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void CreateItemInContainer(UGameItemContainer* Container, TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
 
+	/** Return true if a container has all items at all indicated quantities. Useful for calculating costs. */
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
+	bool HasItemStacks(UGameItemContainer* Container, TArray<FGameItemDefStack> ItemStacks) const;
+
+	/** Remove items from a container by item defs and counts. Useful for subtracting item costs. */
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
+	bool RemoveItemStacks(UGameItemContainer* Container, TArray<FGameItemDefStack> ItemStacks, bool bAllowPartial = false) const;
+
 	/** Duplicate and return a new game item. If count is > 0, set a new count for the item, otherwise use the original item count. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	UGameItem* DuplicateItem(UObject* Outer, UGameItem* Item, int32 Count = -1);
