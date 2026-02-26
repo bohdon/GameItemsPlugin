@@ -65,9 +65,12 @@ void UGameItemDefThumbnailRenderer::Draw(UObject* Object, int32 X, int32 Y, uint
 
 	if (Texture)
 	{
-		FCanvasTileItem TextureTile(FVector2D(X, Y), Texture->GetResource(), FLinearColor::White);
-		TextureTile.BlendMode = SE_BLEND_AlphaBlend;
-		TextureTile.Draw(Canvas);
+		if (Texture->GetResource())
+		{
+			FCanvasTileItem TextureTile(FVector2D(X, Y), Texture->GetResource(), FLinearColor::White);
+			TextureTile.BlendMode = SE_BLEND_AlphaBlend;
+			TextureTile.Draw(Canvas);
+		}
 	}
 	else if (Material)
 	{
