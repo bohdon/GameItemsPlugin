@@ -122,6 +122,7 @@ int32 UGameItemAutoSlotRule_Basic::GetBestSlotForItem_Implementation(const UGame
 bool UGameItemAutoSlotRule_Basic::ShouldReplaceItem_Implementation(const UGameItem* NewItem, const UGameItem* ExistingItem,
                                                                    const FGameplayTagContainer& ContextTags) const
 {
-	return (bReplaceByDefault || ContextTags.HasTag(GameItems::GameplayTags::Item_AutoSlot_Replace)) &&
+	return NewItem != ExistingItem &&
+		(bReplaceByDefault || ContextTags.HasTag(GameItems::GameplayTags::Item_AutoSlot_Replace)) &&
 		!ContextTags.HasTag(GameItems::GameplayTags::Item_AutoSlot_NoReplace);
 }
