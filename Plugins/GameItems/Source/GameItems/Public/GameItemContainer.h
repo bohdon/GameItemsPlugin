@@ -406,7 +406,7 @@ public:
 	void CommitSaveData(FGameItemContainerSaveData& ContainerData, TMap<UGameItem*, FGuid>& SavedItems);
 
 	/** Load this container's items and properties from save data. */
-	void LoadSaveData(const FGameItemContainerSaveData& ContainerData, TMap<FGuid, UGameItem*>& LoadedItems);
+	void LoadSaveData(const FGameItemContainerSaveData& ContainerData, bool bPreserveExistingItems, TMap<FGuid, UGameItem*>& LoadedItems);
 
 	/** Return the internal ItemList for debugging. */
 	const FGameItemList& GetInternalItemList() const { return ItemList; }

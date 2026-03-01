@@ -207,7 +207,7 @@ void UGameItemContainerComponent::CommitSaveGame(USaveGame* SaveGame)
 	}
 }
 
-void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame)
+void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame, bool bPreserveExistingItems)
 {
 	IGameItemSaveDataInterface* ItemSaveDataInterface = Cast<IGameItemSaveDataInterface>(SaveGame);
 	if (!ItemSaveDataInterface)
@@ -241,7 +241,7 @@ void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame)
 		}
 
 		const FGameItemContainerSaveData ContainerData = CollectionData.Containers.FindRef(Container->GetContainerId());
-		Container->LoadSaveData(ContainerData, LoadedItems);
+		Container->LoadSaveData(ContainerData, bPreserveExistingItems, LoadedItems);
 	}
 
 	// ...then load all children, now that items have been created
@@ -260,7 +260,7 @@ void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame)
 		}
 
 		const FGameItemContainerSaveData ContainerData = CollectionData.Containers.FindRef(Container->GetContainerId());
-		Container->LoadSaveData(ContainerData, LoadedItems);
+		Container->LoadSaveData(ContainerData, bPreserveExistingItems, LoadedItems);
 	}
 
 	bIsLoadingSaveGame = false;

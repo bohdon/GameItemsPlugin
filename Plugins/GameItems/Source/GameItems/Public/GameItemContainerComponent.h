@@ -154,7 +154,7 @@ public:
 
 	/** Load all containers and items from a save game. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
-	void LoadSaveGame(USaveGame* SaveGame);
+	void LoadSaveGame(USaveGame* SaveGame, bool bPreserveExistingItems = false);
 
 	/** Return true if currently loading from a save game. */
 	UFUNCTION(BlueprintPure, Category = "GameItems")

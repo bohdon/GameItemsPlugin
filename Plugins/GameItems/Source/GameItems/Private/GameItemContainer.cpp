@@ -1376,7 +1376,10 @@ void UGameItemContainer::CommitSaveData(FGameItemContainerSaveData& ContainerDat
 	Serialize(Ar);
 }
 
-void UGameItemContainer::LoadSaveData(const FGameItemContainerSaveData& ContainerData, TMap<FGuid, UGameItem*>& LoadedItems)
+void UGameItemContainer::LoadSaveData(
+	const FGameItemContainerSaveData& ContainerData,
+	bool bPreserveExistingItems,
+	TMap<FGuid, UGameItem*>& LoadedItems)
 {
 	if (!ensureAlwaysMsgf(HasSaveAndLoadAuthority(),
 		TEXT("Attempted to load item save data without authority: %s (NetExecutionPolicy: %s)"),
@@ -1387,7 +1390,10 @@ void UGameItemContainer::LoadSaveData(const FGameItemContainerSaveData& Containe
 
 	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
 
-	RemoveAllItems();
+	if (!bPreserveExistingItems)
+	{
+		RemoveAllItems();
+	}
 
 	// load items
 	bool bIsChild = IsChild();
