@@ -49,7 +49,7 @@ public:
 	bool HasItemStacks(UGameItemContainer* Container, TArray<FGameItemDefStack> ItemStacks) const;
 
 	/** Remove items from a container by item defs and counts. Useful for subtracting item costs. */
-	UFUNCTION(BlueprintCallable, Category = "GameItems")
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	bool RemoveItemStacks(UGameItemContainer* Container, TArray<FGameItemDefStack> ItemStacks, bool bAllowPartial = false) const;
 
 	/** Duplicate and return a new game item. If count is > 0, set a new count for the item, otherwise use the original item count. */
