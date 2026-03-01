@@ -215,6 +215,8 @@ void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame)
 		return;
 	}
 
+	bIsLoadingSaveGame = true;
+
 	FPlayerAndWorldGameItemSaveData& AllSaveData = ItemSaveDataInterface->GetItemSaveData();
 	const FGameItemContainerCollectionSaveData& CollectionData = bIsPlayerCollection
 		? AllSaveData.PlayerItemData.FindOrAdd(SaveCollectionId)
@@ -260,6 +262,10 @@ void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame)
 		const FGameItemContainerSaveData ContainerData = CollectionData.Containers.FindRef(Container->GetContainerId());
 		Container->LoadSaveData(ContainerData, LoadedItems);
 	}
+
+	bIsLoadingSaveGame = false;
+
+	OnSaveGameLoadedEvent.Broadcast(SaveGame);
 }
 
 void UGameItemContainerComponent::AddDefaultContainers()

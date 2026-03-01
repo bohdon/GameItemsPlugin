@@ -7,6 +7,7 @@
 #include "GameItemContainerInterface.h"
 #include "GameItemTypes.h"
 #include "Components/ActorComponent.h"
+#include "GameFramework/SaveGame.h"
 #include "Rules/GameItemContainerRule.h"
 #include "GameItemContainerComponent.generated.h"
 
@@ -155,6 +156,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void LoadSaveGame(USaveGame* SaveGame);
 
+	/** Return true if currently loading from a save game. */
+	UFUNCTION(BlueprintPure, Category = "GameItems")
+	bool IsLoadingSaveGame() const { return bIsLoadingSaveGame; }
+
 	virtual void PostLoad() override;
 	virtual void InitializeComponent() override;
 	virtual void ReadyForReplication() override;
@@ -163,6 +168,7 @@ public:
 public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FContainerAddOrRemoveDelegate, UGameItemContainer* /*Container*/);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FItemAddOrRemoveDelegate, UGameItem* /*Item*/);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FSaveGameLoadedDelegate, USaveGame* /*SaveGame*/);
 
 	/** Called when a new item container is added. */
 	FContainerAddOrRemoveDelegate OnContainerAddedEvent;
@@ -181,6 +187,9 @@ public:
 	 * Use the delegates in UGameItemContainer for container-specific events.
 	 */
 	FItemAddOrRemoveDelegate OnItemRemovedEvent;
+
+	/** Called after loading save game data. */
+	FSaveGameLoadedDelegate OnSaveGameLoadedEvent;
 
 protected:
 	/** The currently applied container graphs. */
@@ -201,7 +210,10 @@ protected:
 	/** Non-replicated map of containers by id, for faster lookup. */
 	UPROPERTY(Transient)
 	TMap<FGameplayTag, TObjectPtr<UGameItemContainer>> ContainerMap;
-	
+
+	/** True when actively loading save game items. */
+	bool bIsLoadingSaveGame = false;
+
 	/** Return true if an item exists in this collection. */
 	bool ContainsItemInAnyContainer(const UGameItem* Item) const;
 
