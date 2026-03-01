@@ -30,11 +30,11 @@ FGameItemCountLimit UGameItemContainerStockRule_Tags::FindLimitForItem(const UGa
 		return FGameItemCountLimit();
 	}
 
-	for (FGameplayTag ItemTag : ItemDefCDO->OwnedTags)
+	for (const TTuple<FGameplayTag, FGameItemCountLimit>& Entry : Limits)
 	{
-		if (Limits.Contains(ItemTag))
+		if (ItemDefCDO->OwnedTags.HasTag(Entry.Key))
 		{
-			return Limits[ItemTag];
+			return Entry.Value;
 		}
 	}
 	return FGameItemCountLimit();
