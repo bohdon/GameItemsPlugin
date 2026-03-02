@@ -57,5 +57,5 @@ protected:
 	UPROPERTY(Transient)
 	TMap<FGameplayTag, TObjectPtr<UVM_GameItemTagStat>> TagStatViewModels;
 
-	void OnCountChanged(int32 NewCount, int32 OldCount);
+	void OnCountChanged(UGameItem* ChangedItem, int32 NewCount, int32 OldCount);
 };

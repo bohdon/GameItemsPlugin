@@ -43,6 +43,6 @@ protected:
 	UPROPERTY(BlueprintReadWrite, Setter, Getter, FieldNotify, Meta = (AllowPrivateAccess))
 	TObjectPtr<UGameItem> Item;
 
-	void OnSlotted(const UGameItemContainer* Container, int32 NewSlot, int32 OldSlot);
-	void OnUnslotted(const UGameItemContainer* Container, int32 OldSlot);
+	void OnSlotted(UGameItem* ChangedItem, const UGameItemContainer* Container, int32 NewSlot, int32 OldSlot);
+	void OnUnslotted(UGameItem* ChangedItem, const UGameItemContainer* Container, int32 OldSlot);
 };

@@ -31,7 +31,7 @@ public:
 	int32 GetValue() const;
 
 protected:
-	void OnTagStatChanged(const FGameplayTag& ChangedTag, int32 NewValue, int32 OldValue);
+	void OnTagStatChanged(UGameItem* ChangedItem, const FGameplayTag& ChangedTag, int32 NewValue, int32 OldValue);
 
 protected:
 	/** The game item. */

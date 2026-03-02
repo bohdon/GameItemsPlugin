@@ -98,8 +98,9 @@ FText UVM_GameItem::GetDisplayName() const
 	return Item ? Item->GetItemDefCDO()->DisplayName : FText::GetEmpty();
 }
 
-void UVM_GameItem::OnCountChanged(int32 NewCount, int32 OldCount)
+void UVM_GameItem::OnCountChanged(UGameItem* ChangedItem, int32 NewCount, int32 OldCount)
 {
+	check(ChangedItem == Item);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetCount);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(HasMultiple);
 }

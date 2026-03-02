@@ -56,7 +56,7 @@ void UGameItem::SetCount(int32 NewCount)
 		Count = NewCount;
 		MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, Count, this);
 
-		OnCountChangedEvent.Broadcast(NewCount, OldCount);
+		OnCountChangedEvent.Broadcast(this, NewCount, OldCount);
 	}
 }
 
@@ -76,7 +76,7 @@ void UGameItem::SetTagStat(FGameplayTag Tag, int32 NewCount)
 	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, TagStats, this);
 	const int32 NewValue = TagStats.GetStackCount(Tag);
 
-	OnTagStatChangedEvent.Broadcast(Tag, NewValue, OldValue);
+	OnTagStatChangedEvent.Broadcast(this, Tag, NewValue, OldValue);
 }
 
 int32 UGameItem::GetTagStat(FGameplayTag Tag) const

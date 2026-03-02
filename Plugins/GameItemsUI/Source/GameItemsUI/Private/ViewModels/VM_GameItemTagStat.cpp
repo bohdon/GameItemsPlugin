@@ -41,8 +41,9 @@ int32 UVM_GameItemTagStat::GetValue() const
 	return Item ? Item->GetTagStat(Tag) : 0;
 }
 
-void UVM_GameItemTagStat::OnTagStatChanged(const FGameplayTag& ChangedTag, int32 NewValue, int32 OldValue)
+void UVM_GameItemTagStat::OnTagStatChanged(UGameItem* ChangedItem, const FGameplayTag& ChangedTag, int32 NewValue, int32 OldValue)
 {
+	check(ChangedItem == Item);
 	if (ChangedTag == Tag)
 	{
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetValue);

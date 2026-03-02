@@ -135,8 +135,8 @@ void UGameItemEquipmentComponent::ActivateItemEquipmentCondition(UGameItem* Item
 		return;
 	}
 
-	Item->OnSlottedEvent.Add(UGameItem::FSlottedDelegate::FDelegate::CreateUObject(this, &ThisClass::OnExistingItemSlotted, Item));
-	Item->OnUnslottedEvent.Add(UGameItem::FUnslottedDelegate::FDelegate::CreateUObject(this, &ThisClass::OnExistingItemUnslotted, Item));
+	Item->OnSlottedEvent.AddUObject(this, &ThisClass::OnExistingItemSlotted);
+	Item->OnUnslottedEvent.AddUObject(this, &ThisClass::OnExistingItemUnslotted);
 
 	FGameItemEquipmentConditionState& ItemCondition = ItemConditionStates.Emplace(Item);
 
@@ -306,7 +306,7 @@ void UGameItemEquipmentComponent::OnItemRemoved(UGameItem* Item)
 	}
 }
 
-void UGameItemEquipmentComponent::OnExistingItemSlotted(const UGameItemContainer* Container, int32 NewSlot, int32 OldSlot, UGameItem* Item)
+void UGameItemEquipmentComponent::OnExistingItemSlotted(UGameItem* Item, const UGameItemContainer* Container, int32 NewSlot, int32 OldSlot)
 {
 	if (Item && ItemConditionStates.Find(Item))
 	{
@@ -317,7 +317,7 @@ void UGameItemEquipmentComponent::OnExistingItemSlotted(const UGameItemContainer
 	}
 }
 
-void UGameItemEquipmentComponent::OnExistingItemUnslotted(const UGameItemContainer* Container, int32 OldSlot, UGameItem* Item)
+void UGameItemEquipmentComponent::OnExistingItemUnslotted(UGameItem* Item, const UGameItemContainer* Container, int32 OldSlot)
 {
 	if (Item && ItemConditionStates.Find(Item))
 	{

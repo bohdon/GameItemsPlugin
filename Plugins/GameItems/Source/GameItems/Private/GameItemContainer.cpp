@@ -1543,7 +1543,7 @@ void UGameItemContainer::OnItemAdded(UGameItem* Item, int32 Slot)
 
 	Item->Containers.AddUnique(this);
 	OnItemAddedEvent.Broadcast(Item);
-	Item->OnSlottedEvent.Broadcast(this, Slot, INDEX_NONE);
+	Item->OnSlottedEvent.Broadcast(Item, this, Slot, INDEX_NONE);
 }
 
 void UGameItemContainer::OnItemRemoved(UGameItem* Item, int32 Slot)
@@ -1554,7 +1554,7 @@ void UGameItemContainer::OnItemRemoved(UGameItem* Item, int32 Slot)
 
 	Item->Containers.Remove(this);
 	OnItemRemovedEvent.Broadcast(Item);
-	Item->OnUnslottedEvent.Broadcast(this, Slot);
+	Item->OnUnslottedEvent.Broadcast(Item, this, Slot);
 }
 
 void UGameItemContainer::OnPostReplicatedChanges(const TArray<FGameItemList::FChange>& Changes)

@@ -94,8 +94,8 @@ protected:
 
 	void OnItemAdded(UGameItem* Item);
 	void OnItemRemoved(UGameItem* Item);
-	void OnExistingItemSlotted(const UGameItemContainer* Container, int32 NewSlot, int32 OldSlot, UGameItem* Item);
-	void OnExistingItemUnslotted(const UGameItemContainer* Container, int32 OldSlot, UGameItem* Item);
+	void OnExistingItemSlotted(UGameItem* Item, const UGameItemContainer* Container, int32 NewSlot, int32 OldSlot);
+	void OnExistingItemUnslotted(UGameItem* Item, const UGameItemContainer* Container, int32 OldSlot);
 
 public:
 	/** Automatically register any UGameItemContainerComponent found on the owner during InitializeComponent. */

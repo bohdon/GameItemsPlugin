@@ -65,16 +65,18 @@ bool UVM_GameItemSlottedCheck::IsSlotted() const
 	return false;
 }
 
-void UVM_GameItemSlottedCheck::OnSlotted(const UGameItemContainer* Container, int32 NewSlot, int32 OldSlot)
+void UVM_GameItemSlottedCheck::OnSlotted(UGameItem* ChangedItem, const UGameItemContainer* Container, int32 NewSlot, int32 OldSlot)
 {
+	check(ChangedItem == Item);
 	if (Container->GetOwnedTags().HasAny(ContainerTags))
 	{
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(IsSlotted);
 	}
 }
 
-void UVM_GameItemSlottedCheck::OnUnslotted(const UGameItemContainer* Container, int32 OldSlot)
+void UVM_GameItemSlottedCheck::OnUnslotted(UGameItem* ChangedItem, const UGameItemContainer* Container, int32 OldSlot)
 {
+	check(ChangedItem == Item);
 	if (Container->GetOwnedTags().HasAny(ContainerTags))
 	{
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(IsSlotted);

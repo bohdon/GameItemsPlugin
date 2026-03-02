@@ -102,10 +102,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "GameItems")
 	FString GetDebugString() const;
 
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FCountChangedDelegate, int32 /*NewCount*/, int32 /*OldCount*/);
-	DECLARE_MULTICAST_DELEGATE_ThreeParams(FTagStatChangedDelegate, const FGameplayTag& /*Tag*/, int32 /*NewValue*/, int32 /*OldValue*/);
-	DECLARE_MULTICAST_DELEGATE_ThreeParams(FSlottedDelegate, const UGameItemContainer* /*Container*/, int32 /*NewSlot*/, int32 /*OldSlot*/);
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FUnslottedDelegate, const UGameItemContainer* /*Container*/, int32 /*OldSlot*/);
+	DECLARE_MULTICAST_DELEGATE_ThreeParams(FCountChangedDelegate, UGameItem* /*Item*/, int32 /*NewCount*/, int32 /*OldCount*/);
+	DECLARE_MULTICAST_DELEGATE_FourParams(FTagStatChangedDelegate, UGameItem* /*Item*/, const FGameplayTag& /*Tag*/, int32 /*NewValue*/, int32 /*OldValue*/);
+	DECLARE_MULTICAST_DELEGATE_FourParams(FSlottedDelegate, UGameItem* /*Item*/, const UGameItemContainer* /*Container*/, int32 /*NewSlot*/, int32 /*OldSlot*/);
+	DECLARE_MULTICAST_DELEGATE_ThreeParams(FUnslottedDelegate, UGameItem* /*Item*/, const UGameItemContainer* /*Container*/, int32 /*OldSlot*/);
 
 	/** Called when the quantity of this item stack has changed. */
 	FCountChangedDelegate OnCountChangedEvent;
