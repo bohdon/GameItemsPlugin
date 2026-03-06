@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "Engine/DeveloperSettings.h"
 #include "Templates/SubclassOf.h"
+#include "UObject/SoftObjectPtr.h"
 #include "GameItemSettings.generated.h"
 
 class UGameItemCheatsExtension;
