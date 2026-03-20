@@ -36,9 +36,11 @@ public:
 	const FGameEquipmentSpec& GetEquipmentSpec() const { return EquipmentSpec; }
 
 	/** Return the definition of this equipment. */
+	UFUNCTION(BlueprintPure, Category = "Equipment")
 	TSubclassOf<UGameEquipmentDef> GetEquipmentDef() const { return EquipmentSpec.EquipmentDef; }
 
 	/** Return the class default object for the definition of this equipment. */
+	UFUNCTION(BlueprintPure, Category = "Equipment")
 	const UGameEquipmentDef* GetEquipmentDefCDO() const;
 
 	/** Return the equipment definition class default object cast to a type. */
@@ -48,6 +50,11 @@ public:
 		return Cast<T>(GetEquipmentDefCDO());
 	}
 
+	/** Return the context tags for this equipment. */
+	UFUNCTION(BlueprintPure, Category = "Equipment")
+	FGameplayTagContainer GetContextTags() const { return EquipmentSpec.ContextTags; }
+
+	UFUNCTION(BlueprintPure, Category = "Equipment")
 	const TMap<FGameplayTag, int32>& GetTagStats() const { return EquipmentSpec.GetTagStatsMap(); }
 
 	/** Return the owning equipment component. */

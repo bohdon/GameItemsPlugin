@@ -99,7 +99,7 @@ EDataValidationResult UAbilityEquipment::IsDataValid(FDataValidationContext& Con
 {
 	EDataValidationResult Result = CombineDataValidationResults(Super::IsDataValid(Context), EDataValidationResult::Valid);
 
-	if (!LevelStatTag.IsValid())
+	if (bUseLevelStat && !LevelStatTag.IsValid())
 	{
 		Result = EDataValidationResult::Invalid;
 		Context.AddError(LOCTEXT("LevelStatTagNotSet", "LevelStatTag is not set"));
