@@ -306,6 +306,12 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 			break;
 		}
 
+		// start from beginning again if we incremented pass the limit
+		if (IsSlotCountLimited() && NextTargetSlot >= GetNumSlots())
+		{
+			NextTargetSlot = -1;
+		}
+
 		if (NextTargetSlot < 0)
 		{
 			// select a starting slot
@@ -313,13 +319,15 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 			{
 				// start with the first matching item
 				NextTargetSlot = GetItemSlot(MatchingItemsWithSpace[0]);
-				check(NextTargetSlot != INDEX_NONE);
 			}
 			else
 			{
 				NextTargetSlot = 0;
 			}
 		}
+
+		check(NextTargetSlot != INDEX_NONE);
+		check(!IsSlotCountLimited() || NextTargetSlot < GetNumSlots());
 
 		// stack with existing items when auto stacking is enabled, or when there are no empty slots left
 		const bool bCanStackWithExisting = GetContainerDefCDO()->bAutoStack || NumEmptySlots == 0;
