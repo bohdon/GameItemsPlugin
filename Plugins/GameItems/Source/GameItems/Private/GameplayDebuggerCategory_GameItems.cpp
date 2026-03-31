@@ -107,7 +107,7 @@ void FGameplayDebuggerCategory_GameItems::CollectData(APlayerController* OwnerPC
 TArray<FGameplayDebuggerCategory_GameItems::FRepData::FContainerDebug> FGameplayDebuggerCategory_GameItems::CollectContainerData(
 	APlayerController* OwnerPC, AActor* DebugActor)
 {
-	if (!OwnerPC)
+	if (!OwnerPC || !DebugActor)
 	{
 		return TArray<FRepData::FContainerDebug>();
 	}
