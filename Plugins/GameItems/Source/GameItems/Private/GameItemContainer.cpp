@@ -1265,6 +1265,11 @@ UGameItemContainer* UGameItemContainer::FindAutoSlotChildContainerForItem(const 
 			continue;
 		}
 
+		if (!Container->CanContainItem(Item))
+		{
+			continue;
+		}
+
 		const int32 Priority = Container->GetAutoSlotPriorityForItem(Item, ContextTags);
 		if (!BestContainer || Priority > BestPriority)
 		{
