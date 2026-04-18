@@ -86,17 +86,21 @@ protected:
 
 public:
 	/** Whether this container collection should be saved. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "SaveGame")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "SaveGame", meta = (DeprecatedProperty))
 	bool bEnableSaveGame = false;
 
-	/** The id of this container collection for save games. */
+	/** The id of this container collection for saving using IGameItemSaveDataInterface. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Meta = (EditCondition = "bEnableSaveGame"), Category = "SaveGame")
 	FName SaveCollectionId;
 
-	/** Should this game item collection be saved to player save data? */
+	/**
+	 * Should this game item collection be saved to player save data? If false, saves to 'world' save data.
+	 * See FPlayerAndWorldGameItemSaveData.
+	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Meta = (EditCondition = "bEnableSaveGame"), Category = "SaveGame")
 	bool bIsPlayerCollection = false;
 
+public:
 	/** Return true if an item is slotted in a container with any of the given tags. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems", meta = (GameplayTagFilter = "GameItemContainerTagsCategory"))
 	bool IsItemSlotted(UGameItem* Item, FGameplayTagContainer ContainerTags) const;
@@ -148,11 +152,32 @@ public:
 	virtual int32 GetTotalMatchingItemCount(const UGameItem* Item) const override;
 	virtual int32 GetTotalMatchingItemCountByDef(TSubclassOf<UGameItemDef> ItemDef) const override;
 
-	/** Write all containers and items to a save game. */
+public:
+	/**
+	 * Saving and Loading
+	 * 
+	 * Item container components can be saved and loaded in two ways:
+	 *  - Calling CommitSaveGame/LoadSaveGame with a save game object implementing IGameItemSaveDataInterface
+	 *		This requires a unique SaveCollectionId per container
+	 *  - Serializing the component with ArIsSaveGame = true
+	 *		This serializes into FGameItemContainerCollectionSaveData.
+	 *
+	 * The FGameItemContainerComponentSaveProxy makes it easy to serialize the component directly as a
+	 * SaveGame property. On the owning actor add the proxy struct:
+	 * 
+	 *  	UPROPERTY(SaveGame)
+	 *  	FGameItemContainerComponentSaveProxy ItemSaveProxy;
+	 *
+	 * and in actor construct assign the component:
+	 *
+	 *		ItemSaveProxy = MyItemContainerComponent;
+	 */
+
+	/** Write all containers and items to a save game using IGameItemSaveDataInterface. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void CommitSaveGame(USaveGame* SaveGame);
 
-	/** Load all containers and items from a save game. */
+	/** Load all containers and items from a save game using IGameItemSaveDataInterface. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void LoadSaveGame(USaveGame* SaveGame, bool bPreserveExistingItems = false);
 
@@ -160,7 +185,15 @@ public:
 	UFUNCTION(BlueprintPure, Category = "GameItems")
 	bool IsLoadingSaveGame() const { return bIsLoadingSaveGame; }
 
+	/** Write all containers and items to collection data directly. */
+	void CommitSaveData(FGameItemContainerCollectionSaveData& CollectionData);
+
+	/** Load all containers and items from collection data directly. */
+	void LoadSaveData(const FGameItemContainerCollectionSaveData& CollectionData, bool bPreserveExistingItems = false);
+
+public:
 	virtual void PostLoad() override;
+	virtual void Serialize(FArchive& Ar) override;
 	virtual void InitializeComponent() override;
 	virtual void ReadyForReplication() override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
@@ -168,6 +201,7 @@ public:
 public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FContainerAddOrRemoveDelegate, UGameItemContainer* /*Container*/);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FItemAddOrRemoveDelegate, UGameItem* /*Item*/);
+	DECLARE_MULTICAST_DELEGATE(FSaveDataLoadedDelegate);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FSaveGameLoadedDelegate, USaveGame* /*SaveGame*/);
 
 	/** Called when a new item container is added. */
@@ -188,7 +222,10 @@ public:
 	 */
 	FItemAddOrRemoveDelegate OnItemRemovedEvent;
 
-	/** Called after loading save game data. */
+	/** Called after loading save data (from both Serialize or a save game). */
+	FSaveDataLoadedDelegate OnSaveDataLoadedEvent;
+
+	/** Called after loading save data from a USaveGame object. */
 	FSaveGameLoadedDelegate OnSaveGameLoadedEvent;
 
 protected:
@@ -241,4 +278,39 @@ protected:
 	virtual void OnRuleRemoved(UGameItemContainerRule* Rule);
 
 	FString GetDebugPrefix() const;
+};
+
+
+/**
+ * A proxy that forwards Serialize to an item container component.
+ * 
+ * Intended for use as SaveGame property on an actor to save UGameItemContainerComponents,
+ * to avoid needing to manage unique collection ids or use IGameItemSaveDataInterface.
+ */
+USTRUCT()
+struct GAMEITEMS_API FGameItemContainerComponentSaveProxy
+{
+	GENERATED_BODY()
+
+	bool Serialize(FArchive& Ar);
+	bool Identical(const FGameItemContainerComponentSaveProxy* Other, uint32 PortFlags) const;
+
+	void operator=(UGameItemContainerComponent* InComponent);
+
+protected:
+	/** Ensures the component is valid when serializing. Can be disabled if the item component may not exist. */
+	bool bEnsureValid = true;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UGameItemContainerComponent> Component;
+};
+
+template <>
+struct TStructOpsTypeTraits<FGameItemContainerComponentSaveProxy> : public TStructOpsTypeTraitsBase2<FGameItemContainerComponentSaveProxy>
+{
+	enum
+	{
+		WithSerializer = true,
+		WithIdentical = true,
+	};
 };

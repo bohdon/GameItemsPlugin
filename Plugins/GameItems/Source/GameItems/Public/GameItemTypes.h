@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "Net/Serialization/FastArraySerializer.h"
 #include "Templates/SubclassOf.h"
+#include "UObject/SoftObjectPtr.h"
 #include "GameItemTypes.generated.h"
 
 

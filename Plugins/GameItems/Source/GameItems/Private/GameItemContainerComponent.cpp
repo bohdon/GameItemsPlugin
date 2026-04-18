@@ -54,6 +54,31 @@ void UGameItemContainerComponent::PostLoad()
 #endif
 }
 
+void UGameItemContainerComponent::Serialize(FArchive& Ar)
+{
+	if (Ar.IsSaveGame())
+	{
+		FGameItemContainerCollectionSaveData CollectionData;
+
+		if (!Ar.IsLoading())
+		{
+			CommitSaveData(CollectionData);
+		}
+
+		static FGameItemContainerCollectionSaveData Defaults;
+		FGameItemContainerCollectionSaveData::StaticStruct()->SerializeItem(Ar, &CollectionData, &Defaults);
+
+		if (Ar.IsLoading())
+		{
+			LoadSaveData(CollectionData);
+		}
+	}
+	else
+	{
+		Super::Serialize(Ar);
+	}
+}
+
 void UGameItemContainerComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
@@ -166,6 +191,29 @@ void UGameItemContainerComponent::CommitSaveGame(USaveGame* SaveGame)
 		? AllSaveData.PlayerItemData.FindOrAdd(SaveCollectionId)
 		: AllSaveData.WorldItemData.FindOrAdd(SaveCollectionId);
 
+	CommitSaveData(CollectionData);
+}
+
+void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame, bool bPreserveExistingItems)
+{
+	IGameItemSaveDataInterface* ItemSaveDataInterface = Cast<IGameItemSaveDataInterface>(SaveGame);
+	if (!ItemSaveDataInterface)
+	{
+		return;
+	}
+
+	FPlayerAndWorldGameItemSaveData& AllSaveData = ItemSaveDataInterface->GetItemSaveData();
+	const FGameItemContainerCollectionSaveData& CollectionData = bIsPlayerCollection
+		? AllSaveData.PlayerItemData.FindOrAdd(SaveCollectionId)
+		: AllSaveData.WorldItemData.FindOrAdd(SaveCollectionId);
+
+	LoadSaveData(CollectionData, bPreserveExistingItems);
+
+	OnSaveGameLoadedEvent.Broadcast(SaveGame);
+}
+
+void UGameItemContainerComponent::CommitSaveData(FGameItemContainerCollectionSaveData& CollectionData)
+{
 	TMap<UGameItem*, FGuid> SavedItems;
 
 	// save parent containers
@@ -207,20 +255,9 @@ void UGameItemContainerComponent::CommitSaveGame(USaveGame* SaveGame)
 	}
 }
 
-void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame, bool bPreserveExistingItems)
+void UGameItemContainerComponent::LoadSaveData(const FGameItemContainerCollectionSaveData& CollectionData, bool bPreserveExistingItems)
 {
-	IGameItemSaveDataInterface* ItemSaveDataInterface = Cast<IGameItemSaveDataInterface>(SaveGame);
-	if (!ItemSaveDataInterface)
-	{
-		return;
-	}
-
 	bIsLoadingSaveGame = true;
-
-	FPlayerAndWorldGameItemSaveData& AllSaveData = ItemSaveDataInterface->GetItemSaveData();
-	const FGameItemContainerCollectionSaveData& CollectionData = bIsPlayerCollection
-		? AllSaveData.PlayerItemData.FindOrAdd(SaveCollectionId)
-		: AllSaveData.WorldItemData.FindOrAdd(SaveCollectionId);
 
 	TMap<FGuid, UGameItem*> LoadedItems;
 
@@ -265,7 +302,7 @@ void UGameItemContainerComponent::LoadSaveGame(USaveGame* SaveGame, bool bPreser
 
 	bIsLoadingSaveGame = false;
 
-	OnSaveGameLoadedEvent.Broadcast(SaveGame);
+	OnSaveDataLoadedEvent.Broadcast();
 }
 
 void UGameItemContainerComponent::AddDefaultContainers()
@@ -681,4 +718,40 @@ void UGameItemContainerComponent::OnRuleRemoved(UGameItemContainerRule* Rule)
 FString UGameItemContainerComponent::GetDebugPrefix() const
 {
 	return FString::Printf(TEXT("%s[%s]"), *UGameItemStatics::GetNetDebugPrefix(this), *GetReadableName());
+}
+
+bool FGameItemContainerComponentSaveProxy::Serialize(FArchive& Ar)
+{
+	if (Ar.IsSaveGame())
+	{
+#if DO_ENSURE
+		if (bEnsureValid ? ensure(Component != nullptr) : Component != nullptr)
+#else
+		if (Component != nullptr)
+#endif
+		{
+			Component->Serialize(Ar);
+		}
+		return true;
+	}
+	return false;
+}
+
+bool FGameItemContainerComponentSaveProxy::Identical(const FGameItemContainerComponentSaveProxy* Other, uint32 PortFlags) const
+{
+	if (Other == nullptr)
+	{
+		return false;
+	}
+	if (!Component)
+	{
+		// nothing to do
+		return true;
+	}
+	return false;
+}
+
+void FGameItemContainerComponentSaveProxy::operator=(UGameItemContainerComponent* InComponent)
+{
+	Component = InComponent;
 }

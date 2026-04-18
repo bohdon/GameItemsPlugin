@@ -572,6 +572,7 @@ protected:
 
 	virtual void BroadcastSlotChanges();
 
+public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool IsSupportedForNetworking() const override;
 	virtual int32 GetFunctionCallspace(UFunction* Function, FFrame* Stack) override;
