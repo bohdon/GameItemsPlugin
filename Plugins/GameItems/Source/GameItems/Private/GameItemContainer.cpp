@@ -365,7 +365,7 @@ FGameItemContainerAddPlan UGameItemContainer::GetAddItemPlan(UGameItem* Item, in
 	return Plan;
 }
 
-void UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot)
+void UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot, bool bWarn)
 {
 	CONDITIONAL_EXECUTE(AddItem, Item, TargetSlot)
 
@@ -374,7 +374,7 @@ void UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot)
 	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
 	check(ItemSubsystem);
 
-	FGameItemContainerAddPlan Plan = GetAddItemPlan(Item, TargetSlot);
+	FGameItemContainerAddPlan Plan = GetAddItemPlan(Item, TargetSlot, false, bWarn);
 	check(Plan.TargetSlots.Num() == Plan.SlotDeltaCounts.Num());
 
 	TArray<UGameItem*> Result;

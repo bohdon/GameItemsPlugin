@@ -6,6 +6,7 @@
 #include "GameItemTypes.h"
 #include "Engine/DataAsset.h"
 #include "UObject/ObjectSaveContext.h"
+#include "UObject/ScriptInterface.h"
 #include "GameItemSet.generated.h"
 
 class IGameItemContainerInterface;
@@ -79,7 +80,7 @@ public:
 
 	/** Add all items in this set to a container. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
-	virtual void AddToContainer(UGameItemContainer* Container) const;
+	virtual void AddToContainer(UGameItemContainer* Container, bool bWarn = true) const;
 
 	/** Add each item in the set to a container, determined by finding the default container to use for each item. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")

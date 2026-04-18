@@ -114,7 +114,7 @@ bool UGameItemSetAutoFill::ShouldIncludeItem_Implementation(TSubclassOf<UGameIte
 // UGameItemSet
 // ------------
 
-void UGameItemSet::AddToContainer(UGameItemContainer* Container) const
+void UGameItemSet::AddToContainer(UGameItemContainer* Container, bool bWarn) const
 {
 	if (!Container)
 	{
@@ -129,7 +129,7 @@ void UGameItemSet::AddToContainer(UGameItemContainer* Container) const
 
 	for (const FGameItemDefStack& Item : Items)
 	{
-		ItemSubsystem->CreateItemInContainer(Container, Item.ItemDef, Item.Count);
+		ItemSubsystem->CreateItemInContainer(Container, Item.ItemDef, Item.Count, bWarn);
 	}
 }
 

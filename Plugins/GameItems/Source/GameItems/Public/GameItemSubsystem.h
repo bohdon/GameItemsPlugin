@@ -42,7 +42,7 @@ public:
 	 * @return The newly created items, which may have been split depending on the container rules.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
-	void CreateItemInContainer(UGameItemContainer* Container, TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
+	void CreateItemInContainer(UGameItemContainer* Container, TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1, bool bWarn = true);
 
 	/** Return true if a container has all items at all indicated quantities. Useful for calculating costs. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")

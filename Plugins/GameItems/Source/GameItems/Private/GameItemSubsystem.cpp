@@ -62,12 +62,14 @@ UGameItem* UGameItemSubsystem::CreateItem(UObject* Outer, TSubclassOf<UGameItemD
 	return NewItem;
 }
 
-void UGameItemSubsystem::CreateItemInContainer(UGameItemContainer* Container, TSubclassOf<UGameItemDef> ItemDef, int32 Count)
+void UGameItemSubsystem::CreateItemInContainer(UGameItemContainer* Container, TSubclassOf<UGameItemDef> ItemDef, int32 Count, bool bWarn)
 {
 	if (!Container || !Container->GetItemOuter())
 	{
 		return;
 	}
+
+	// TODO: no way to check ahead of time and avoid creating items if we can't add?
 
 	UGameItem* NewItem = CreateItem(Container->GetItemOuter(), ItemDef, Count);
 	if (!NewItem)
@@ -75,7 +77,7 @@ void UGameItemSubsystem::CreateItemInContainer(UGameItemContainer* Container, TS
 		return;
 	}
 
-	Container->AddItem(NewItem);
+	Container->AddItem(NewItem, -1, bWarn);
 }
 
 bool UGameItemSubsystem::HasItemStacks(UGameItemContainer* Container, TArray<FGameItemDefStack> ItemStacks) const

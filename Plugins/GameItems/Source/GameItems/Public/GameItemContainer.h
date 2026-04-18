@@ -119,10 +119,11 @@ public:
 	 * Add an item to this container. This does not remove the item from any existing containers.
 	 * @param Item The item to add.
 	 * @param TargetSlot The slot where the item should be added, or the first available if -1.
+	 * @param bWarn Warn if the item could not be added successfully.
 	 * @return The item or items (if split into multiple stacks) that were added.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
-	void AddItem(UGameItem* Item, int32 TargetSlot = -1);
+	void AddItem(UGameItem* Item, int32 TargetSlot = -1, bool bWarn = true);
 
 	/** Add multiple items to this container. */
 	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
