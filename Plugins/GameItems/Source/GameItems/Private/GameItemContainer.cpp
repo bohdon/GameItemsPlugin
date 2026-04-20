@@ -1045,7 +1045,7 @@ void UGameItemContainer::CreateDefaultItems(bool bForce)
 			continue;
 		}
 
-		UE_LOG(LogGameItems, VeryVerbose, TEXT("%s Creating default item: %s (x%d)"),
+		UE_LOG(LogGameItems, VeryVerbose, TEXT("%s Creating default item: %s x%d"),
 		       *GetDebugPrefix(), *DefaultItem.ItemDef->GetName(), DefaultItem.Count);
 		ItemSubsystem->CreateItemInContainer(this, DefaultItem.ItemDef, DefaultItem.Count);
 	}
@@ -1370,12 +1370,18 @@ void UGameItemContainer::CommitSaveData(FGameItemContainerSaveData& ContainerDat
 			if (FGuid* ItemGuid = SavedItems.Find(Item))
 			{
 				ContainerData.ItemList.Emplace(Slot, *ItemGuid);
+
+				UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] [Slot %d] Saving item guid: %s -> %s"),
+						*GetDebugPrefix(), __func__, Slot, *Item->GetDebugString(), *ContainerData.ItemList[Slot].ToString());
 			}
 		}
 		else
 		{
 			// serialize item data
 			const FGameItemSaveData& ItemData = ContainerData.ItemList.Emplace(Slot, Item);
+
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] [Slot %d] Saving: %s -> %s"),
+					*GetDebugPrefix(), __func__, Slot, *Item->GetDebugString(), *ItemData.ToString());
 
 			// store item guid for children to access
 			SavedItems.Add(Item, ItemData.Guid);
@@ -1435,7 +1441,7 @@ void UGameItemContainer::LoadSaveData(
 			// create new item from save data
 			if (ItemData.ItemDef.IsNull())
 			{
-				UE_LOG(LogGameItems, Warning, TEXT("%s [%hs] [Slot %d] ItemDef is null: %s"),
+				UE_LOG(LogGameItems, Warning, TEXT("%s [%hs] [Slot %d] ItemDef is null %s"),
 					*GetDebugPrefix(), __func__, Slot, *ItemData.ToString());
 				continue;
 			}
@@ -1444,7 +1450,7 @@ void UGameItemContainer::LoadSaveData(
 			const TSubclassOf<UGameItemDef> ItemDef = ItemData.ItemDef.LoadSynchronous();
 			if (!ItemDef)
 			{
-				UE_LOG(LogGameItems, Warning, TEXT("%s [%hs] [Slot %d] Failed to load item def: %s"),
+				UE_LOG(LogGameItems, Warning, TEXT("%s [%hs] [Slot %d] Failed to load %s"),
 					*GetDebugPrefix(), __func__, Slot, *ItemData.ToString());
 				continue;
 			}
@@ -1452,7 +1458,7 @@ void UGameItemContainer::LoadSaveData(
 			UGameItem* NewItem = ItemSubsystem->CreateItemFromSaveData(GetItemOuter(), ItemData);
 			check(NewItem);
 
-			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] [Slot %d] Created item %s for %s"),
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] [Slot %d] Created %s from %s"),
 				*GetDebugPrefix(), __func__, Slot, *NewItem->GetDebugString(), *ItemData.ToString());
 
 			// save item so it can be retrieved by children

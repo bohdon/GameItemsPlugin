@@ -465,7 +465,7 @@ UGameItemContainer* UGameItemContainerComponent::CreateContainer(const FGameItem
 	NewContainer->DisplayName = ContainerSpec.DisplayName;
 
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s Created container: %s (%s)"),
-	       *GetDebugPrefix(), *ContainerSpec.ContainerId.ToString(), *ContainerSpec.ContainerDef->GetName());
+	       *GetDebugPrefix(), *ContainerSpec.ContainerId.ToString(), *ContainerSpec.ContainerDef->GetName().LeftChop(2));
 
 	// add any already-defined links
 	AddMatchingLinkRulesToContainer(NewContainer, Links);

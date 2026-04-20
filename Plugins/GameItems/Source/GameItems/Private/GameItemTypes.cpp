@@ -393,5 +393,5 @@ FGameItemSaveData::FGameItemSaveData(const FGuid& InGuid)
 
 FString FGameItemSaveData::ToString() const
 {
-	return FString::Printf(TEXT("%s (%s)"), *ItemDef.GetAssetName(), *Guid.ToString());
+	return FString::Printf(TEXT("%s (%s)"), *ItemDef.GetAssetName().LeftChop(2), *Guid.ToString(EGuidFormats::DigitsWithHyphens));
 }

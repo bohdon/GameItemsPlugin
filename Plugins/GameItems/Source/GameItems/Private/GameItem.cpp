@@ -127,5 +127,5 @@ FString UGameItem::GetDebugString() const
 {
 	FString ItemDefName = GetNameSafe(ItemDef);
 	ItemDefName.RemoveFromEnd(TEXT("_C"));
-	return FString::Printf(TEXT("%s (%s x %d)"), *GetName(), *ItemDefName, Count);
+	return FString::Printf(TEXT("%s x%d (%s)"), *ItemDefName, Count, *GetName());
 }
