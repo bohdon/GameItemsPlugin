@@ -4,6 +4,7 @@
 #include "Rules/GameItemContainerLink_AutoSlot.h"
 
 #include "GameItemContainer.h"
+#include "GameItemContainerComponent.h"
 #include "GameItemsModule.h"
 #include "Net/UnrealNetwork.h"
 #include "Rules/GameItemAutoSlotRule_Basic.h"
@@ -50,6 +51,16 @@ void UGameItemContainerLink_AutoSlot::OnLinkedItemAdded(UGameItem* Item)
 	if (!Container->IsLocallyControlled())
 	{
 		return;
+	}
+
+	if (!bAutoSlotDuringLoad)
+	{
+		const UGameItemContainerComponent* ContainerComp = Cast<UGameItemContainerComponent>(Container->GetOuter());
+		if (ContainerComp && ContainerComp->IsLoadingSaveGame())
+		{
+			// don't auto-slot-on-add while loading save data
+			return;
+		}
 	}
 
 	if (Container->CanAutoSlot(Item, ContextTags) && (ItemQuery.IsEmpty() || ItemQuery.Matches(Item->GetOwnedTags())))

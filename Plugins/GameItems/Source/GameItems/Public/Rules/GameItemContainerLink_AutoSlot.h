@@ -26,6 +26,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Auto Slot")
 	FGameplayTagContainer ContextTags;
 
+	/** If true, allow triggering auto-slotting even when loading save data. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Auto Slot")
+	bool bAutoSlotDuringLoad = false;
+
 	virtual void OnLinkedContainerChanged(UGameItemContainer* NewContainer, UGameItemContainer* OldContainer) override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
