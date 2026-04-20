@@ -61,6 +61,11 @@ void UGameItemContainerLink::SetLinkedContainer(UGameItemContainer* NewContainer
 	}
 }
 
+void UGameItemContainerLink::OnRep_LinkedContainer(UGameItemContainer* OldLinkedContainer)
+{
+	OnLinkedContainerChanged(LinkedContainer, OldLinkedContainer);
+}
+
 void UGameItemContainerLink::ResolveLinkedContainer(const IGameItemContainerInterface* ContainerProvider, bool bForce)
 {
 	if (!ensure(ContainerProvider))

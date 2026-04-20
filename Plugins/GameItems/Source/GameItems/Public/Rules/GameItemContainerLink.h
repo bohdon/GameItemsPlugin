@@ -36,7 +36,7 @@ public:
 	/** Set the linked container (if not already) by searching for a container with LinkedContainerId. */
 	void ResolveLinkedContainer(const IGameItemContainerInterface* ContainerProvider, bool bForce = false);
 
-	/** Called when the linked container has changed. */
+	/** Called when the linked container has changed on both server and client. */
 	virtual void OnLinkedContainerChanged(UGameItemContainer* NewContainer, UGameItemContainer* OldContainer);
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -45,6 +45,9 @@ public:
 
 protected:
 	/** The other container that is linked. */
-	UPROPERTY(Transient, BlueprintReadOnly, Replicated, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(Transient, BlueprintReadOnly, ReplicatedUsing = OnRep_LinkedContainer, Meta = (AllowPrivateAccess = true))
 	TObjectPtr<UGameItemContainer> LinkedContainer;
+	
+	UFUNCTION()
+	virtual void OnRep_LinkedContainer(UGameItemContainer* OldLinkedContainer);
 };

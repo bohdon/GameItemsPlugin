@@ -192,6 +192,11 @@ int32 UGameItemContainerLink_Selection::ClampSlot(int32 Slot, bool bLoop) const
 
 void UGameItemContainerLink_Selection::OnLinkedSlotChanged(int32 Slot)
 {
+	if (!GetContainer()->IsLocallyControlled())
+	{
+		return;
+	}
+
 	if (Slot == SelectedSlot && LinkedContainer)
 	{
 		if (LinkedContainer->IsSlotEmpty(SelectedSlot) && !bAllowSelectingEmptySlots)
@@ -208,6 +213,11 @@ void UGameItemContainerLink_Selection::OnLinkedSlotChanged(int32 Slot)
 
 void UGameItemContainerLink_Selection::OnLinkedItemAdded(UGameItem* GameItem)
 {
+	if (!GetContainer()->IsLocallyControlled())
+	{
+		return;
+	}
+
 	if (!bAllowSelectingEmptySlots && GetContainer()->IsSlotEmpty(TargetSlot))
 	{
 		// try to select the new item
