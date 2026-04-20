@@ -1401,6 +1401,8 @@ void UGameItemContainer::LoadSaveData(
 		return;
 	}
 
+	FScopedSlotChanges ScopedChanges(this);
+
 	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
 
 	if (!bPreserveExistingItems)
@@ -1688,6 +1690,8 @@ void UGameItemContainer::BroadcastSlotChanges()
 	// aggregate into adjacent ranges
 	TArray<int32> SlotsArray = PendingChangedSlots.Array();
 	PendingChangedSlots.Reset();
+
+	SlotsArray.Sort();
 
 	FSlotRange CurrentRange;
 	for (int32 Idx = 0; Idx < SlotsArray.Num(); ++Idx)

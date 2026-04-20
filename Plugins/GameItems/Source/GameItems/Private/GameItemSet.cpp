@@ -127,6 +127,7 @@ void UGameItemSet::AddToContainer(UGameItemContainer* Container, bool bWarn) con
 		return;
 	}
 
+	UGameItemContainer::FScopedSlotChanges ScopedChanges(Container);
 	for (const FGameItemDefStack& Item : Items)
 	{
 		ItemSubsystem->CreateItemInContainer(Container, Item.ItemDef, Item.Count, bWarn);
@@ -141,10 +142,17 @@ void UGameItemSet::AddToDefaultContainers(TScriptInterface<IGameItemContainerInt
 		return;
 	}
 
+	TMap<UGameItemContainer*, UGameItemContainer::FScopedSlotChanges> ScopedChanges;
+
 	for (const FGameItemDefStack& Item : Items)
 	{
 		if (UGameItemContainer* Container = ContainerInterface->GetDefaultContainerForItem(Item.ItemDef))
 		{
+			if (!ScopedChanges.Contains(Container))
+			{
+				ScopedChanges.Emplace(Container, Container);
+			}
+
 			ItemSubsystem->CreateItemInContainer(Container, Item.ItemDef, Item.Count);
 		}
 #if !NO_LOGGING
