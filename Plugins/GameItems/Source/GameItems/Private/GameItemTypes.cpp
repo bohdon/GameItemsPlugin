@@ -3,9 +3,11 @@
 #include "GameItemTypes.h"
 
 #include "GameItem.h"
+#include "GameItemContainer.h"
 #include "GameItemContainerDef.h"
 #include "GameItemDef.h"
 #include "GameItemsModule.h"
+#include "GameFramework/Actor.h"
 #include "Rules/GameItemContainerLink.h"
 #include "Serialization/MemoryWriter.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
@@ -394,4 +396,51 @@ FGameItemSaveData::FGameItemSaveData(const FGuid& InGuid)
 FString FGameItemSaveData::ToString() const
 {
 	return FString::Printf(TEXT("%s (%s)"), *ItemDef.GetAssetName().LeftChop(2), *Guid.ToString(EGuidFormats::DigitsWithHyphens));
+}
+
+
+// FGameItemsPredictionKey
+// -----------------------
+
+void FGameItemsPredictionKey::GenerateNewPredictionKey()
+{
+	static int16 GKey = 1;
+	Id = GKey++;
+	if (GKey <= 0)
+	{
+		GKey = 1;
+	}
+}
+
+FGameItemsPredictionKey FGameItemsPredictionKey::CreateNewPredictionKey(const UGameItemContainer* Container)
+{
+	FGameItemsPredictionKey NewKey;
+
+	// must be generated on clients, never the authority
+	if (Container->GetNetworkOwner()->GetLocalRole() != ROLE_Authority)
+	{
+		NewKey.GenerateNewPredictionKey();
+	}
+
+	return NewKey;
+}
+
+FGameItemsPredictionKey FGameItemsPredictionKey::CreateNewServerInitiatedKey(const UGameItemContainer* Container)
+{
+	FGameItemsPredictionKey NewKey;
+
+	// must be generated on server
+	if (Container->GetNetworkOwner()->GetLocalRole() == ROLE_Authority)
+	{
+		// don't use same generation as client
+		static int16 GServerKey = 1;
+		NewKey.bIsServerInitiated = true;
+		NewKey.Id = GServerKey++;
+
+		if (GServerKey <= 0)
+		{
+			GServerKey = 1;
+		}
+	}
+	return NewKey;
 }

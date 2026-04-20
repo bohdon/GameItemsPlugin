@@ -93,6 +93,8 @@ void UGameItemSubsystem::CreateItemInContainer(UGameItemContainer* Container, TS
 		return;
 	}
 
+	// TODO: ensure we're creating items in a local owned container (e.g. not creating on client then attempting to add to server-owned or vice versa)
+
 	// TODO: no way to check ahead of time and avoid creating items if we can't add?
 
 	UGameItem* NewItem = CreateItem(Container->GetItemOuter(), ItemDef, Count);
@@ -125,7 +127,7 @@ bool UGameItemSubsystem::RemoveItemStacks(UGameItemContainer* Container, TArray<
 			return false;
 		}
 	}
-	
+
 	for (const FGameItemDefStack& ItemStack : ItemStacks)
 	{
 		Container->RemoveItemsByDef(ItemStack.ItemDef, ItemStack.Count);
@@ -185,6 +187,13 @@ void UGameItemSubsystem::MoveItem(UGameItemContainer* FromContainer, UGameItemCo
 		return;
 	}
 
+	// TODO: perform the net move after we've worked out exactly what to do, handle splitting over net, etc
+	// check for network move
+	if (HandleNetMoveItems(FromContainer, ToContainer, {{Item, TargetSlot}}))
+	{
+		return;
+	}
+
 	// split the item if needed
 	UGameItem* ItemToAdd = Item;
 	if (Plan.RemainderCount > 0)
@@ -204,12 +213,98 @@ void UGameItemSubsystem::MoveItem(UGameItemContainer* FromContainer, UGameItemCo
 }
 
 void UGameItemSubsystem::MoveItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer,
-                                                 TArray<UGameItem*> Items, bool bAllowPartial)
+                                   TArray<UGameItem*> Items, bool bAllowPartial)
 {
+	if (GetWorld()->GetNetMode() != NM_Standalone)
+	{
+		TArray<FGameItemMove> Moves;
+		Moves.Reserve(Items.Num());
+		for (UGameItem* Item : Items)
+		{
+			Moves.Emplace(Item, -1);
+		}
+
+		// TODO: perform the net move after we've worked out exactly what to do, handle splitting over net, etc
+		// check for network move
+		if (HandleNetMoveItems(FromContainer, ToContainer, Moves))
+		{
+			return;
+		}
+	}
+
 	for (UGameItem* Item : Items)
 	{
 		MoveItem(FromContainer, ToContainer, Item, -1, bAllowPartial);
 	}
+}
+
+bool UGameItemSubsystem::HandleNetMoveItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, const TArray<FGameItemMove>& Moves)
+{
+	if (GetWorld()->GetNetMode() == NM_Standalone)
+	{
+		return false;
+	}
+
+	// Since the item (which must be valid) belongs to FromContainer, the only consideration here
+	// is whether ToContainer's owner can receive that item without serializing and recreating it via RPC.
+
+	const bool bFromItemsOnServer = FromContainer->ItemsExistOnServer(); 
+	const bool bToItemsOnServer = ToContainer->ItemsExistOnServer(); 
+
+	// are we sending items from client-only to a server?
+	if (!bFromItemsOnServer && bToItemsOnServer)
+	{
+		// must be client, no way the server could request moving an unknown item from a client
+		check(GetWorld()->GetNetMode() == NM_Client);
+		check(FromContainer->IsLocallyControlled())
+
+		UE_LOG(LogGameItems, Verbose, TEXT("%s[%hs]   Sending client-only item to server: %s -> %s"),
+			*UGameItemStatics::GetNetDebugPrefix(FromContainer), __func__, *FromContainer->GetReadableName(), *ToContainer->GetReadableName());
+
+		FromContainer->MoveItemsToServer(Moves, ToContainer);
+		return true;
+	}
+
+	// are we sending items from server to client-only?
+	if (bFromItemsOnServer && !bToItemsOnServer)
+	{
+		if (GetWorld()->GetNetMode() == NM_Client)
+		{
+			// client requesting an item from server, must be a replicated item the client can see
+			check(FromContainer->IsReplicated());
+			check(ToContainer->IsLocallyControlled());
+
+			UE_LOG(LogGameItems, Verbose, TEXT("%s[%hs]   Taking known server item to client-only: %s -> %s"),
+				*UGameItemStatics::GetNetDebugPrefix(FromContainer), __func__, *FromContainer->GetReadableName(), *ToContainer->GetReadableName());
+
+			ToContainer->MoveItemsFromServer(Moves, FromContainer);
+			return true;
+		}
+		else if (FromContainer->IsReplicated())
+		{
+			// server sending replicated item to client
+			UE_LOG(LogGameItems, Verbose, TEXT("%s[%hs]   Sending known server item to client-only: %s -> %s"),
+				*UGameItemStatics::GetNetDebugPrefix(FromContainer), __func__, *FromContainer->GetReadableName(), *ToContainer->GetReadableName());
+			
+			// tell client to take the known item by reference
+			ensureMsgf(false, TEXT("Sending server initiated to client-only is unsupported"));
+			return true;
+		}
+		else
+		{
+			// server sending non-replicated item to client 
+			UE_LOG(LogGameItems, Verbose, TEXT("%s[%hs]   Sending unknown server item to client-only: %s -> %s"),
+				*UGameItemStatics::GetNetDebugPrefix(FromContainer), __func__, *FromContainer->GetReadableName(), *ToContainer->GetReadableName());
+
+			// serialize to save data and recreate on client
+			ensureMsgf(false, TEXT("Sending server initiated to client-only is unsupported"));
+			return true;
+		}
+	}
+
+	// If neither container was client-local-only, we don't need an RPC.
+	// Even if one of them is server-local-only, just moving the items will simply replicate or stop replicating as needed.
+	return false;
 }
 
 void UGameItemSubsystem::MoveAllItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, bool bAllowPartial)

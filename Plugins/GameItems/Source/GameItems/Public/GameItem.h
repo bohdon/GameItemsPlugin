@@ -102,6 +102,35 @@ public:
 	UFUNCTION(BlueprintPure, Category = "GameItems")
 	FString GetDebugString() const;
 
+public:
+	/** Is any network operation currently pending for this item? Used to block other predictive actions. */
+	bool HasPendingNetChange() const;
+
+	/** Clear any pending predicted network changes as part of acceptance. Does not perform any logic. */
+	void AcceptPendingNetChange();
+
+	/** Undo pending net changes, broadcasting events to reveal previous state. */
+	void RejectPendingNetChange();
+
+	const FGameItemsPredictionKey& GetPendingPredictionKey() const { return PendingPredictionKey; }
+
+	/** Called when transferring a client-only item to the server, to indicate it's predicted this will be removed. */
+	void MarkPendingRemove(UGameItemContainer* FromContainer, const FGameItemsPredictionKey PredictionKey);
+
+	/** Called when transferring a client-only item to the server, to indicate it's predicted this will be removed. */
+	void SetPendingCount(int32 NewCount, const FGameItemsPredictionKey PredictionKey);
+
+	/** Return the container that this item will be removed from soon, while awaiting network confirmation. */
+	UGameItemContainer* GetPendingRemoveContainer() const;
+
+	/** Return the pending new count for this item, while awaiting network confirmation. */
+	TOptional<int32> GetPendingCount() const;
+	
+protected:
+	/** Clear all prediction / pending state variables (usually as part of accepting or rejecting the changes). */
+	void ResetPredictionState();
+
+public:
 	DECLARE_MULTICAST_DELEGATE_ThreeParams(FCountChangedDelegate, UGameItem* /*Item*/, int32 /*NewCount*/, int32 /*OldCount*/);
 	DECLARE_MULTICAST_DELEGATE_FourParams(FTagStatChangedDelegate, UGameItem* /*Item*/, const FGameplayTag& /*Tag*/, int32 /*NewValue*/, int32 /*OldValue*/);
 	DECLARE_MULTICAST_DELEGATE_FourParams(FSlottedDelegate, UGameItem* /*Item*/, const UGameItemContainer* /*Container*/, int32 /*NewSlot*/, int32 /*OldSlot*/);
@@ -124,8 +153,12 @@ public:
 
 protected:
 	/** All containers that this item is in. */
-	UPROPERTY(Transient)
 	TArray<TWeakObjectPtr<UGameItemContainer>> Containers;
+
+	FGameItemsPredictionKey PendingPredictionKey;
+	bool bIsPendingRemove;
+	TWeakObjectPtr<UGameItemContainer> PendingRemoveContainer;
+	TOptional<int32> PendingCount;
 
 	friend UGameItemContainer;
 };

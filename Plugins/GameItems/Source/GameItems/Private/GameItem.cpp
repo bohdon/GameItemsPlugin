@@ -3,16 +3,16 @@
 
 #include "GameItem.h"
 
+#include "GameItemContainer.h"
 #include "GameItemDef.h"
 #include "Net/UnrealNetwork.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItem)
 
-class FLifetimeProperty;
 
 UGameItem::UGameItem(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer),
-	  Count(0)
+	: Super(ObjectInitializer)
+	, Count(0)
 {
 }
 
@@ -22,7 +22,7 @@ void UGameItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 
 	FDoRepLifetimeParams Params;
 	Params.bIsPushBased = true;
-	
+
 	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, ItemDef, Params);
 	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, Count, Params);
 	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, TagStats, Params);
@@ -118,8 +118,8 @@ TArray<UGameItemContainer*> UGameItem::GetContainers() const
 {
 	TArray<UGameItemContainer*> Result;
 	Algo::TransformIf(Containers, Result,
-	                  [](const TWeakObjectPtr<UGameItemContainer>& Container) { return Container.IsValid(); },
-	                  [](const TWeakObjectPtr<UGameItemContainer>& Container) { return Container.Get(); });
+		[](const TWeakObjectPtr<UGameItemContainer>& Container) { return Container.IsValid(); },
+		[](const TWeakObjectPtr<UGameItemContainer>& Container) { return Container.Get(); });
 	return Result;
 }
 
@@ -128,4 +128,68 @@ FString UGameItem::GetDebugString() const
 	FString ItemDefName = GetNameSafe(ItemDef);
 	ItemDefName.RemoveFromEnd(TEXT("_C"));
 	return FString::Printf(TEXT("%s x%d (%s)"), *ItemDefName, Count, *GetName());
+}
+
+bool UGameItem::HasPendingNetChange() const
+{
+	return PendingPredictionKey.IsValidKey();
+}
+
+void UGameItem::AcceptPendingNetChange()
+{
+	ResetPredictionState();
+}
+
+void UGameItem::RejectPendingNetChange()
+{
+	if (bIsPendingRemove)
+	{
+		// TODO: broadcast events for UI
+	}
+	if (PendingCount.IsSet())
+	{
+		// TODO: broadcast events for UI
+	}
+	ResetPredictionState();
+}
+
+void UGameItem::ResetPredictionState()
+{
+	PendingPredictionKey = FGameItemsPredictionKey();
+	bIsPendingRemove = false;
+	PendingRemoveContainer.Reset();
+	PendingCount.Reset();
+}
+
+void UGameItem::MarkPendingRemove(UGameItemContainer* FromContainer, const FGameItemsPredictionKey PredictionKey)
+{
+	check(FromContainer != nullptr);
+	check(!HasPendingNetChange() && !bIsPendingRemove && !PendingRemoveContainer.IsValid());
+	check(PredictionKey.IsLocalClientKey());
+
+	PendingPredictionKey = PredictionKey;
+	bIsPendingRemove = true;
+	PendingRemoveContainer = FromContainer;
+
+	// TODO: broadcast events for UI
+}
+
+void UGameItem::SetPendingCount(int32 NewCount, const FGameItemsPredictionKey PredictionKey)
+{
+	check(!HasPendingNetChange() && !PendingCount.IsSet());
+
+	PendingPredictionKey = PredictionKey;
+	PendingCount = NewCount;
+
+	// TODO: broadcast events for UI
+}
+
+UGameItemContainer* UGameItem::GetPendingRemoveContainer() const
+{
+	return bIsPendingRemove ? PendingRemoveContainer.Get() : nullptr;
+}
+
+TOptional<int32> UGameItem::GetPendingCount() const
+{
+	return PendingCount;
 }

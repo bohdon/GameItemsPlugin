@@ -64,17 +64,17 @@ public:
 	UGameItem* SplitItem(UObject* Outer, UGameItem* Item, int32 Count = 1);
 
 	/**
-	 * Move an item from one container to another. If bAllowPartial is true, allow moving only some
-	 * of the item if the target container can't receive the full amount.
-	 * @return The item or items that were moved into the target container.
+	 * Move an item from one container to another.
+	 * If bAllowPartial is true, allow moving only some of the item if the target container can't receive the full amount.
+	 * Handles potentially sending items via RPC if the net ownership of the containers differs.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void MoveItem(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, UGameItem* Item, int32 TargetSlot = -1, bool bAllowPartial = true);
 
 	/**
-	 * Move multiple items from one container to another. If bAllowPartial is true, allow moving only some
-	 * of each item if the target container can't receive the full amount.
-	 * @return The item or items that were moved into the target container.
+	 * Move multiple items from one container to another.
+	 * If bAllowPartial is true, allow moving only some of each item if the target container can't receive the full amount.
+	 * Handles potentially sending items via RPC if the net ownership of the containers differs.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void MoveItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, TArray<UGameItem*> Items, bool bAllowPartial = true);
@@ -82,7 +82,6 @@ public:
 	/**
 	 * Move all items from one container to another. If bAllowPartial is true, allow moving only some
 	 * of each item if the target container can't receive the full amount.
-	 * @return The item or items that were moved into the target container.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void MoveAllItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, bool bAllowPartial = true);
@@ -137,6 +136,13 @@ public:
 	virtual const IGameItemContainerInterface* GetContainerInterfaceForActor(const AActor* Actor) const;
 
 protected:
+	/**
+	 * Check for potential network move items between containers (from local-only to server or vice versa)
+	 * and handle using RPCs as needed, potentially serializing and recreating items.
+	 * @return True if the move will be handled via network RPC calls, false if it should be done normally.
+	 */
+	bool HandleNetMoveItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, const TArray<FGameItemMove>& Moves);
+
 	void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& YL, float& YPos);
 
 public:

@@ -118,7 +118,7 @@ void UGameItemContainer::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 
 bool UGameItemContainer::IsSupportedForNetworking() const
 {
-	// TODO: should be false for local only, but we need to replicate some core properties for now
+	// TODO: could consider disabling for local only, but we need to replicate some core properties (id, rules, etc) for now
 	return true;
 }
 
@@ -393,6 +393,8 @@ void UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot, bool bWarn)
 		}
 		else
 		{
+			// TODO: always duplicate if actor owner changed for replication
+
 			// add the given item first, but if its already been added, duplicate and add a new item.
 			UGameItem* NewItem = Item;
 			if (Result.Contains(Item))
@@ -1371,8 +1373,13 @@ void UGameItemContainer::CommitSaveData(FGameItemContainerSaveData& ContainerDat
 			{
 				ContainerData.ItemList.Emplace(Slot, *ItemGuid);
 
-				UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] [Slot %d] Saving item guid: %s -> %s"),
-						*GetDebugPrefix(), __func__, Slot, *Item->GetDebugString(), *ContainerData.ItemList[Slot].ToString());
+				UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] [Slot %d] Saving: *%s -> %s"),
+					*GetDebugPrefix(), __func__, Slot, *Item->GetDebugString(), *ContainerData.ItemList[Slot].ToString());
+			}
+			else
+			{
+				UE_LOG(LogGameItems, Error, TEXT("%s [%hs] [Slot %d] Cant save item, no parent guid: %s"),
+					*GetDebugPrefix(), __func__, Slot, *Item->GetDebugString());
 			}
 		}
 		else
@@ -1381,12 +1388,15 @@ void UGameItemContainer::CommitSaveData(FGameItemContainerSaveData& ContainerDat
 			const FGameItemSaveData& ItemData = ContainerData.ItemList.Emplace(Slot, Item);
 
 			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] [Slot %d] Saving: %s -> %s"),
-					*GetDebugPrefix(), __func__, Slot, *Item->GetDebugString(), *ItemData.ToString());
+				*GetDebugPrefix(), __func__, Slot, *Item->GetDebugString(), *ItemData.ToString());
 
 			// store item guid for children to access
 			SavedItems.Add(Item, ItemData.Guid);
 		}
 	}
+
+	UE_CLOG(ItemList.GetEntries().IsEmpty(), LogGameItems, VeryVerbose, TEXT("%s [%hs] No items to save"),
+		*GetDebugPrefix(), __func__);
 
 	// serialize additional container data
 	FMemoryWriter MemWriter(ContainerData.ByteData);
@@ -1458,7 +1468,7 @@ void UGameItemContainer::LoadSaveData(
 			UGameItem* NewItem = ItemSubsystem->CreateItemFromSaveData(GetItemOuter(), ItemData);
 			check(NewItem);
 
-			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] [Slot %d] Created %s from %s"),
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] [Slot %d] Created %s <- %s"),
 				*GetDebugPrefix(), __func__, Slot, *NewItem->GetDebugString(), *ItemData.ToString());
 
 			// save item so it can be retrieved by children
@@ -1482,6 +1492,11 @@ EGameItemContainerNetExecutionPolicy UGameItemContainer::GetNetExecutionPolicy()
 	return ContainerDefCDO ? ContainerDefCDO->NetExecutionPolicy : EGameItemContainerNetExecutionPolicy::LocalPredicted;
 }
 
+bool UGameItemContainer::ItemsExistOnServer() const
+{
+	return IsReplicated() || (GetNetworkOwner()->GetNetMode() == NM_Client ? !IsLocallyControlled() : IsLocallyControlled());
+}
+
 AActor* UGameItemContainer::GetNetworkOwner() const
 {
 	// if owner is a player state, use controller role on clients,
@@ -1498,12 +1513,16 @@ AActor* UGameItemContainer::GetNetworkOwner() const
 
 bool UGameItemContainer::IsLocallyControlled() const
 {
-	AActor* Owner = GetNetworkOwner();
-	if (const APlayerController* PC = Cast<APlayerController>(Owner))
+	return IsLocallyControlledActor(GetNetworkOwner());
+}
+
+bool UGameItemContainer::IsLocallyControlledActor(const AActor* InActor)
+{
+	if (const APlayerController* PC = Cast<APlayerController>(InActor))
 	{
 		return PC->IsLocalController();
 	}
-	else if (const APawn* Pawn = Cast<APawn>(Owner))
+	if (const APawn* Pawn = Cast<APawn>(InActor))
 	{
 		if (Pawn->IsLocallyControlled())
 		{
@@ -1514,15 +1533,22 @@ bool UGameItemContainer::IsLocallyControlled() const
 			return false;
 		}
 	}
-	return Owner->HasAuthority();
+	return InActor->HasAuthority();
+}
+
+void UGameItemContainer::GetAuthorityAndLocalControl(bool& bOutAuthority, bool& bOutLocallyControlled) const
+{
+	const AActor* Owner = GetNetworkOwner();
+	const ENetRole LocalRole = Owner->GetLocalRole();
+	bOutAuthority = LocalRole == ROLE_Authority;
+	bOutLocallyControlled = IsLocallyControlledActor(Owner);
 }
 
 void UGameItemContainer::GetNetExecutionPlan(bool& bOutExecuteServer, bool& bOutExecuteLocal) const
 {
-	const AActor* Owner = GetNetworkOwner();
-	const ENetRole LocalRole = Owner->GetLocalRole();
-	const bool bIsAuthority = LocalRole == ROLE_Authority;
-	const bool bIsLocallyControlled = IsLocallyControlled();
+	bool bIsAuthority;
+	bool bIsLocallyControlled;
+	GetAuthorityAndLocalControl(bIsAuthority, bIsLocallyControlled);
 
 	switch (GetNetExecutionPolicy())
 	{
@@ -1548,15 +1574,7 @@ void UGameItemContainer::GetNetExecutionPlan(bool& bOutExecuteServer, bool& bOut
 
 bool UGameItemContainer::HasSaveAndLoadAuthority() const
 {
-	switch (GetNetExecutionPolicy())
-	{
-	case EGameItemContainerNetExecutionPolicy::LocalOnly:
-		return IsLocallyControlled();
-	case EGameItemContainerNetExecutionPolicy::LocalPredicted:
-	case EGameItemContainerNetExecutionPolicy::ServerInitiated:
-	default:
-		return GetNetworkOwner()->HasAuthority();
-	}
+	return IsReplicated() ? GetNetworkOwner()->HasAuthority() : IsLocallyControlled();
 }
 
 void UGameItemContainer::OnItemAdded(UGameItem* Item, int32 Slot)
@@ -1741,6 +1759,297 @@ void UGameItemContainer::ServerCreateDefaultItems_Implementation(bool bForce)
 {
 	CreateDefaultItems(bForce);
 }
+
+void UGameItemContainer::MoveItemsToServer(const TArray<FGameItemMove>& Moves, UGameItemContainer* ToContainer)
+{
+	// - generate a prediction key, and 'remove' the items locally (don't fully remove them or free up slots, to make rollback easy)
+	// - serialize to save data and send items to server, where it recreates the items in ToContainer
+	// - server acks with the prediction key and success/fail, which commits the "real" removal of items on this client
+
+	if (Moves.IsEmpty())
+	{
+		return;
+	}
+
+	const FGameItemsPredictionKey PredictionKey = FGameItemsPredictionKey::CreateNewPredictionKey(this);
+
+	TArray<FGameItemSerializedMove> ServerMoves;
+	for (const FGameItemMove& Move : Moves)
+	{
+		UGameItem* Item = Move.Item;
+		if (!Item)
+		{
+			continue;
+		}
+	
+		// make sure item actually exists
+		if (!ensure(Contains(Item)))
+		{
+			continue;
+		}
+
+		if (Item->HasPendingNetChange())
+		{
+			UE_LOG(LogGameItems, Warning, TEXT("Attempted to move Item already pending net changes: %s"),
+				*Item->GetDebugString());
+
+			// item already waiting on some predicted action, leave it alone
+			continue;
+		}
+
+		// mark item as pending-remove from this container
+		UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] Marking for remove: %s"),
+			*GetDebugPrefix(), __func__, *Item->GetDebugString());
+
+		Item->MarkPendingRemove(this, PredictionKey);
+
+		// TODO: show as predicted add in target container for UI
+		// ToContainer->AddPendingItem(Item, TargetSlot);
+
+		// serialize for server recreation
+		ServerMoves.Emplace(Item, Move.TargetSlot);
+	}
+
+	if (ServerMoves.IsEmpty())
+	{
+		// nothing to send
+		UE_LOG(LogGameItems, Verbose, TEXT("%s [%hs] All items invalid or already pending net change"),
+			*GetDebugPrefix(), __func__);
+		return;
+	}
+
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] Moving %d items to %s (Key: %s)"),
+		*GetDebugPrefix(), __func__, ServerMoves.Num(), *ToContainer->GetReadableName(), *PredictionKey.ToString());
+
+	ServerReceiveItems(ServerMoves, ToContainer, PredictionKey);
+}
+
+void UGameItemContainer::ServerReceiveItems_Implementation(
+	const TArray<FGameItemSerializedMove>& Moves,
+	UGameItemContainer* ToContainer,
+	FGameItemsPredictionKey PredictionKey)
+{
+	if (!ToContainer)
+	{
+		UE_LOG(LogGameItems, Warning, TEXT("%s [ServerReceiveItems] Cant move %d items, ToContainer not available (Key: %s)"),
+			*GetDebugPrefix(), Moves.Num(), *PredictionKey.ToString());
+
+		ClientConfirmPredictionKey(PredictionKey, false);
+	}
+
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [ServerReceiveItems] Moving %d items to %s (Key: %s)"),
+		*GetDebugPrefix(), Moves.Num(), *ToContainer->GetReadableName(), *PredictionKey.ToString());
+
+	UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
+
+	bool bSuccess = true;
+
+	// recreate the items in the target container
+	for (const FGameItemSerializedMove& Move : Moves)
+	{
+		const FGameItemSaveData& ItemData = Move.ItemData;
+		const int32 TargetSlot = Move.TargetSlot;
+
+		if (UGameItem* NewItem = ItemSubsystem->CreateItemFromSaveData(ToContainer->GetItemOuter(), ItemData))
+		{
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [ServerReceiveItems] Recreated item %s (Key: %s)"),
+				*GetDebugPrefix(), *NewItem->GetDebugString(), *PredictionKey.ToString());
+
+			// TODO: test ALL items up front before adding any! or mark added items with a prediction key for rollback
+			// make sure the item will add successfully
+			const FGameItemContainerAddPlan Plan = ToContainer->CheckAddItem(NewItem, TargetSlot, this);
+			if (!Plan.bWillAddFullAmount)
+			{
+				bSuccess = false;
+				break;
+			}
+
+			ToContainer->AddItem(NewItem, TargetSlot);
+		}
+		else
+		{
+			// this should cancel the operation, but for now allow partial failure
+			UE_LOG(LogGameItems, Error, TEXT("%s [ServerReceiveItems] Failed to recreate client item: %s (Key: %s)"),
+				*GetDebugPrefix(), *ItemData.ToString(), *PredictionKey.ToString());
+		}
+	}
+
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [ServerReceiveItems] Calling ClientConfirmPredictionKey %s (Key: %s)"),
+		*GetDebugPrefix(), bSuccess ? TEXT("Accepted") : TEXT("Rejected"), *PredictionKey.ToString());
+
+	ClientConfirmPredictionKey(PredictionKey, bSuccess);
+}
+
+void UGameItemContainer::MoveItemsFromServer(const TArray<FGameItemMove>& Moves, UGameItemContainer* FromContainer)
+{
+	// - generate a prediction key, and 'add' the items locally (in a pending state for easy rollback)
+	// - request the server send the items (which just involves removing them)
+	// - server acks with the prediction key and success/fail, which commits the "real" adding of items on this client
+
+	if (Moves.IsEmpty())
+	{
+		return;
+	}
+
+	const FGameItemsPredictionKey PredictionKey = FGameItemsPredictionKey::CreateNewPredictionKey(this);
+
+	TArray<FGameItemMove> ServerMoves;
+	for (const FGameItemMove& Move : Moves)
+	{
+		UGameItem* Item = Move.Item;
+		if (!Item)
+		{
+			continue;
+		}
+	
+		// make sure item isn't already in this container
+		if (!ensure(!Contains(Item)))
+		{
+			continue;
+		}
+
+		if (Item->HasPendingNetChange())
+		{
+			UE_LOG(LogGameItems, Warning, TEXT("Attempted to move Item already pending net changes: %s"),
+				*Item->GetDebugString());
+
+			// item already waiting on some predicted action, leave it alone
+			continue;
+		}
+
+		// TODO: mark item as pending-remove from the server container
+		// UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] Marking for remove: %s"),
+		// 	*GetDebugPrefix(), __func__, *Item->GetDebugString());
+		// Item->MarkPendingRemove(this, PredictionKey);
+
+		// TODO: make sure this duplicates into this container! for new ownership and to sever replication
+		// mark item as pending add in this container
+		// AddPendingItem(Item, TargetSlot);
+
+		// no serialization when client takes items from server, they already exist on both sides
+		ServerMoves.Emplace(Move);
+	}
+
+	PendingAdds.Emplace(PredictionKey, ServerMoves);
+
+	if (ServerMoves.IsEmpty())
+	{
+		// nothing to receive
+		UE_LOG(LogGameItems, Verbose, TEXT("%s [%hs] All items invalid or already pending net change"),
+			*GetDebugPrefix(), __func__);
+		return;
+	}
+
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] Moving %d items from %s (Key: %s)"),
+		*GetDebugPrefix(), __func__, ServerMoves.Num(), *FromContainer->GetReadableName(), *PredictionKey.ToString());
+
+	ServerSendItems(ServerMoves, FromContainer, PredictionKey);
+}
+
+void UGameItemContainer::ServerSendItems_Implementation(
+	const TArray<FGameItemMove>& Moves,
+	UGameItemContainer* FromContainer,
+	FGameItemsPredictionKey PredictionKey)
+{
+	if (!FromContainer)
+	{
+		UE_LOG(LogGameItems, Warning, TEXT("%s [ServerSendItems] Cant move %d items, FromContainer not available (Key: %s)"),
+			*GetDebugPrefix(), Moves.Num(), *PredictionKey.ToString());
+
+		ClientConfirmPredictionKey(PredictionKey, false);
+	}
+
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [ServerSendItems] Moving %d items from %s (Key: %s)"),
+		*GetDebugPrefix(), Moves.Num(), *FromContainer->GetReadableName(), *PredictionKey.ToString());
+
+	bool bSuccess = true;
+
+	// recreate the items in the target container
+	for (const FGameItemMove& Move : Moves)
+	{
+		UGameItem* Item = Move.Item;
+		if (!Item)
+		{
+			bSuccess = false;
+			break;
+		}
+
+		// all we have to do on server is remove and confirm, the client will add their local-only items
+		FromContainer->RemoveItem(Item);
+	}
+
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [ServerSendItems] Calling ClientConfirmPredictionKey %s (Key: %s)"),
+		*GetDebugPrefix(), bSuccess ? TEXT("Accepted") : TEXT("Rejected"), *PredictionKey.ToString());
+
+	ClientConfirmPredictionKey(PredictionKey, bSuccess);
+}
+
+void UGameItemContainer::ClientConfirmPredictionKey_Implementation(FGameItemsPredictionKey PredictionKey, bool bAccepted)
+{
+	if (!ensure(PredictionKey.IsValidKey()))
+	{
+		return;
+	}
+
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [ClientConfirmPredictionKey]: %s (Key: %s)"),
+		*GetDebugPrefix(), bAccepted ? TEXT("Accepted") : TEXT("Rejected"), *PredictionKey.ToString());
+
+	// commit or rollback item count / removal
+	TArray<FGameItemListEntry> ItemsPendingNetChange = ItemList.GetEntries().FilterByPredicate([](const FGameItemListEntry& Entry)
+		{
+			return Entry.Item && Entry.Item->HasPendingNetChange();
+		});
+
+	for (const FGameItemListEntry& Entry : ItemsPendingNetChange)
+	{
+		UGameItem* Item = Entry.Item;
+		if (Item->GetPendingPredictionKey() == PredictionKey)
+		{
+			if (bAccepted)
+			{
+				if (Item->GetPendingRemoveContainer() == this)
+				{
+					// commit the remove
+					Item->AcceptPendingNetChange();
+					RemoveItem(Item);
+				}
+				else if (Item->GetPendingCount().IsSet())
+				{
+					// commit the count
+					Item->AcceptPendingNetChange();
+					Item->SetCount(Item->GetPendingCount().GetValue());
+				}
+			}
+			else
+			{
+				// item can handle any callbacks to reveal it's previous state
+				Item->RejectPendingNetChange();
+			}
+		}
+	}
+
+	// commit or rollback item adds in this container
+	for (auto AddIt = PendingAdds.CreateIterator(); AddIt; ++AddIt)
+	{
+		const FGameItemPendingAdd& PendingAdd = *AddIt;
+		if (PendingAdd.Key == PredictionKey)
+		{
+			if (bAccepted && IsLocallyControlled())
+			{
+				for (const FGameItemMove& Add : PendingAdd.Adds)
+				{
+					if (ensure(Add.Item))
+					{
+						AddItem(Add.Item, Add.TargetSlot);
+					}
+				}
+			}
+
+			AddIt.RemoveCurrent();
+		}
+	}
+}
+
 
 void UGameItemContainer::OnRep_Rules(const TArray<UGameItemContainerRule*>& PreviousRules)
 {

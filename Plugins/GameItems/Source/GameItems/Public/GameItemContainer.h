@@ -448,11 +448,26 @@ public:
 public:
 	virtual EGameItemContainerNetExecutionPolicy GetNetExecutionPolicy() const;
 
+	/** Return true if the items in this container should be replicated (Policy != LocalOnly). */
+	FORCEINLINE bool IsReplicated() const
+	{
+		return GetNetExecutionPolicy() != EGameItemContainerNetExecutionPolicy::LocalOnly;
+	}
+
+	/**
+	 * Return true if the items in this container exist and are managed on the server,
+	 * whether the container is replicated or not.
+	 */
+	bool ItemsExistOnServer() const;
+
 	/** Return the actor that should be used for network role / authority checks. */
 	virtual AActor* GetNetworkOwner() const;
 
 	/** Return true if the network owner is locally controlled. */
 	virtual bool IsLocallyControlled() const;
+
+	/** Retrieve whether the network owner has authority and/or is locally controlled. */
+	virtual void GetAuthorityAndLocalControl(bool& bOutAuthority, bool& bOutLocallyControlled) const;
 
 	/** Return whether we should execute a function via Server rpc and/or locally. */
 	virtual void GetNetExecutionPlan(bool& bOutExecuteServer, bool& bOutExecuteLocal) const;
@@ -492,6 +507,36 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void ServerCreateDefaultItems(bool bForce = false);
+	
+protected:
+	static bool IsLocallyControlledActor(const AActor* InActor);
+
+public:
+	/**
+	 * Called on locally controlled client-only containers to send game items to the server.
+	 * @param Moves The items to send, and target slots if any, must be in this container.
+	 * @param ToContainer The server container to send to, must be visible from the client.
+	 */
+	void MoveItemsToServer(const TArray<FGameItemMove>& Moves, UGameItemContainer* ToContainer);
+
+	/** Receive items being sent from a client-only container and move them into ToContainer. */
+	UFUNCTION(Server, Reliable)
+	void ServerReceiveItems(const TArray<FGameItemSerializedMove>& Moves, UGameItemContainer* ToContainer, FGameItemsPredictionKey PredictionKey);
+
+	/**
+	 * Called on locally controlled client-only containers to take game items from the server.
+	 * @param Moves The items to move into this container, and target slots.
+	 * @param FromContainer The server container where the items are.
+	 */
+	void MoveItemsFromServer(const TArray<FGameItemMove>& Moves, UGameItemContainer* FromContainer);
+
+	/** Send items being requested from a client-only container. */
+	UFUNCTION(Server, Reliable)
+	void ServerSendItems(const TArray<FGameItemMove>& Moves, UGameItemContainer* FromContainer, FGameItemsPredictionKey PredictionKey);
+
+	/** Called from server to accept or reject some predicted changes to this container or its items. */
+	UFUNCTION(Client, Reliable)
+	void ClientConfirmPredictionKey(FGameItemsPredictionKey PredictionKey, bool bAccepted = false);
 
 public:
 	/** Groups multiple slot changes during the scope, and broadcasts them all when completed. */
@@ -587,6 +632,10 @@ protected:
 	/** The replicated item list struct. */
 	UPROPERTY(Transient, Replicated)
 	FGameItemList ItemList;
+
+	/** Items that are pending being added to this container. */
+	UPROPERTY(Transient)
+	TArray<FGameItemPendingAdd> PendingAdds;
 
 public:
 	/** Return a readable name for this container object for debugging. */

@@ -26,13 +26,13 @@ struct FGameItemTagStackContainer;
 UENUM(BlueprintType)
 enum class EGameItemContainerNetExecutionPolicy : uint8
 {
-	/** The container only updates on the client or server that has local control. */
+	/** The container only operates on the client or server that has local control. */
 	LocalOnly,
 
-	/** Execute changes immediately on autonomous clients, and trigger the same changes on the server. */
+	/** Server owned. Execute changes immediately on autonomous clients, and trigger the same changes on the server. */
 	LocalPredicted,
 
-	/** Only execute changes on the server and replicate to clients. */
+	/** Server owned. Only execute changes on the server and replicate to clients. */
 	ServerInitiated,
 };
 
@@ -471,4 +471,129 @@ struct GAMEITEMS_API FPlayerAndWorldGameItemSaveData
 	/** Save data for all world item containers. */
 	UPROPERTY(SaveGame)
 	TMap<FName, FGameItemContainerCollectionSaveData> WorldItemData;
+};
+
+
+/**
+ * A key passed around when performing network operations to confirm or cancel
+ * the server and client being in sync. Modeled loosely after FPredictionKey.
+ */
+USTRUCT()
+struct GAMEITEMS_API FGameItemsPredictionKey
+{
+	GENERATED_BODY()
+
+public:
+	/** Construct a new prediction key with no dependencies */
+	static FGameItemsPredictionKey CreateNewPredictionKey(const UGameItemContainer* Container);
+
+	/** Construct a new server initiated key, for actions performed by the server */
+	static FGameItemsPredictionKey CreateNewServerInitiatedKey(const UGameItemContainer* Container);
+
+public:
+	/** The unique id of this prediction key */
+	UPROPERTY()
+	int16 Id = 0;
+
+	/** True if this was created by the server, not used for prediction. */
+	UPROPERTY()
+	bool bIsServerInitiated = false;
+
+	bool IsValidKey() const
+	{
+		return Id > 0;
+	}
+
+	bool IsLocalClientKey() const
+	{
+		return Id > 0 && !bIsServerInitiated;
+	}
+
+	bool IsServerInitiatedKey() const
+	{
+		return bIsServerInitiated;
+	}
+
+	FString ToString() const
+	{
+		return bIsServerInitiated ? FString::Printf(TEXT("[Srv: %d]"), Id) : FString::Printf(TEXT("[%d]"), Id);
+	}
+
+	bool operator==(const FGameItemsPredictionKey& Other) const
+	{
+		return Other.Id == Id && Other.bIsServerInitiated == bIsServerInitiated;
+	}
+
+	bool operator!=(const FGameItemsPredictionKey& Other) const
+	{
+		return !(*this == Other);
+	}
+
+	friend uint32 GetTypeHash(const FGameItemsPredictionKey& InKey)
+	{
+		return ((InKey.Id << 1) | (InKey.bIsServerInitiated & 1));
+	}
+
+protected:
+	void GenerateNewPredictionKey();
+};
+
+
+template <>
+struct TStructOpsTypeTraits<FGameItemsPredictionKey> : public TStructOpsTypeTraitsBase2<FGameItemsPredictionKey>
+{
+	enum
+	{
+		WithIdenticalViaEquality = true
+	};
+};
+
+
+/**
+ * Contains an item and desired target slot for a move.
+ * Intended for sending client-only items to the server.
+ */
+USTRUCT()
+struct GAMEITEMS_API FGameItemMove
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TObjectPtr<UGameItem> Item;
+
+	UPROPERTY()
+	int32 TargetSlot = -1;
+};
+
+
+/**
+ * Contains a serialized item and desired target slot for a move.
+ * Intended for sending client-only items to the server.
+ */
+USTRUCT()
+struct GAMEITEMS_API FGameItemSerializedMove
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FGameItemSaveData ItemData;
+
+	UPROPERTY()
+	int32 TargetSlot = -1;
+};
+
+
+/**
+ * A pending, predicted add of an item to a container.
+ */
+USTRUCT()
+struct GAMEITEMS_API FGameItemPendingAdd
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FGameItemsPredictionKey Key;
+
+	UPROPERTY()
+	TArray<FGameItemMove> Adds;
 };
