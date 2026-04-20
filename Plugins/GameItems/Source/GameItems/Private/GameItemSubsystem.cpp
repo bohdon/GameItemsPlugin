@@ -18,6 +18,8 @@
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "GameFramework/HUD.h"
+#include "Serialization/MemoryReader.h"
+#include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemSubsystem)
 
@@ -58,6 +60,28 @@ UGameItem* UGameItemSubsystem::CreateItem(UObject* Outer, TSubclassOf<UGameItemD
 			Fragment->OnItemCreated(NewItem);
 		}
 	}
+
+	return NewItem;
+}
+
+UGameItem* UGameItemSubsystem::CreateItemFromSaveData(UObject* Outer, const FGameItemSaveData& ItemSaveData)
+{
+	const TSubclassOf<UGameItemDef> ItemDef = ItemSaveData.ItemDef.LoadSynchronous();
+	if (!ItemDef)
+	{
+		UE_LOG(LogGameItems, Warning, TEXT("Failed to load item def from save data: %s (Outer: %s)"),
+			*ItemSaveData.ItemDef.ToString(), *GetNameSafe(Outer));
+		return nullptr;
+	}
+
+	UGameItem* NewItem = CreateItem(Outer, ItemDef);
+	check(NewItem);
+
+	// serialize item properties (including count)
+	FMemoryReader MemReader(ItemSaveData.ByteData);
+	FObjectAndNameAsStringProxyArchive Ar(MemReader, true);
+	Ar.ArIsSaveGame = true;
+	NewItem->Serialize(Ar);
 
 	return NewItem;
 }

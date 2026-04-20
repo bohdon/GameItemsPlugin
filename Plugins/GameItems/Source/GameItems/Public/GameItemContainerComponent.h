@@ -271,7 +271,7 @@ protected:
 
 	virtual void OnItemAddedToContainer(UGameItem* GameItem, UGameItemContainer* Container);
 
-	virtual void OnItemRemovedFromContainer(UGameItem* GameItem, UGameItemContainer* Container);
+	virtual void OnPostItemRemovedFromContainer(UGameItem* GameItem, UGameItemContainer* Container);
 
 	virtual void OnRuleAdded(UGameItemContainerRule* Rule);
 

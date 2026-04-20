@@ -37,10 +37,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	UGameItem* CreateItem(UObject* Outer, TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1);
 
-	/**
-	 * Create a new game item and add it to a container.
-	 * @return The newly created items, which may have been split depending on the container rules.
-	 */
+	/** Create and return a new game item from save data. */
+	UGameItem* CreateItemFromSaveData(UObject* Outer, const FGameItemSaveData& ItemSaveData);
+
+	/** Create a new game item and add it to a container. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void CreateItemInContainer(UGameItemContainer* Container, TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1, bool bWarn = true);
 

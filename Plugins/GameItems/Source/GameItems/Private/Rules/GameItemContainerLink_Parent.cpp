@@ -4,6 +4,7 @@
 #include "Rules/GameItemContainerLink_Parent.h"
 
 #include "GameItemContainer.h"
+#include "GameItemsModule.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemContainerLink_Parent)
 
@@ -37,6 +38,9 @@ bool UGameItemContainerLink_Parent::CanContainItem_Implementation(const UGameIte
 
 void UGameItemContainerLink_Parent::OnLinkedItemRemoved(UGameItem* Item)
 {
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s Removing item %s, due to remove from: %s"),
+		*GetContainer()->GetDebugPrefix(), *Item->GetDebugString(), *LinkedContainerId.ToString());
+
 	// remove from this container when removed from parent
 	GetContainer()->RemoveItem(Item);
 }

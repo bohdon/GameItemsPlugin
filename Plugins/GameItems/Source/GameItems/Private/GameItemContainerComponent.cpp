@@ -557,7 +557,7 @@ void UGameItemContainerComponent::OnContainerAdded(UGameItemContainer* Container
 
 	// monitor for item and rule changes so that all subobjects can be replicated
 	Container->OnItemAddedEvent.AddUObject(this, &ThisClass::OnItemAddedToContainer, Container);
-	Container->OnItemRemovedEvent.AddUObject(this, &ThisClass::OnItemRemovedFromContainer, Container);
+	Container->OnPostItemRemovedEvent.AddUObject(this, &ThisClass::OnPostItemRemovedFromContainer, Container);
 	Container->OnRuleAddedEvent.AddUObject(this, &ThisClass::OnRuleAdded);
 	Container->OnRuleRemovedEvent.AddUObject(this, &ThisClass::OnRuleRemoved);
 
@@ -582,7 +582,7 @@ void UGameItemContainerComponent::OnContainerRemoved(UGameItemContainer* Contain
 	}
 
 	Container->OnItemAddedEvent.RemoveAll(this);
-	Container->OnItemRemovedEvent.RemoveAll(this);
+	Container->OnPostItemRemovedEvent.RemoveAll(this);
 	Container->OnRuleAddedEvent.RemoveAll(this);
 	Container->OnRuleRemovedEvent.RemoveAll(this);
 
@@ -679,7 +679,7 @@ void UGameItemContainerComponent::OnItemAddedToContainer(UGameItem* GameItem, UG
 	}
 }
 
-void UGameItemContainerComponent::OnItemRemovedFromContainer(UGameItem* GameItem, UGameItemContainer* Container)
+void UGameItemContainerComponent::OnPostItemRemovedFromContainer(UGameItem* GameItem, UGameItemContainer* Container)
 {
 	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && GameItem && GameItem->GetContainers().IsEmpty())
 	{
@@ -688,7 +688,8 @@ void UGameItemContainerComponent::OnItemRemovedFromContainer(UGameItem* GameItem
 
 	if (!Container->IsChild())
 	{
-		// items should never belong to more than one parent container
+		// items should never belong to more than one parent container,
+		// child linked containers should also have cleaned up by now.
 		if (ensure(!ContainsItemInAnyContainer(GameItem)))
 		{
 			OnItemRemovedEvent.Broadcast(GameItem);

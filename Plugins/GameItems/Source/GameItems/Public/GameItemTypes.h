@@ -401,7 +401,7 @@ struct GAMEITEMS_API FGameItemSaveData
 	FGameItemSaveData();
 
 	/** Create save data from an item. */
-	FGameItemSaveData(UGameItem* InItem);
+	FGameItemSaveData(const UGameItem* InItem);
 
 	/** Create save data using only a guid, pointing to an item in a parent container. */
 	FGameItemSaveData(const FGuid& InGuid);
@@ -417,6 +417,8 @@ struct GAMEITEMS_API FGameItemSaveData
 	/** The item's serialized SaveGame properties. */
 	UPROPERTY(SaveGame)
 	TArray<uint8> ByteData;
+
+	FString ToString() const;
 };
 
 

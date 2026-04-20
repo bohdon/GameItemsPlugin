@@ -427,6 +427,9 @@ public:
 	/** Called when an item is removed. */
 	FItemAddOrRemoveDelegate OnItemRemovedEvent;
 
+	/** Called when an item is removed, and after other delegates. */
+	FItemAddOrRemoveDelegate OnPostItemRemovedEvent;
+
 	/** Called the item in a slot is changed. */
 	FItemSlotChangedDelegate OnItemSlotChangedEvent;
 

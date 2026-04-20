@@ -1408,6 +1408,11 @@ void UGameItemContainer::LoadSaveData(
 		RemoveAllItems();
 	}
 
+	// make sure we don't have any missing or unconfigured rules, they could affect parent/child handling
+	UE_CLOG(GetWorld()->GetNetMode() == NM_Client && Rules.Contains(nullptr), LogGameItems, Error,
+		TEXT("%s [%hs] Loading save data with null rules. Make sure they are fully replicated!"),
+		*GetDebugPrefix(), __func__);
+
 	// load items
 	bool bIsChild = IsChild();
 	for (const auto& ItemElem : ContainerData.ItemList)
@@ -1428,30 +1433,28 @@ void UGameItemContainer::LoadSaveData(
 			// create new item from save data
 			if (ItemData.ItemDef.IsNull())
 			{
-				UE_LOG(LogGameItems, Warning, TEXT("%s Found null item def when loading save game: %s.%d"),
-					*GetDebugPrefix(), *ContainerId.ToString(), Slot);
+				UE_LOG(LogGameItems, Warning, TEXT("%s [%hs] [Slot %d] ItemDef is null: %s"),
+					*GetDebugPrefix(), __func__, Slot, *ItemData.ToString());
 				continue;
 			}
 
+			// attempt to load item def to give early warning
 			const TSubclassOf<UGameItemDef> ItemDef = ItemData.ItemDef.LoadSynchronous();
 			if (!ItemDef)
 			{
-				UE_LOG(LogGameItems, Warning, TEXT("%s Failed to load item def when loading save game: %s"),
-					*GetDebugPrefix(), *ItemData.ItemDef.ToString());
+				UE_LOG(LogGameItems, Warning, TEXT("%s [%hs] [Slot %d] Failed to load item def: %s"),
+					*GetDebugPrefix(), __func__, Slot, *ItemData.ToString());
 				continue;
 			}
 
-			UGameItem* NewItem = ItemSubsystem->CreateItem(GetItemOuter(), ItemDef);
+			UGameItem* NewItem = ItemSubsystem->CreateItemFromSaveData(GetItemOuter(), ItemData);
 			check(NewItem);
+
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] [Slot %d] Created item %s for %s"),
+				*GetDebugPrefix(), __func__, Slot, *NewItem->GetDebugString(), *ItemData.ToString());
 
 			// save item so it can be retrieved by children
 			LoadedItems.Add(ItemData.Guid, NewItem);
-
-			// serialize item properties
-			FMemoryReader MemReader(ItemData.ByteData);
-			FObjectAndNameAsStringProxyArchive Ar(MemReader, true);
-			Ar.ArIsSaveGame = true;
-			NewItem->Serialize(Ar);
 
 			AddItem(NewItem, Slot);
 		}
@@ -1568,6 +1571,8 @@ void UGameItemContainer::OnItemRemoved(UGameItem* Item, int32 Slot)
 	Item->Containers.Remove(this);
 	OnItemRemovedEvent.Broadcast(Item);
 	Item->OnUnslottedEvent.Broadcast(Item, this, Slot);
+
+	OnPostItemRemovedEvent.Broadcast(Item);
 }
 
 void UGameItemContainer::OnPostReplicatedChanges(const TArray<FGameItemList::FChange>& Changes)

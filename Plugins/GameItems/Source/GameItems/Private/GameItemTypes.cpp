@@ -9,6 +9,7 @@
 #include "Rules/GameItemContainerLink.h"
 #include "Serialization/MemoryWriter.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
+#include "UObject/Stack.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemTypes)
 
@@ -363,7 +364,7 @@ FGameItemSaveData::FGameItemSaveData()
 {
 }
 
-FGameItemSaveData::FGameItemSaveData(UGameItem* InItem)
+FGameItemSaveData::FGameItemSaveData(const UGameItem* InItem)
 	: FGameItemSaveData()
 {
 	if (!InItem)
@@ -376,7 +377,10 @@ FGameItemSaveData::FGameItemSaveData(UGameItem* InItem)
 	FMemoryWriter MemWriter(ByteData);
 	FObjectAndNameAsStringProxyArchive Ar(MemWriter, true);
 	Ar.ArIsSaveGame = true;
-	InItem->Serialize(Ar);
+
+	// we are only saving, never loading, keep const in the arguments to indicate this intent
+	UGameItem* MutableItem = const_cast<UGameItem*>(InItem);
+	MutableItem->Serialize(Ar);
 
 	// create a new guid for this save data
 	Guid = FGuid::NewGuid();
@@ -385,4 +389,9 @@ FGameItemSaveData::FGameItemSaveData(UGameItem* InItem)
 FGameItemSaveData::FGameItemSaveData(const FGuid& InGuid)
 	: Guid(InGuid)
 {
+}
+
+FString FGameItemSaveData::ToString() const
+{
+	return FString::Printf(TEXT("%s (%s)"), *ItemDef.GetAssetName(), *Guid.ToString());
 }
