@@ -448,11 +448,8 @@ public:
 public:
 	virtual EGameItemContainerNetExecutionPolicy GetNetExecutionPolicy() const;
 
-	/** Return true if the items in this container should be replicated (Policy != LocalOnly). */
-	FORCEINLINE bool IsReplicated() const
-	{
-		return GetNetExecutionPolicy() != EGameItemContainerNetExecutionPolicy::LocalOnly;
-	}
+	/** Return true if the items in this container are replicated (Policy != LocalOnly, and owner is a replicated actor). */
+	bool IsReplicated() const;
 
 	/**
 	 * Return true if the items in this container exist and are managed on the server,

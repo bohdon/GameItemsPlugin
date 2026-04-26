@@ -1492,6 +1492,28 @@ EGameItemContainerNetExecutionPolicy UGameItemContainer::GetNetExecutionPolicy()
 	return ContainerDefCDO ? ContainerDefCDO->NetExecutionPolicy : EGameItemContainerNetExecutionPolicy::LocalPredicted;
 }
 
+bool UGameItemContainer::IsReplicated() const
+{
+	if (GetNetExecutionPolicy() == EGameItemContainerNetExecutionPolicy::LocalOnly)
+	{
+		return false;
+	}
+
+	const AActor* NetOwner = GetNetworkOwner();
+	if (!NetOwner || !NetOwner->GetIsReplicated())
+	{
+		return false;
+	}
+
+	if (NetOwner->GetNetMode() == NM_Client && NetOwner->HasAuthority())
+	{
+		// client-owned actor was not replicated from server
+		return false;
+	}
+
+	return true;
+}
+
 bool UGameItemContainer::ItemsExistOnServer() const
 {
 	return IsReplicated() || (GetNetworkOwner()->GetNetMode() == NM_Client ? !IsLocallyControlled() : IsLocallyControlled());
@@ -1957,6 +1979,7 @@ void UGameItemContainer::ServerSendItems_Implementation(
 			*GetDebugPrefix(), Moves.Num(), *PredictionKey.ToString());
 
 		ClientConfirmPredictionKey(PredictionKey, false);
+		return;
 	}
 
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [ServerSendItems] Moving %d items from %s (Key: %s)"),

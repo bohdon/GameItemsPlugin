@@ -248,8 +248,8 @@ bool UGameItemSubsystem::HandleNetMoveItems(UGameItemContainer* FromContainer, U
 	// Since the item (which must be valid) belongs to FromContainer, the only consideration here
 	// is whether ToContainer's owner can receive that item without serializing and recreating it via RPC.
 
-	const bool bFromItemsOnServer = FromContainer->ItemsExistOnServer(); 
-	const bool bToItemsOnServer = ToContainer->ItemsExistOnServer(); 
+	const bool bFromItemsOnServer = FromContainer->ItemsExistOnServer();
+	const bool bToItemsOnServer = ToContainer->ItemsExistOnServer();
 
 	// are we sending items from client-only to a server?
 	if (!bFromItemsOnServer && bToItemsOnServer)
@@ -258,7 +258,7 @@ bool UGameItemSubsystem::HandleNetMoveItems(UGameItemContainer* FromContainer, U
 		check(GetWorld()->GetNetMode() == NM_Client);
 		check(FromContainer->IsLocallyControlled())
 
-		UE_LOG(LogGameItems, Verbose, TEXT("%s[%hs]   Sending client-only item to server: %s -> %s"),
+		UE_LOG(LogGameItems, Verbose, TEXT("%s[%hs]   Client sending unreplicated items to server: %s -> %s"),
 			*UGameItemStatics::GetNetDebugPrefix(FromContainer), __func__, *FromContainer->GetReadableName(), *ToContainer->GetReadableName());
 
 		FromContainer->MoveItemsToServer(Moves, ToContainer);
@@ -274,7 +274,7 @@ bool UGameItemSubsystem::HandleNetMoveItems(UGameItemContainer* FromContainer, U
 			check(FromContainer->IsReplicated());
 			check(ToContainer->IsLocallyControlled());
 
-			UE_LOG(LogGameItems, Verbose, TEXT("%s[%hs]   Taking known server item to client-only: %s -> %s"),
+			UE_LOG(LogGameItems, Verbose, TEXT("%s[%hs]   Client requesting replicated server items: %s -> %s"),
 				*UGameItemStatics::GetNetDebugPrefix(FromContainer), __func__, *FromContainer->GetReadableName(), *ToContainer->GetReadableName());
 
 			ToContainer->MoveItemsFromServer(Moves, FromContainer);
@@ -283,7 +283,7 @@ bool UGameItemSubsystem::HandleNetMoveItems(UGameItemContainer* FromContainer, U
 		else if (FromContainer->IsReplicated())
 		{
 			// server sending replicated item to client
-			UE_LOG(LogGameItems, Verbose, TEXT("%s[%hs]   Sending known server item to client-only: %s -> %s"),
+			UE_LOG(LogGameItems, Verbose, TEXT("%s[%hs]   Server sending replicated item to client: %s -> %s"),
 				*UGameItemStatics::GetNetDebugPrefix(FromContainer), __func__, *FromContainer->GetReadableName(), *ToContainer->GetReadableName());
 			
 			// tell client to take the known item by reference
@@ -293,7 +293,7 @@ bool UGameItemSubsystem::HandleNetMoveItems(UGameItemContainer* FromContainer, U
 		else
 		{
 			// server sending non-replicated item to client 
-			UE_LOG(LogGameItems, Verbose, TEXT("%s[%hs]   Sending unknown server item to client-only: %s -> %s"),
+			UE_LOG(LogGameItems, Verbose, TEXT("%s[%hs]   Server sending unreplicated item to client: %s -> %s"),
 				*UGameItemStatics::GetNetDebugPrefix(FromContainer), __func__, *FromContainer->GetReadableName(), *ToContainer->GetReadableName());
 
 			// serialize to save data and recreate on client
