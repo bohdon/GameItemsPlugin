@@ -8,6 +8,7 @@
 #include "GameFramework/PlayerState.h"
 #include "ItemsDemoPlayerState.generated.h"
 
+class UDemoPlayerSaveSubsystem;
 class UGameItemContainerComponent;
 class ULocalPlayerSaveGame;
 
@@ -39,6 +40,13 @@ public:
 	// IGameItemContainerComponentInterface
 	virtual UGameItemContainerComponent* GetItemContainerComponent() const override;
 
-	void CommitSaveGame(ULocalPlayerSaveGame* SaveGame) const;
-	void LoadSaveGame(ULocalPlayerSaveGame* SaveGame);
+	void OnCommitSaveGame(ULocalPlayerSaveGame* SaveGame) const;
+	void OnSaveGameChanged();
+
+	bool IsReadyToApplySaveGame() const;
+	void TryApplySaveGame();
+
+protected:
+	UPROPERTY(Transient)
+	TObjectPtr<UDemoPlayerSaveSubsystem> SaveSubsystem;
 };

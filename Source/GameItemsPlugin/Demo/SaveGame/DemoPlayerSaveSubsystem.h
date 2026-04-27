@@ -73,6 +73,9 @@ public:
 	/** Called when gameplay state should be committed to the save game. */
 	FCommitSaveGameDelegate OnCommitSaveGameEvent;
 
+	/** Called when the current save game has changed. */
+	FSimpleMulticastDelegate OnSaveGameChangedEvent;
+
 public:
 	/** The save game class to create. */
 	UPROPERTY(BlueprintReadWrite)

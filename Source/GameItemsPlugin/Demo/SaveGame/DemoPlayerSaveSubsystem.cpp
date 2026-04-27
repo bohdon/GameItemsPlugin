@@ -6,7 +6,6 @@
 #include "DemoSaveGame.h"
 #include "GameItemsModule.h"
 #include "JsonObjectConverter.h"
-#include "Demo/Player/ItemsDemoPlayerState.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "GameFramework/SaveGame.h"
@@ -68,17 +67,7 @@ void UDemoPlayerSaveSubsystem::SetSavingDisabled(bool bDisabled)
 void UDemoPlayerSaveSubsystem::LoadOrCreateSaveGame()
 {
 	SaveGame = ULocalPlayerSaveGame::LoadOrCreateSaveGameForLocalPlayer(SaveGameClass, GetOuterULocalPlayer(), SaveSlotName);
-
-	if (SaveGame)
-	{
-		if (const APlayerController* PlayerController = GetOuterULocalPlayer()->GetPlayerController(nullptr))
-		{
-			if (AItemsDemoPlayerState* PlayerState = PlayerController->GetPlayerState<AItemsDemoPlayerState>())
-			{
-				PlayerState->LoadSaveGame(SaveGame);
-			}
-		}
-	}
+	OnSaveGameChangedEvent.Broadcast();
 }
 
 void UDemoPlayerSaveSubsystem::CommitSaveGame()
@@ -89,15 +78,6 @@ void UDemoPlayerSaveSubsystem::CommitSaveGame()
 	}
 
 	OnCommitSaveGameEvent.Broadcast(SaveGame);
-
-	// commit player state
-	if (const APlayerController* PlayerController = GetOuterULocalPlayer()->GetPlayerController(nullptr))
-	{
-		if (const AItemsDemoPlayerState* PlayerState = Cast<AItemsDemoPlayerState>(PlayerController->PlayerState))
-		{
-			PlayerState->CommitSaveGame(SaveGame);
-		}
-	}
 }
 
 void UDemoPlayerSaveSubsystem::WriteSaveGame(bool bCommit)
