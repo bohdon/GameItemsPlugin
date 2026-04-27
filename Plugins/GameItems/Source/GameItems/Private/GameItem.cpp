@@ -112,11 +112,17 @@ bool UGameItem::IsMatching(const UGameItem* Item) const
 
 void UGameItem::CopyItemProperties(const UGameItem* Item)
 {
-	Count = Item->Count;
-	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, Count, this);
-	TagStats = Item->TagStats;
-	TagStats.MarkArrayDirty();
-	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, TagStats, this);
+	if (Count != Item->Count)
+	{
+		Count = Item->Count;
+		MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, Count, this);
+	}
+	if (TagStats != Item->TagStats)
+	{
+		TagStats = Item->TagStats;
+		TagStats.MarkArrayDirty();
+		MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, TagStats, this);
+	}
 }
 
 TArray<UGameItemContainer*> UGameItem::GetContainers() const

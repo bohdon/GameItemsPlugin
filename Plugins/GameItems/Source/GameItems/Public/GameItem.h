@@ -95,7 +95,7 @@ public:
 	 * Copy all properties from another item, such as count and tag stats.
 	 * Does not broadcast any events.
 	 */
-	void CopyItemProperties(const UGameItem* Item);
+	virtual void CopyItemProperties(const UGameItem* Item);
 
 	/** Return all containers that this item is in. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
