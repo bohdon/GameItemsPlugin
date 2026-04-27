@@ -46,7 +46,7 @@ void UGameItemContainerLink_Parent::OnLinkedItemRemoved(UGameItem* Item)
 		return;
 	}
 
-	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s Removing item %s, due to remove from: %s"),
+	UE_CLOG(Container->Contains(Item), LogGameItems, VeryVerbose, TEXT("%s Removing item %s, due to remove from: %s"),
 		*Container->GetDebugPrefix(), *Item->GetDebugString(), *LinkedContainerId.ToString());
 
 	// remove from this container when removed from parent

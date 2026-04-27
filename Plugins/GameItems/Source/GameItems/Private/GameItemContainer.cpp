@@ -388,6 +388,10 @@ void UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot, bool bWarn)
 		{
 			// increase count of existing item
 			const int32 NewCount = ExistingItem->GetCount() + SlotDeltaCount;
+
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] [Slot %d] %s changing count to %d"),
+				   *GetDebugPrefix(), __func__, Slot, *Item->GetDebugString(), NewCount);
+
 			ExistingItem->SetCount(NewCount);
 			Result.Add(ExistingItem);
 		}
@@ -530,6 +534,9 @@ void UGameItemContainer::RemoveItemsByDef(TSubclassOf<UGameItemDef> ItemDef, int
 		const int32 NewCount = Item->GetCount() - NumRemoved;
 		if (NewCount > 0)
 		{
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] %s changing count to %d"),
+				   *GetDebugPrefix(), __func__, *Item->GetDebugString(), NewCount);
+
 			Item->SetCount(NewCount);
 		}
 		else
@@ -637,10 +644,16 @@ void UGameItemContainer::StackItems(int32 FromSlot, int32 ToSlot, bool bAllowPar
 	else
 	{
 		// remove delta
-		FromItem->SetCount(FromItem->Count - DeltaCount);
+		UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] %s changing count to %d"),
+			   *GetDebugPrefix(), __func__, *FromItem->GetDebugString(), FromItem->GetCount() - DeltaCount);
+
+		FromItem->SetCount(FromItem->GetCount() - DeltaCount);
 	}
 
 	// add delta
+	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] %s changing count to %d"),
+		   *GetDebugPrefix(), __func__, *ToItem->GetDebugString(), ToItem->GetCount() + DeltaCount);
+
 	ToItem->SetCount(ToItem->GetCount() + DeltaCount);
 }
 

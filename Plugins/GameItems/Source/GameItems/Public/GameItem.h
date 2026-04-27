@@ -23,14 +23,17 @@ class GAMEITEMS_API UGameItem : public UObject
 public:
 	UGameItem(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-private:
+protected:
 	/** The definition of the item. */
 	UPROPERTY(Replicated, BlueprintReadOnly, Meta = (AllowPrivateAccess))
 	TSubclassOf<UGameItemDef> ItemDef;
 
 	/** The quantity of this item in this instance (aka stack). */
-	UPROPERTY(SaveGame, Replicated, BlueprintReadOnly, Meta = (AllowPrivateAccess))
+	UPROPERTY(SaveGame, ReplicatedUsing = OnRep_Count, BlueprintReadOnly, Meta = (AllowPrivateAccess))
 	int32 Count;
+
+	UFUNCTION()
+	void OnRep_Count(int32 OldCount);
 
 	/** Tags representing various stats about this item, such as level, use count, remaining ammo, etc. */
 	UPROPERTY(SaveGame, Replicated)

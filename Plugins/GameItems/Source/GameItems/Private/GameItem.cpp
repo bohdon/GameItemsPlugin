@@ -16,6 +16,11 @@ UGameItem::UGameItem(const FObjectInitializer& ObjectInitializer)
 {
 }
 
+void UGameItem::OnRep_Count(int32 OldCount)
+{
+	OnCountChangedEvent.Broadcast(this, Count, OldCount);
+}
+
 void UGameItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
