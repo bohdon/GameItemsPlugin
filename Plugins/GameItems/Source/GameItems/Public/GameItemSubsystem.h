@@ -52,13 +52,16 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	bool RemoveItemStacks(UGameItemContainer* Container, TArray<FGameItemDefStack> ItemStacks, bool bAllowPartial = false) const;
 
-	/** Duplicate and return a new game item. If count is > 0, set a new count for the item, otherwise use the original item count. */
+	/** Create and return a duplicate of a game item. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
-	UGameItem* DuplicateItem(UObject* Outer, UGameItem* Item, int32 Count = -1);
+	UGameItem* DuplicateItem(UObject* Outer, UGameItem* Item);
 
 	/**
 	 * Split a game item and return a new item with part of the original quantity.
 	 * The split item will not be added to any container. Will return null if the item cannot be split.
+	 * @param Outer The outer of the split off item.
+	 * @param Item The item to be split.
+	 * @param Count The quantity to remove from the original item. Must be less than the items original count.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	UGameItem* SplitItem(UObject* Outer, UGameItem* Item, int32 Count = 1);

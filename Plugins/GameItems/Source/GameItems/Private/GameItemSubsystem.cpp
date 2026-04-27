@@ -136,22 +136,20 @@ bool UGameItemSubsystem::RemoveItemStacks(UGameItemContainer* Container, TArray<
 	return true;
 }
 
-UGameItem* UGameItemSubsystem::DuplicateItem(UObject* Outer, UGameItem* Item, int32 Count)
+UGameItem* UGameItemSubsystem::DuplicateItem(UObject* Outer, UGameItem* Item)
 {
 	if (!Item)
 	{
 		return nullptr;
 	}
 
-	const int32 NewCount = Count > 0 ? Count : Item->GetCount();
-	UGameItem* NewItem = CreateItem(Outer, Item->GetItemDef(), NewCount);
+	UGameItem* NewItem = CreateItem(Outer, Item->GetItemDef());
 	if (!NewItem)
 	{
 		return nullptr;
 	}
 
 	NewItem->CopyItemProperties(Item);
-
 	return NewItem;
 }
 
@@ -163,7 +161,8 @@ UGameItem* UGameItemSubsystem::SplitItem(UObject* Outer, UGameItem* Item, int32 
 	}
 
 	Item->SetCount(Item->GetCount() - Count);
-	UGameItem* NewItem = DuplicateItem(Outer, Item, Count);
+	UGameItem* NewItem = DuplicateItem(Outer, Item);
+	NewItem->SetCount(Count);
 	return NewItem;
 }
 
