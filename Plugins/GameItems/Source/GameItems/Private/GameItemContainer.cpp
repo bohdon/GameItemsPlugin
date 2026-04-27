@@ -393,14 +393,37 @@ void UGameItemContainer::AddItem(UGameItem* Item, int32 TargetSlot, bool bWarn)
 		}
 		else
 		{
-			// TODO: always duplicate if actor owner changed for replication
-
-			// add the given item first, but if its already been added, duplicate and add a new item.
 			UGameItem* NewItem = Item;
-			if (Result.Contains(Item))
+
+			// If outer is different, duplicate it before adding. This prevents items being
+			// marked as garbage if some previous container dies, and is also necessary for replication.
+			// Only done for parents, assuming children only reference items from the same outer.
+			if (NewItem->GetOuter() != GetItemOuter())
 			{
-				NewItem = ItemSubsystem->DuplicateItem(GetItemOuter(), Item);
+				if (!IsChild())
+				{
+					UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] Duplicating %s to move from outer: %s -> %s"),
+						*GetDebugPrefix(), __func__, *NewItem->GetDebugString(), *GetNameSafe(NewItem->GetOuter()), *GetNameSafe(GetItemOuter()));
+
+					NewItem = ItemSubsystem->DuplicateItem(GetItemOuter(), NewItem);
+				}
+				else
+				{
+					UE_LOG(LogGameItems, Warning, TEXT("%s [%hs] Adding %s to this child container from different outer: %s != %s"),
+						*GetDebugPrefix(), __func__, *NewItem->GetDebugString(), *GetNameSafe(NewItem->GetOuter()), *GetNameSafe(GetItemOuter()));
+				}
 			}
+
+			// Try to add the item as-is. If we've already done that and have more to add, duplicate and add a new stack.
+			if (Result.Contains(NewItem))
+			{
+				UE_CLOG(IsChild(), LogGameItems, Error,
+					TEXT("%s [%hs] Splitting %s while adding to this child container. Child and parent stacking rules should match."),
+					*GetDebugPrefix(), __func__, *NewItem->GetDebugString());
+
+				NewItem = ItemSubsystem->DuplicateItem(GetItemOuter(), NewItem);
+			}
+
 			NewItem->SetCount(SlotDeltaCount);
 
 			ItemList.AddEntryForSlot(NewItem, Slot);
@@ -1071,7 +1094,7 @@ void UGameItemContainer::CreateDefaultItems(bool bForce)
 
 		UE_LOG(LogGameItems, VeryVerbose, TEXT("%s Creating default items from drop content: %s"),
 		       *GetDebugPrefix(), *GetContainerDefCDO()->DefaultDropContent.ToDebugString());
-		const TArray<UGameItem*> NewItems = ItemSubsystem->CreateItemsFromDropTable(this, Context, GetContainerDefCDO()->DefaultDropContent);
+		const TArray<UGameItem*> NewItems = ItemSubsystem->CreateItemsFromDropTable(GetItemOuter(), Context, GetContainerDefCDO()->DefaultDropContent);
 		AddItems(NewItems);
 	}
 
@@ -1155,6 +1178,7 @@ FString UGameItemContainer::GetRulesDebugString() const
 
 bool UGameItemContainer::IsChild() const
 {
+	// TODO: cache on Rules change
 	return Algo::AnyOf(Rules, [](const UGameItemContainerRule* Rule) { return Rule && Rule->IsChild(); });
 }
 
