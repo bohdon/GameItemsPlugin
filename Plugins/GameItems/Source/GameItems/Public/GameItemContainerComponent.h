@@ -263,15 +263,21 @@ protected:
 	/** Called when a container is removed (both on authority or when replicated). */
 	virtual void OnContainerRemoved(UGameItemContainer* Container);
 
+	/** Register the container and any of its relevant subobjects for replication. */
+	virtual void AddReplicatedContainerSubObjects(UGameItemContainer* Container);
+
+	/** Unregister the container and any of its relevant subobjects from replication. */
+	virtual void RemoveReplicatedContainerSubObjects(UGameItemContainer* Container);
+
 	/** Add new link rules to a container. */
 	void AddMatchingLinkRulesToContainer(UGameItemContainer* Container, const TArray<FActiveGameItemContainerLink>& InLinks);
 
 	/** Add a new link rule to a container, if the query matches. */
 	void AddLinkRuleToContainer(UGameItemContainer* Container, const FActiveGameItemContainerLink& Link);
 
-	virtual void OnItemAddedToContainer(UGameItem* GameItem, UGameItemContainer* Container);
+	virtual void OnItemAddedToContainer(UGameItem* Item, UGameItemContainer* Container);
 
-	virtual void OnPostItemRemovedFromContainer(UGameItem* GameItem, UGameItemContainer* Container);
+	virtual void OnPostItemRemovedFromContainer(UGameItem* Item, UGameItemContainer* Container);
 
 	virtual void OnRuleAdded(UGameItemContainerRule* Rule);
 

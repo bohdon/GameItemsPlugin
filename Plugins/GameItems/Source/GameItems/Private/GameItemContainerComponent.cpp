@@ -114,15 +114,55 @@ void UGameItemContainerComponent::ReadyForReplication()
 		{
 			if (IsValid(Container))
 			{
-				AddReplicatedSubObject(Container);
+				AddReplicatedContainerSubObjects(Container);
+			}
+		}
+	}
+}
 
-				for (UGameItemContainerRule* Rule : Container->GetRules())
-				{
-					if (IsValid(Rule))
-					{
-						AddReplicatedSubObject(Rule);
-					}
-				}
+void UGameItemContainerComponent::AddReplicatedContainerSubObjects(UGameItemContainer* Container)
+{
+	AddReplicatedSubObject(Container);
+
+	for (UGameItemContainerRule* Rule : Container->GetRules())
+	{
+		if (IsValid(Rule))
+		{
+			AddReplicatedSubObject(Rule);
+		}
+	}
+
+	if (!Container->IsChild())
+	{
+		for (const auto& Elem : Container->GetAllItems())
+		{
+			if (UGameItem* Item = Elem.Value)
+			{
+				AddReplicatedSubObject(Item);
+			}
+		}
+	}
+}
+
+void UGameItemContainerComponent::RemoveReplicatedContainerSubObjects(UGameItemContainer* Container)
+{
+	RemoveReplicatedSubObject(Container);
+
+	for (UGameItemContainerRule* Rule : Container->GetRules())
+	{
+		if (IsValid(Rule))
+		{
+			RemoveReplicatedSubObject(Rule);
+		}
+	}
+
+	if (!Container->IsChild())
+	{
+		for (const auto& Elem : Container->GetAllItems())
+		{
+			if (UGameItem* Item = Elem.Value)
+			{
+				RemoveReplicatedSubObject(Item);
 			}
 		}
 	}
@@ -543,16 +583,7 @@ void UGameItemContainerComponent::OnContainerAdded(UGameItemContainer* Container
 
 	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
 	{
-		AddReplicatedSubObject(Container);
-
-		// also replicate rules (new rules added later will be replicated in OnRuleAdded below)
-		for (UGameItemContainerRule* Rule : Container->GetRules())
-		{
-			if (IsValid(Rule))
-			{
-				AddReplicatedSubObject(Rule);
-			}
-		}
+		AddReplicatedContainerSubObjects(Container);
 	}
 
 	// monitor for item and rule changes so that all subobjects can be replicated
@@ -570,15 +601,7 @@ void UGameItemContainerComponent::OnContainerRemoved(UGameItemContainer* Contain
 
 	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
 	{
-		RemoveReplicatedSubObject(Container);
-
-		for (UGameItemContainerRule* Rule : Container->GetRules())
-		{
-			if (IsValid(Rule))
-			{
-				RemoveReplicatedSubObject(Rule);
-			}
-		}
+		RemoveReplicatedContainerSubObjects(Container);
 	}
 
 	Container->OnItemAddedEvent.RemoveAll(this);
@@ -666,33 +689,33 @@ void UGameItemContainerComponent::OnRep_Containers(const TArray<UGameItemContain
 	}
 }
 
-void UGameItemContainerComponent::OnItemAddedToContainer(UGameItem* GameItem, UGameItemContainer* Container)
+void UGameItemContainerComponent::OnItemAddedToContainer(UGameItem* Item, UGameItemContainer* Container)
 {
-	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && GameItem)
-	{
-		AddReplicatedSubObject(GameItem);
-	}
-
 	if (!Container->IsChild())
 	{
-		OnItemAddedEvent.Broadcast(GameItem);
+		if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
+		{
+			AddReplicatedSubObject(Item);
+		}
+
+		OnItemAddedEvent.Broadcast(Item);
 	}
 }
 
-void UGameItemContainerComponent::OnPostItemRemovedFromContainer(UGameItem* GameItem, UGameItemContainer* Container)
+void UGameItemContainerComponent::OnPostItemRemovedFromContainer(UGameItem* Item, UGameItemContainer* Container)
 {
-	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && GameItem && GameItem->GetContainers().IsEmpty())
-	{
-		RemoveReplicatedSubObject(GameItem);
-	}
-
 	if (!Container->IsChild())
 	{
 		// items should never belong to more than one parent container,
 		// child linked containers should also have cleaned up by now.
-		if (ensure(!ContainsItemInAnyContainer(GameItem)))
+		if (ensure(!ContainsItemInAnyContainer(Item)))
 		{
-			OnItemRemovedEvent.Broadcast(GameItem);
+			if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
+			{
+				RemoveReplicatedSubObject(Item);
+			}
+
+			OnItemRemovedEvent.Broadcast(Item);
 		}
 	}
 }
