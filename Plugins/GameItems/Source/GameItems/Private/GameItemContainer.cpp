@@ -1849,7 +1849,7 @@ void UGameItemContainer::MoveItemsToServer(const TArray<FGameItemMove>& Moves, U
 
 		if (Item->HasPendingNetChange())
 		{
-			UE_LOG(LogGameItems, Warning, TEXT("Attempted to move Item already pending net changes: %s"),
+			UE_LOG(LogGameItems, Warning, TEXT("Item already pending net changes: %s"),
 				*Item->GetDebugString());
 
 			// item already waiting on some predicted action, leave it alone
@@ -1969,19 +1969,17 @@ void UGameItemContainer::MoveItemsFromServer(const TArray<FGameItemMove>& Moves,
 
 		if (Item->HasPendingNetChange())
 		{
-			UE_LOG(LogGameItems, Warning, TEXT("Attempted to move Item already pending net changes: %s"),
+			UE_LOG(LogGameItems, Warning, TEXT("Item already pending net changes: %s"),
 				*Item->GetDebugString());
 
 			// item already waiting on some predicted action, leave it alone
 			continue;
 		}
 
-		// TODO: mark item as pending-remove from the server container
-		// UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] Marking for remove: %s"),
-		// 	*GetDebugPrefix(), __func__, *Item->GetDebugString());
-		// Item->MarkPendingRemove(this, PredictionKey);
+		UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [%hs] Marking for remove: %s"),
+		       *GetDebugPrefix(), __func__, *Item->GetDebugString());
+		Item->MarkPendingRemove(FromContainer, PredictionKey);
 
-		// TODO: make sure this duplicates into this container! for new ownership and to sever replication
 		// mark item as pending add in this container
 		// AddPendingItem(Item, TargetSlot);
 
