@@ -412,12 +412,17 @@ void FGameItemsPredictionKey::GenerateNewPredictionKey()
 	}
 }
 
-FGameItemsPredictionKey FGameItemsPredictionKey::CreateNewPredictionKey(const UGameItemContainer* Container)
+bool FGameItemContainerPair::IsValid() const
+{
+	return From != nullptr && To != nullptr;
+}
+
+FGameItemsPredictionKey FGameItemsPredictionKey::CreateNewClientPredictionKey(const AActor* Owner)
 {
 	FGameItemsPredictionKey NewKey;
 
 	// must be generated on clients, never the authority
-	if (Container->GetNetworkOwner()->GetLocalRole() != ROLE_Authority)
+	if (Owner->GetLocalRole() != ROLE_Authority)
 	{
 		NewKey.GenerateNewPredictionKey();
 	}
@@ -425,12 +430,12 @@ FGameItemsPredictionKey FGameItemsPredictionKey::CreateNewPredictionKey(const UG
 	return NewKey;
 }
 
-FGameItemsPredictionKey FGameItemsPredictionKey::CreateNewServerInitiatedKey(const UGameItemContainer* Container)
+FGameItemsPredictionKey FGameItemsPredictionKey::CreateNewServerInitiatedKey(const AActor* Owner)
 {
 	FGameItemsPredictionKey NewKey;
 
 	// must be generated on server
-	if (Container->GetNetworkOwner()->GetLocalRole() == ROLE_Authority)
+	if (Owner->GetLocalRole() == ROLE_Authority)
 	{
 		// don't use same generation as client
 		static int16 GServerKey = 1;

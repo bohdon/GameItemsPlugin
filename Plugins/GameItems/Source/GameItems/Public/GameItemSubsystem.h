@@ -17,6 +17,7 @@ class UCanvas;
 class UGameItem;
 class UGameItemContainer;
 class UGameItemContainerComponent;
+class UGameItemControllerComponent;
 class UGameItemDef;
 class UGameItemFragment;
 
@@ -139,6 +140,8 @@ public:
 	virtual const IGameItemContainerInterface* GetContainerInterfaceForActor(const AActor* Actor) const;
 
 protected:
+	virtual UGameItemControllerComponent* FindControllerForContainerPair(const FGameItemContainerPair& Pair) const;
+
 	/**
 	 * Check for potential network move items between containers (from local-only to server or vice versa)
 	 * and handle using RPCs as needed, potentially serializing and recreating items.
@@ -150,5 +153,6 @@ protected:
 
 public:
 	/** Return the game item subsystem given a world context object. */
+	static UGameItemSubsystem* Get(const UObject* WorldContextObject);
 	static UGameItemSubsystem* GetGameItemSubsystem(const UObject* WorldContextObject);
 };

@@ -484,11 +484,11 @@ struct GAMEITEMS_API FGameItemsPredictionKey
 	GENERATED_BODY()
 
 public:
-	/** Construct a new prediction key with no dependencies */
-	static FGameItemsPredictionKey CreateNewPredictionKey(const UGameItemContainer* Container);
+	/** Construct a new prediction key for client actions. */
+	static FGameItemsPredictionKey CreateNewClientPredictionKey(const AActor* Owner);
 
 	/** Construct a new server initiated key, for actions performed by the server */
-	static FGameItemsPredictionKey CreateNewServerInitiatedKey(const UGameItemContainer* Container);
+	static FGameItemsPredictionKey CreateNewServerInitiatedKey(const AActor* Owner);
 
 public:
 	/** The unique id of this prediction key */
@@ -550,6 +550,24 @@ struct TStructOpsTypeTraits<FGameItemsPredictionKey> : public TStructOpsTypeTrai
 
 
 /**
+ * A pair of containers used when moving items.
+ */
+USTRUCT()
+struct GAMEITEMS_API FGameItemContainerPair
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TObjectPtr<UGameItemContainer> From;
+
+	UPROPERTY()
+	TObjectPtr<UGameItemContainer> To;
+
+	bool IsValid() const;
+};
+
+
+/**
  * Contains an item and desired target slot for a move.
  * Intended for sending client-only items to the server.
  */
@@ -564,6 +582,39 @@ struct GAMEITEMS_API FGameItemMove
 	UPROPERTY()
 	int32 TargetSlot = -1;
 };
+
+
+/**
+ * A pair of containers, and a set of moves from one to the other.
+ * Used to define client requests on server owned containers.
+ */
+USTRUCT()
+struct GAMEITEMS_API FGameItemMoveSpec
+{
+	GENERATED_BODY()
+
+	FGameItemMoveSpec()
+	{
+	}
+
+	FGameItemMoveSpec(UGameItemContainer* InFrom, UGameItemContainer* InTo, const TArray<FGameItemMove>& InMoves)
+		: Containers(InFrom, InTo)
+		, Moves(InMoves)
+	{
+	}
+
+	UPROPERTY()
+	FGameItemContainerPair Containers;
+
+	UPROPERTY()
+	TArray<FGameItemMove> Moves;
+
+	FORCEINLINE bool IsValid() const
+	{
+		return Containers.IsValid() && !Moves.IsEmpty();
+	}
+};
+
 
 
 /**

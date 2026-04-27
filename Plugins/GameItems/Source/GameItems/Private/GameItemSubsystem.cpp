@@ -9,6 +9,7 @@
 #include "GameItemContainerComponent.h"
 #include "GameItemContainerComponentInterface.h"
 #include "GameItemContainerInterface.h"
+#include "GameItemControllerComponent.h"
 #include "GameItemDef.h"
 #include "GameItemsModule.h"
 #include "GameItemStatics.h"
@@ -17,9 +18,11 @@
 #include "Engine/DataTable.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
+#include "GameFramework/Controller.h"
 #include "GameFramework/HUD.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
+#include "Sound/SoundConcurrency.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameItemSubsystem)
 
@@ -237,6 +240,31 @@ void UGameItemSubsystem::MoveItems(UGameItemContainer* FromContainer, UGameItemC
 	}
 }
 
+UGameItemControllerComponent* UGameItemSubsystem::FindControllerForContainerPair(const FGameItemContainerPair& Pair) const
+{
+	auto FindItemController = [](const UGameItemContainer* Container) -> UGameItemControllerComponent*
+		{
+			if (const AController* Owner = Cast<AController>(Container->GetNetworkOwner()))
+			{
+				if (Owner->IsLocalController())
+				{
+					return Owner->FindComponentByClass<UGameItemControllerComponent>();
+				}
+			}
+			return nullptr;
+		};
+
+	if (UGameItemControllerComponent* FromController = FindItemController(Pair.From))
+	{
+		return FromController;
+	}
+	if (UGameItemControllerComponent* ToController = FindItemController(Pair.To))
+	{
+		return ToController;
+	}
+	return nullptr;
+}
+
 bool UGameItemSubsystem::HandleNetMoveItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, const TArray<FGameItemMove>& Moves)
 {
 	if (GetWorld()->GetNetMode() == NM_Standalone)
@@ -244,66 +272,17 @@ bool UGameItemSubsystem::HandleNetMoveItems(UGameItemContainer* FromContainer, U
 		return false;
 	}
 
-	// Since the item (which must be valid) belongs to FromContainer, the only consideration here
-	// is whether ToContainer's owner can receive that item without serializing and recreating it via RPC.
+	const FGameItemMoveSpec MoveSpec(FromContainer, ToContainer, Moves);
 
-	const bool bFromItemsOnServer = FromContainer->ItemsExistOnServer();
-	const bool bToItemsOnServer = ToContainer->ItemsExistOnServer();
-
-	// are we sending items from client-only to a server?
-	if (!bFromItemsOnServer && bToItemsOnServer)
+	// TODO: pass in controller, so we can move server-to-server from a client request
+	UGameItemControllerComponent* Controller = FindControllerForContainerPair(MoveSpec.Containers);
+	if (!Controller)
 	{
-		// must be client, no way the server could request moving an unknown item from a client
-		check(GetWorld()->GetNetMode() == NM_Client);
-		check(FromContainer->IsLocallyControlled())
-
-		UE_LOG(LogGameItems, Verbose, TEXT("%s[%hs]   Client sending unreplicated items to server: %s -> %s"),
-			*UGameItemStatics::GetNetDebugPrefix(FromContainer), __func__, *FromContainer->GetReadableName(), *ToContainer->GetReadableName());
-
-		FromContainer->MoveItemsToServer(Moves, ToContainer);
-		return true;
+		// no controller to handle the network move
+		return false;
 	}
 
-	// are we sending items from server to client-only?
-	if (bFromItemsOnServer && !bToItemsOnServer)
-	{
-		if (GetWorld()->GetNetMode() == NM_Client)
-		{
-			// client requesting an item from server, must be a replicated item the client can see
-			check(FromContainer->IsReplicated());
-			check(ToContainer->IsLocallyControlled());
-
-			UE_LOG(LogGameItems, Verbose, TEXT("%s[%hs]   Client requesting replicated server items: %s -> %s"),
-				*UGameItemStatics::GetNetDebugPrefix(FromContainer), __func__, *FromContainer->GetReadableName(), *ToContainer->GetReadableName());
-
-			ToContainer->MoveItemsFromServer(Moves, FromContainer);
-			return true;
-		}
-		else if (FromContainer->IsReplicated())
-		{
-			// server sending replicated item to client
-			UE_LOG(LogGameItems, Verbose, TEXT("%s[%hs]   Server sending replicated item to client: %s -> %s"),
-				*UGameItemStatics::GetNetDebugPrefix(FromContainer), __func__, *FromContainer->GetReadableName(), *ToContainer->GetReadableName());
-			
-			// tell client to take the known item by reference
-			ensureMsgf(false, TEXT("Sending server initiated to client-only is unsupported"));
-			return true;
-		}
-		else
-		{
-			// server sending non-replicated item to client 
-			UE_LOG(LogGameItems, Verbose, TEXT("%s[%hs]   Server sending unreplicated item to client: %s -> %s"),
-				*UGameItemStatics::GetNetDebugPrefix(FromContainer), __func__, *FromContainer->GetReadableName(), *ToContainer->GetReadableName());
-
-			// serialize to save data and recreate on client
-			ensureMsgf(false, TEXT("Sending server initiated to client-only is unsupported"));
-			return true;
-		}
-	}
-
-	// If neither container was client-local-only, we don't need an RPC.
-	// Even if one of them is server-local-only, just moving the items will simply replicate or stop replicating as needed.
-	return false;
+	return Controller->HandleNetMove(MoveSpec);
 }
 
 void UGameItemSubsystem::MoveAllItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, bool bAllowPartial)
@@ -447,8 +426,13 @@ void UGameItemSubsystem::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebu
 	}
 }
 
-UGameItemSubsystem* UGameItemSubsystem::GetGameItemSubsystem(const UObject* WorldContextObject)
+UGameItemSubsystem* UGameItemSubsystem::Get(const UObject* WorldContextObject)
 {
 	const UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
 	return World ? UGameInstance::GetSubsystem<UGameItemSubsystem>(World->GetGameInstance()) : nullptr;
+}
+
+UGameItemSubsystem* UGameItemSubsystem::GetGameItemSubsystem(const UObject* WorldContextObject)
+{
+	return Get(WorldContextObject);
 }

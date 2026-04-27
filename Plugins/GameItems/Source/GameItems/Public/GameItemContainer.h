@@ -472,6 +472,9 @@ public:
 	/** Return true if this container has authority to save and load items. */
 	virtual bool HasSaveAndLoadAuthority() const;
 
+	/** Accept or reject predicted changes for a key. */
+	virtual void ConfirmPredictionKey(const FGameItemsPredictionKey& PredictionKey, bool bAccepted);
+
 	UFUNCTION(Server, Reliable)
 	void ServerAddItem(UGameItem* Item, int32 TargetSlot = -1);
 
@@ -507,33 +510,6 @@ public:
 	
 protected:
 	static bool IsLocallyControlledActor(const AActor* InActor);
-
-public:
-	/**
-	 * Called on locally controlled client-only containers to send game items to the server.
-	 * @param Moves The items to send, and target slots if any, must be in this container.
-	 * @param ToContainer The server container to send to, must be visible from the client.
-	 */
-	void MoveItemsToServer(const TArray<FGameItemMove>& Moves, UGameItemContainer* ToContainer);
-
-	/** Receive items being sent from a client-only container and move them into ToContainer. */
-	UFUNCTION(Server, Reliable)
-	void ServerReceiveItems(const TArray<FGameItemSerializedMove>& Moves, UGameItemContainer* ToContainer, FGameItemsPredictionKey PredictionKey);
-
-	/**
-	 * Called on locally controlled client-only containers to take game items from the server.
-	 * @param Moves The items to move into this container, and target slots.
-	 * @param FromContainer The server container where the items are.
-	 */
-	void MoveItemsFromServer(const TArray<FGameItemMove>& Moves, UGameItemContainer* FromContainer);
-
-	/** Send items being requested from a client-only container. */
-	UFUNCTION(Server, Reliable)
-	void ServerSendItems(const TArray<FGameItemMove>& Moves, UGameItemContainer* FromContainer, FGameItemsPredictionKey PredictionKey);
-
-	/** Called from server to accept or reject some predicted changes to this container or its items. */
-	UFUNCTION(Client, Reliable)
-	void ClientConfirmPredictionKey(FGameItemsPredictionKey PredictionKey, bool bAccepted = false);
 
 public:
 	/** Groups multiple slot changes during the scope, and broadcasts them all when completed. */
@@ -630,9 +606,10 @@ protected:
 	UPROPERTY(Transient, Replicated)
 	FGameItemList ItemList;
 
+public:
 	/** Items that are pending being added to this container. */
 	UPROPERTY(Transient)
-	TArray<FGameItemPendingAdd> PendingAdds;
+	TArray<FGameItemPendingAdd> PendingAddExistingItems;
 
 public:
 	/** Return a readable name for this container object for debugging. */
