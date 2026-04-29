@@ -6,7 +6,6 @@
 #include "GameItemContainerProvider.h"
 #include "GameItemSettings.h"
 #include "GameItemsUISubsystem.h"
-#include "Blueprint/UserWidget.h"
 #include "ViewModels/VM_GameItemContainer.h"
 #include "ViewModels/VM_GameItemSlot.h"
 
@@ -24,8 +23,11 @@ UVM_GameItemContainer* UGameItemViewModelResolverBase::GetItemContainerViewModel
 	}
 
 	// get view model for the container
-	UGameItemsUISubsystem* GameItemsUISubsystem = UserWidget->GetWorld()->GetSubsystem<UGameItemsUISubsystem>();
-	return GameItemsUISubsystem->GetOrCreateContainerViewModel(Container);
+	if (UGameItemsUISubsystem* ItemsUISubsystem = UGameItemsUISubsystem::GetFromUserWidget(UserWidget))
+	{
+		return ItemsUISubsystem->GetOrCreateContainerViewModel(Container);
+	}
+	return nullptr;
 }
 
 UGameItemContainer* UGameItemViewModelResolverBase::GetItemContainer(const UUserWidget* UserWidget, const UMVVMView* View) const
@@ -50,9 +52,12 @@ UObject* UVMR_GameItemContainer::CreateInstance(const UClass* ExpectedType, cons
 
 UGameItemContainer* UVMR_GameItemContainer::GetItemContainer(const UUserWidget* UserWidget, const UMVVMView* View) const
 {
-	UGameItemsUISubsystem* ItemsUISubsystem = UserWidget->GetWorld()->GetSubsystem<UGameItemsUISubsystem>();
-	const FGameItemViewContext Context(UserWidget);
-	return ItemsUISubsystem->GetContainerFromProvider(Provider, ContainerId, Context);
+	if (UGameItemsUISubsystem* ItemsUISubsystem = UGameItemsUISubsystem::GetFromUserWidget(UserWidget))
+	{
+		const FGameItemViewContext Context(UserWidget);
+		return ItemsUISubsystem->GetContainerFromProvider(Provider, ContainerId, Context);
+	}
+	return nullptr;
 }
 
 
@@ -84,7 +89,10 @@ UObject* UVMR_GameItemSlot::CreateInstance(const UClass* ExpectedType, const UUs
 
 UGameItemContainer* UVMR_GameItemSlot::GetItemContainer(const UUserWidget* UserWidget, const UMVVMView* View) const
 {
-	UGameItemsUISubsystem* ItemsUISubsystem = UserWidget->GetWorld()->GetSubsystem<UGameItemsUISubsystem>();
-	const FGameItemViewContext Context(UserWidget);
-	return ItemsUISubsystem->GetContainerFromProvider(Provider, ContainerId, Context);
+	if (UGameItemsUISubsystem* ItemsUISubsystem = UGameItemsUISubsystem::GetFromUserWidget(UserWidget))
+	{
+		const FGameItemViewContext Context(UserWidget);
+		return ItemsUISubsystem->GetContainerFromProvider(Provider, ContainerId, Context);
+	}
+	return nullptr;
 }

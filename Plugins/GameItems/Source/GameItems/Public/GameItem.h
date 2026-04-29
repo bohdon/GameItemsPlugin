@@ -120,6 +120,12 @@ public:
 	/** Called when transferring a client-only item to the server, to indicate it's predicted this will be removed. */
 	void MarkPendingRemove(UGameItemContainer* FromContainer, const FGameItemsPredictionKey PredictionKey);
 
+	/**
+	 * Called when client-predicting a move for this on server-owned containers.
+	 * The actual move is irrelevant as it will be replicated from the server on when accepted.
+	 */
+	void MarkPendingMove(const FGameItemsPredictionKey PredictionKey);
+
 	/** Called when transferring a client-only item to the server, to indicate it's predicted this will be removed. */
 	void SetPendingCount(int32 NewCount, const FGameItemsPredictionKey PredictionKey);
 

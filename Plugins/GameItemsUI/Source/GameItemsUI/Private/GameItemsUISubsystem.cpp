@@ -4,13 +4,110 @@
 #include "GameItemsUISubsystem.h"
 
 #include "GameItemContainer.h"
+#include "GameItemControllerComponent.h"
+#include "GameItemsModule.h"
 #include "GameItemSubsystem.h"
-#include "Engine/GameInstance.h"
+#include "Blueprint/UserWidget.h"
+#include "Engine/Engine.h"
+#include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
-#include "ViewModels/VM_GameItemSlot.h"
-#include "ViewModels/VM_GameItemContainer.h"
+#include "GameFramework/PlayerController.h"
 #include "ViewModels/VM_GameItem.h"
+#include "ViewModels/VM_GameItemContainer.h"
+#include "ViewModels/VM_GameItemContainerTransfer.h"
+#include "ViewModels/VM_GameItemSlot.h"
 
+
+UGameItemsUISubsystem* UGameItemsUISubsystem::GetFromPlayerController(const APlayerController* Player)
+{
+	const ULocalPlayer* LocalPlayer = Player ? Player->GetLocalPlayer() : nullptr;
+	return LocalPlayer ? LocalPlayer->GetSubsystem<UGameItemsUISubsystem>() : nullptr;
+}
+
+UGameItemsUISubsystem* UGameItemsUISubsystem::GetFromUserWidget(const UUserWidget* UserWidget)
+{
+	const ULocalPlayer* LocalPlayer = UserWidget ? UserWidget->GetOwningLocalPlayer() : nullptr;
+	return LocalPlayer ? LocalPlayer->GetSubsystem<UGameItemsUISubsystem>() : nullptr;
+}
+
+bool UGameItemsUISubsystem::ShouldCreateSubsystem(UObject* Outer) const
+{
+	TArray<UClass*> ChildClasses;
+	GetDerivedClasses(GetClass(), ChildClasses, false);
+
+	// only create an instance if there is no overridden implementation
+	return ChildClasses.Num() == 0;
+}
+
+void UGameItemsUISubsystem::PlayerControllerChanged(APlayerController* NewPlayerController)
+{
+	PlayerController = NewPlayerController;
+}
+
+UGameItemControllerComponent* UGameItemsUISubsystem::GetGameItemController() const
+{
+	return PlayerController ? PlayerController->FindComponentByClass<UGameItemControllerComponent>() : nullptr;
+}
+
+void UGameItemsUISubsystem::MoveItem(UVM_GameItemSlot* FromSlot, UGameItemContainer* To, bool bAllowPartial) const
+{
+	if (!FromSlot || !To)
+	{
+		return;
+	}
+
+	UGameItemContainer* From = FromSlot->GetContainer();
+	UGameItem* Item = FromSlot->GetItem();
+	if (!From || !Item)
+	{
+		return;
+	}
+
+	if (UGameItemControllerComponent* Controller = GetGameItemController())
+	{
+		Controller->MoveItem(From, To, Item, bAllowPartial);
+	}
+	else
+	{
+		// no network support, but don't require a controller for standalone
+		UE_CLOG(GetWorld()->GetNetMode() != NM_Standalone, LogGameItems, Warning,
+			TEXT("No UGameItemControllerComponent found, network control may not work as expected"));
+
+		UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
+		ItemSubsystem->MoveItem(From, To, Item, INDEX_NONE, bAllowPartial);
+	}
+}
+
+void UGameItemsUISubsystem::MoveSwapOrStackItem(UVM_GameItemSlot* FromSlot, UVM_GameItemSlot* ToSlot, bool bAllowPartial) const
+{
+	if (!FromSlot || !ToSlot)
+	{
+		return;
+	}
+
+	UGameItemContainer* From = FromSlot->GetContainer();
+	UGameItem* Item = FromSlot->GetItem();
+	UGameItemContainer* To = ToSlot->GetContainer();
+	const int32 ToSlotIdx = ToSlot->GetSlot();
+	if (!From || !Item || !To || ToSlotIdx == INDEX_NONE)
+	{
+		return;
+	}
+
+	if (UGameItemControllerComponent* Controller = GetGameItemController())
+	{
+		Controller->MoveSwapOrStackItem(From, Item, To, ToSlotIdx, bAllowPartial);
+	}
+	else
+	{
+		// no network support, but don't require a controller for standalone
+		UE_CLOG(GetWorld()->GetNetMode() != NM_Standalone, LogGameItems, Warning,
+			TEXT("No UGameItemControllerComponent found, network control may not work as expected"));
+
+		UGameItemSubsystem* ItemsSubsystem = UGameItemSubsystem::Get(this);
+		ItemsSubsystem->MoveSwapOrStackItem(From, Item, To, ToSlotIdx, bAllowPartial);
+	}
+}
 
 UVM_GameItemContainer* UGameItemsUISubsystem::GetOrCreateContainerViewModel(UGameItemContainer* Container)
 {
@@ -20,9 +117,9 @@ UVM_GameItemContainer* UGameItemsUISubsystem::GetOrCreateContainerViewModel(UGam
 	}
 
 	const TObjectPtr<UVM_GameItemContainer>* ContainerViewModel = ContainerViewModels.FindByPredicate([Container](const UVM_GameItemContainer* ViewModel)
-	{
-		return ViewModel && ViewModel->GetContainer() == Container;
-	});
+		{
+			return ViewModel && ViewModel->GetContainer() == Container;
+		});
 
 	if (ContainerViewModel)
 	{
@@ -47,6 +144,13 @@ UVM_GameItemSlot* UGameItemsUISubsystem::CreateSlotViewModelForContainer(UObject
 {
 	UVM_GameItemSlot* NewViewModel = NewObject<UVM_GameItemSlot>(Outer, NAME_None, RF_Transient);
 	NewViewModel->SetContainerAndSlot(InContainer, Slot);
+	return NewViewModel;
+}
+
+UVM_GameItemContainerTransfer* UGameItemsUISubsystem::CreateTransferViewModel(UObject* Outer)
+{
+	UVM_GameItemContainerTransfer* NewViewModel = NewObject<UVM_GameItemContainerTransfer>(Outer, NAME_None, RF_Transient);
+	NewViewModel->SetOwningPlayer(PlayerController);
 	return NewViewModel;
 }
 
@@ -83,9 +187,10 @@ void UGameItemsUISubsystem::GetContainerAndItem(UObject* ViewModelObject, bool& 
 	}
 }
 
-UGameItemContainer* UGameItemsUISubsystem::GetContainerFromProvider(TSubclassOf<UGameItemContainerProvider> Provider,
-                                                                    const FGameplayTag& ContainerId,
-                                                                    const FGameItemViewContext& Context)
+UGameItemContainer* UGameItemsUISubsystem::GetContainerFromProvider(
+	TSubclassOf<UGameItemContainerProvider> Provider,
+	const FGameplayTag& ContainerId,
+	const FGameItemViewContext& Context)
 {
 	if (Provider)
 	{
@@ -95,59 +200,6 @@ UGameItemContainer* UGameItemsUISubsystem::GetContainerFromProvider(TSubclassOf<
 		}
 	}
 	return nullptr;
-}
-
-void UGameItemsUISubsystem::MoveSwapOrStackItem(UVM_GameItemSlot* FromSlot, UVM_GameItemSlot* ToSlot, bool bAllowPartial) const
-{
-	if (!FromSlot || !FromSlot->GetContainer() || !FromSlot->GetItem() || !ToSlot || !ToSlot->GetContainer())
-	{
-		return;
-	}
-
-	if (FromSlot->GetContainer() == ToSlot->GetContainer())
-	{
-		if (FromSlot->GetSlot() == ToSlot->GetSlot())
-		{
-			// same slot
-			return;
-		}
-
-		if (FromSlot->GetItem()->IsMatching(ToSlot->GetItem()) && !ToSlot->GetContainer()->IsStackFull(ToSlot->GetSlot()))
-		{
-			// stack items
-			ToSlot->GetContainer()->StackItems(FromSlot->GetSlot(), ToSlot->GetSlot(), bAllowPartial);
-		}
-		else
-		{
-			// swap items in the container
-			ToSlot->GetContainer()->SwapItems(FromSlot->GetSlot(), ToSlot->GetSlot());
-		}
-	}
-	else if (ToSlot->GetContainer()->IsChild())
-	{
-		// assign / replace item to a child container
-		if (ToSlot->GetItem())
-		{
-			ToSlot->GetContainer()->RemoveItemAt(ToSlot->GetSlot());
-		}
-		const int32 ExistingItemSlot = ToSlot->GetContainer()->GetItemSlot(FromSlot->GetItem());
-		if (ExistingItemSlot != INDEX_NONE)
-		{
-			// re-assigning an item from parent container, just move the item to the new location
-			ToSlot->GetContainer()->SwapItems(ExistingItemSlot, ToSlot->GetSlot());
-		}
-		else
-		{
-			// assign new item
-			ToSlot->GetContainer()->AddItem(FromSlot->GetItem(), ToSlot->GetSlot());
-		}
-	}
-	else
-	{
-		// move from another container
-		UGameItemSubsystem* ItemsSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
-		ItemsSubsystem->MoveItem(FromSlot->GetContainer(), ToSlot->GetContainer(), FromSlot->GetItem(), ToSlot->GetSlot(), bAllowPartial);
-	}
 }
 
 UVM_GameItemContainer* UGameItemsUISubsystem::CreateContainerViewModel(UGameItemContainer* Container)

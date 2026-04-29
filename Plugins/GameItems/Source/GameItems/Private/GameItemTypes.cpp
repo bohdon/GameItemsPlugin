@@ -3,7 +3,6 @@
 #include "GameItemTypes.h"
 
 #include "GameItem.h"
-#include "GameItemContainer.h"
 #include "GameItemContainerDef.h"
 #include "GameItemDef.h"
 #include "GameItemsModule.h"
@@ -412,10 +411,18 @@ void FGameItemsPredictionKey::GenerateNewPredictionKey()
 	}
 }
 
+
+// FGameItemContainerPair
+// ----------------------
+
 bool FGameItemContainerPair::IsValid() const
 {
 	return From != nullptr && To != nullptr;
 }
+
+
+// FGameItemsPredictionKey
+// -----------------------
 
 FGameItemsPredictionKey FGameItemsPredictionKey::CreateNewClientPredictionKey(const AActor* Owner)
 {

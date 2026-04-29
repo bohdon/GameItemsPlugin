@@ -185,6 +185,15 @@ void UGameItem::MarkPendingRemove(UGameItemContainer* FromContainer, const FGame
 	// TODO: broadcast events for UI
 }
 
+void UGameItem::MarkPendingMove(const FGameItemsPredictionKey PredictionKey)
+{
+	check(!HasPendingNetChange());
+	
+	PendingPredictionKey = PredictionKey;
+
+	// TODO: broadcast events for UI
+}
+
 void UGameItem::SetPendingCount(int32 NewCount, const FGameItemsPredictionKey PredictionKey)
 {
 	check(!HasPendingNetChange() && !PendingCount.IsSet());

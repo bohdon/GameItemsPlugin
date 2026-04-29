@@ -6,12 +6,16 @@
 #include "MVVMViewModelBase.h"
 #include "VM_GameItemContainerTransfer.generated.h"
 
+class UGameItemControllerComponent;
+class APlayerController;
 class UGameItemContainer;
+class UGameItemsUISubsystem;
 class UVM_GameItemSlot;
 
 
 /**
  * A view model to help with common transactions between two containers.
+ * Requires an owning player in order to route commands through the UGameItemsUISubsystem.
  */
 UCLASS()
 class GAMEITEMSUI_API UVM_GameItemContainerTransfer : public UMVVMViewModelBase
@@ -19,6 +23,11 @@ class GAMEITEMSUI_API UVM_GameItemContainerTransfer : public UMVVMViewModelBase
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable)
+	virtual void SetOwningPlayer(APlayerController* Player);
+
+	APlayerController* GetOwningPlayer() const { return OwningPlayer; }
+
 	virtual void SetContainerA(UGameItemContainer* NewContainer);
 
 	UGameItemContainer* GetContainerA() const { return ContainerA; }
@@ -43,6 +52,15 @@ public:
 	virtual void MoveAllItemsToB(bool bAllowPartial = true);
 
 protected:
+	virtual UGameItemsUISubsystem* GetItemsUISubsystem() const;
+
+	virtual UGameItemControllerComponent* GetGameItemController() const;
+
+protected:
+	/** The game item controller used to perform network operations. */
+	UPROPERTY(Transient, BlueprintReadOnly)
+	TObjectPtr<APlayerController> OwningPlayer;
+
 	UPROPERTY(Transient, BlueprintReadWrite, Setter, Getter, FieldNotify)
 	TObjectPtr<UGameItemContainer> ContainerA;
 

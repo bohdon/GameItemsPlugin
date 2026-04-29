@@ -17,13 +17,18 @@ class UCanvas;
 class UGameItem;
 class UGameItemContainer;
 class UGameItemContainerComponent;
-class UGameItemControllerComponent;
 class UGameItemDef;
 class UGameItemFragment;
 
 
 /**
- * Subsystem for working with game items.
+ * Subsystem for creating and managing game items.
+ * 
+ * Runs operations locally on the calling client or server, though some operations
+ * automatically replicate for local-controlled containers.
+ * 
+ * For full network support, use UGameItemControllerComponent and/or
+ * UGameItemsUISubsystem which allow client control over server-owned containers.
  */
 UCLASS(Config = Game)
 class GAMEITEMS_API UGameItemSubsystem : public UGameInstanceSubsystem
@@ -31,8 +36,15 @@ class GAMEITEMS_API UGameItemSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 
 public:
+	/** Return the game item subsystem given a world context object. */
+	static UGameItemSubsystem* Get(const UObject* WorldContextObject);
+	/** Deprecated */
+	static UGameItemSubsystem* GetGameItemSubsystem(const UObject* WorldContextObject);
+
+public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
+	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 
 	/** Create and return a new game item from definition. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
@@ -90,6 +102,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void MoveAllItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, bool bAllowPartial = true);
 
+	/** Move an item from one slot to another, in the same container or different one, swapping or stacking as needed. */
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
+	virtual void MoveSwapOrStackItem(UGameItemContainer* From, UGameItem* Item, UGameItemContainer* To, int32 ToSlot, bool bAllowPartial = true);
+
 	/**
 	 * Select items from a drop table.
 	 * @return The item definitions and quantities that were selected.
@@ -140,19 +156,5 @@ public:
 	virtual const IGameItemContainerInterface* GetContainerInterfaceForActor(const AActor* Actor) const;
 
 protected:
-	virtual UGameItemControllerComponent* FindControllerForContainerPair(const FGameItemContainerPair& Pair) const;
-
-	/**
-	 * Check for potential network move items between containers (from local-only to server or vice versa)
-	 * and handle using RPCs as needed, potentially serializing and recreating items.
-	 * @return True if the move will be handled via network RPC calls, false if it should be done normally.
-	 */
-	bool HandleNetMoveItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, const TArray<FGameItemMove>& Moves);
-
 	void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& YL, float& YPos);
-
-public:
-	/** Return the game item subsystem given a world context object. */
-	static UGameItemSubsystem* Get(const UObject* WorldContextObject);
-	static UGameItemSubsystem* GetGameItemSubsystem(const UObject* WorldContextObject);
 };

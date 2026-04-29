@@ -9,7 +9,6 @@
 #include "GameItemContainerComponent.h"
 #include "GameItemContainerComponentInterface.h"
 #include "GameItemContainerInterface.h"
-#include "GameItemControllerComponent.h"
 #include "GameItemDef.h"
 #include "GameItemsModule.h"
 #include "GameItemStatics.h"
@@ -35,6 +34,15 @@ void UGameItemSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 void UGameItemSubsystem::Deinitialize()
 {
 	AHUD::OnShowDebugInfo.RemoveAll(this);
+}
+
+bool UGameItemSubsystem::ShouldCreateSubsystem(UObject* Outer) const
+{
+	TArray<UClass*> ChildClasses;
+	GetDerivedClasses(GetClass(), ChildClasses, false);
+
+	// only create an instance if there is no overridden implementation
+	return ChildClasses.Num() == 0;
 }
 
 UGameItem* UGameItemSubsystem::CreateItem(UObject* Outer, TSubclassOf<UGameItemDef> ItemDef, int32 Count)
@@ -189,13 +197,6 @@ void UGameItemSubsystem::MoveItem(UGameItemContainer* FromContainer, UGameItemCo
 		return;
 	}
 
-	// TODO: perform the net move after we've worked out exactly what to do, handle splitting over net, etc
-	// check for network move
-	if (HandleNetMoveItems(FromContainer, ToContainer, {{Item, TargetSlot}}))
-	{
-		return;
-	}
-
 	// split the item if needed
 	UGameItem* ItemToAdd = Item;
 	if (Plan.RemainderCount > 0)
@@ -214,75 +215,16 @@ void UGameItemSubsystem::MoveItem(UGameItemContainer* FromContainer, UGameItemCo
 	ToContainer->AddItem(ItemToAdd, TargetSlot);
 }
 
-void UGameItemSubsystem::MoveItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer,
-                                   TArray<UGameItem*> Items, bool bAllowPartial)
+void UGameItemSubsystem::MoveItems(
+	UGameItemContainer* FromContainer,
+	UGameItemContainer* ToContainer,
+	TArray<UGameItem*> Items,
+	bool bAllowPartial)
 {
-	if (GetWorld()->GetNetMode() != NM_Standalone)
-	{
-		TArray<FGameItemMove> Moves;
-		Moves.Reserve(Items.Num());
-		for (UGameItem* Item : Items)
-		{
-			Moves.Emplace(Item, -1);
-		}
-
-		// TODO: perform the net move after we've worked out exactly what to do, handle splitting over net, etc
-		// check for network move
-		if (HandleNetMoveItems(FromContainer, ToContainer, Moves))
-		{
-			return;
-		}
-	}
-
 	for (UGameItem* Item : Items)
 	{
 		MoveItem(FromContainer, ToContainer, Item, -1, bAllowPartial);
 	}
-}
-
-UGameItemControllerComponent* UGameItemSubsystem::FindControllerForContainerPair(const FGameItemContainerPair& Pair) const
-{
-	auto FindItemController = [](const UGameItemContainer* Container) -> UGameItemControllerComponent*
-		{
-			if (const AController* Owner = Cast<AController>(Container->GetNetworkOwner()))
-			{
-				if (Owner->IsLocalController())
-				{
-					return Owner->FindComponentByClass<UGameItemControllerComponent>();
-				}
-			}
-			return nullptr;
-		};
-
-	if (UGameItemControllerComponent* FromController = FindItemController(Pair.From))
-	{
-		return FromController;
-	}
-	if (UGameItemControllerComponent* ToController = FindItemController(Pair.To))
-	{
-		return ToController;
-	}
-	return nullptr;
-}
-
-bool UGameItemSubsystem::HandleNetMoveItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, const TArray<FGameItemMove>& Moves)
-{
-	if (GetWorld()->GetNetMode() == NM_Standalone)
-	{
-		return false;
-	}
-
-	const FGameItemMoveSpec MoveSpec(FromContainer, ToContainer, Moves);
-
-	// TODO: pass in controller, so we can move server-to-server from a client request
-	UGameItemControllerComponent* Controller = FindControllerForContainerPair(MoveSpec.Containers);
-	if (!Controller)
-	{
-		// no controller to handle the network move
-		return false;
-	}
-
-	return Controller->HandleNetMove(MoveSpec);
 }
 
 void UGameItemSubsystem::MoveAllItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, bool bAllowPartial)
@@ -297,6 +239,78 @@ void UGameItemSubsystem::MoveAllItems(UGameItemContainer* FromContainer, UGameIt
 	TArray<UGameItem*> Items;
 	ItemsBySlot.GenerateValueArray(Items);
 	MoveItems(FromContainer, ToContainer, Items, bAllowPartial);
+}
+
+void UGameItemSubsystem::MoveSwapOrStackItem(UGameItemContainer* From, UGameItem* Item, UGameItemContainer* To, int32 ToSlot, bool bAllowPartial)
+{
+	if (!From || !To)
+	{
+		return;
+	}
+
+	if (!To->IsValidSlot(ToSlot))
+	{
+		UE_LOG(LogGameItems, Warning, TEXT("%s[%hs] Slot %d is not valid in To container: %s"),
+			*UGameItemStatics::GetNetDebugPrefix(this), __func__, ToSlot, *To->GetReadableName());
+		return;
+	}
+
+	int32 FromSlot = From->GetItemSlot(Item);
+	if (FromSlot == INDEX_NONE)
+	{
+		UE_LOG(LogGameItems, Warning, TEXT("%s[%hs] Item %s not found in From container: %s"),
+			*UGameItemStatics::GetNetDebugPrefix(this), __func__, *Item->GetDebugString(), *From->GetReadableName());
+		return;
+	}
+
+	const UGameItem* ToItem = To->GetItemAt(ToSlot);
+
+	if (From == To)
+	{
+		// same container
+
+		if (FromSlot == ToSlot)
+		{
+			// same slot
+			return;
+		}
+
+		if (Item->IsMatching(ToItem) && !To->IsStackFull(ToSlot))
+		{
+			// TODO: if not allowing partial, and item cant fully fit in the target stack, fallback to swap
+			// stack items
+			To->StackItems(FromSlot, ToSlot, bAllowPartial);
+		}
+		else
+		{
+			// swap items in the container
+			To->SwapItems(FromSlot, ToSlot);
+		}
+	}
+	else if (To->IsChild())
+	{
+		// assign / replace item to a child container
+		if (ToItem)
+		{
+			To->RemoveItemAt(ToSlot);
+		}
+		const int32 ExistingItemSlot = To->GetItemSlot(Item);
+		if (ExistingItemSlot != INDEX_NONE)
+		{
+			// re-assigning an item from parent container, just move the item to the new location
+			To->SwapItems(ExistingItemSlot, ToSlot);
+		}
+		else
+		{
+			// assign new item
+			To->AddItem(Item, ToSlot);
+		}
+	}
+	else
+	{
+		// move from another container
+		MoveItem(From, To, Item, ToSlot, bAllowPartial);
+	}
 }
 
 TArray<FGameItemDefStack> UGameItemSubsystem::SelectItemsFromDropTable(const FGameItemDropContext& Context, FDataTableRowHandle DropTableEntry)

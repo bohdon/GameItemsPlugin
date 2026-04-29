@@ -41,8 +41,8 @@ public:
 	/** Return the current item. */
 	UGameItem* GetItem() const { return Item; }
 
-	/** Move the item in this slot to a new container. */
-	UFUNCTION(BlueprintCallable)
+	UE_DEPRECATED(5.7, "Use UGameItemsUISubsystem::MoveItem instead to handle network control")
+	UFUNCTION(BlueprintCallable, meta = (DeprecatedFunction))
 	void MoveItem(UGameItemContainer* ToContainer, bool bAllowPartial = true);
 
 	virtual UWorld* GetWorld() const override;

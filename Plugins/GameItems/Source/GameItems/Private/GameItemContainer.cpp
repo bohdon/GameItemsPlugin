@@ -46,6 +46,7 @@
 		bool bExecuteServer; \
 		bool bExecuteLocal; \
 		GetNetExecutionPlan(bExecuteServer, bExecuteLocal); \
+		UE_CLOG(!bExecuteServer && !bExecuteLocal, LogGameItems, Warning, TEXT("%s[%hs] Called without authority or local control"), *GetDebugPrefix(), __func__); \
 		if (bExecuteServer) \
 		{ \
 			Server##FuncName(__VA_ARGS__); \
@@ -1651,17 +1652,30 @@ void UGameItemContainer::ConfirmPredictionKey(const FGameItemsPredictionKey& Pre
 		{
 			if (bAccepted)
 			{
+				// marking for add/removal can be done on client or server containers,
+				// skip actual operations if not locally controlled, and just wait for replicated changes
+
 				if (Item->GetPendingRemoveContainer() == this)
 				{
 					// commit the remove
 					Item->AcceptPendingNetChange();
-					RemoveItem(Item);
+					if (IsLocallyControlled())
+					{
+						RemoveItem(Item);
+					}
 				}
 				else if (Item->GetPendingCount().IsSet())
 				{
 					// commit the count
 					Item->AcceptPendingNetChange();
-					Item->SetCount(Item->GetPendingCount().GetValue());
+					if (IsLocallyControlled())
+					{
+						Item->SetCount(Item->GetPendingCount().GetValue());
+					}
+				}
+				else
+				{
+					Item->AcceptPendingNetChange();
 				}
 			}
 			else
