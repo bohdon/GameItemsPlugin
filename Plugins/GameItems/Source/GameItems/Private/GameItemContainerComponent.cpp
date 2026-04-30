@@ -386,7 +386,10 @@ void UGameItemContainerComponent::CreateDefaultItems(bool bForce)
 {
 	for (UGameItemContainer* Container : Containers)
 	{
-		Container->CreateDefaultItems(bForce);
+		if (Container->IsLocallyControlled())
+		{
+			Container->CreateDefaultItems(bForce);
+		}
 	}
 }
 
