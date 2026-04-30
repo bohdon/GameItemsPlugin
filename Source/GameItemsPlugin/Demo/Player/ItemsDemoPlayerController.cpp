@@ -3,10 +3,17 @@
 
 #include "ItemsDemoPlayerController.h"
 
+#include "GameItemControllerComponent.h"
 #include "GameItemStatics.h"
 #include "ItemsDemoHUD.h"
 #include "ItemsDemoPlayerState.h"
 
+
+AItemsDemoPlayerController::AItemsDemoPlayerController(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	ItemController = CreateDefaultSubobject<UGameItemControllerComponent>(TEXT("ItemController"));
+}
 
 UCommonActivatableWidgetStack* AItemsDemoPlayerController::GetUILayer(FGameplayTag LayerTag) const
 {

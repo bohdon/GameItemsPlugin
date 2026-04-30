@@ -9,6 +9,7 @@
 #include "ItemsDemoPlayerController.generated.h"
 
 class UCommonActivatableWidgetStack;
+class UGameItemControllerComponent;
 
 
 /**
@@ -20,7 +21,13 @@ class GAMEITEMSPLUGIN_API AItemsDemoPlayerController : public APlayerController,
 {
 	GENERATED_BODY()
 
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
+	TObjectPtr<UGameItemControllerComponent> ItemController;
+
 public:
+	AItemsDemoPlayerController(const FObjectInitializer& ObjectInitializer);
+
 	/** Return a UI layer by tag. */
 	UFUNCTION(BlueprintPure, Meta = (GameplayTagFilter = "UI.Layer"))
 	UCommonActivatableWidgetStack* GetUILayer(FGameplayTag LayerTag) const;
