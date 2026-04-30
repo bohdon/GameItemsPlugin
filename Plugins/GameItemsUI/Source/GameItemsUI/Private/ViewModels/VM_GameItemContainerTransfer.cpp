@@ -4,7 +4,9 @@
 
 #include "GameItemControllerComponent.h"
 #include "GameItemsModule.h"
+#include "GameItemSubsystem.h"
 #include "GameItemsUISubsystem.h"
+#include "Engine/World.h"
 #include "ViewModels/VM_GameItemSlot.h"
 
 
@@ -46,7 +48,13 @@ void UVM_GameItemContainerTransfer::MoveItem(UVM_GameItemSlot* SlotViewModel, bo
 		}
 		else
 		{
-			UE_CLOG(!OwningPlayer, LogGameItems, Warning, TEXT("[%hs] OwningPlayer is not set"), __FUNCTION__);
+			UE_LOG(LogGameItems, Warning,
+			       TEXT("[%hs] Couldn't get UGameItemsUISubsystem from OwningPlayer, make sure it's set. Falling back to UGameItemSubsystem calls,"
+				       " but this is deprecated and will be removed. Set the OwningPlayer or use UGameItemsUISubsystem::CreateTransferViewModel."),
+			       __FUNCTION__);
+
+			UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::Get(SlotViewModel->GetContainer()->GetWorld());
+			ItemSubsystem->MoveItem(SlotViewModel->GetContainer(), OtherContainer, SlotViewModel->GetItem(), INDEX_NONE, bAllowPartial);
 		}
 	}
 	else
@@ -66,7 +74,13 @@ void UVM_GameItemContainerTransfer::MoveAllItemsToA(bool bAllowPartial)
 		}
 		else
 		{
-			UE_CLOG(!OwningPlayer, LogGameItems, Warning, TEXT("[%hs] OwningPlayer is not set"), __FUNCTION__);
+			UE_LOG(LogGameItems, Warning,
+			       TEXT("[%hs] Couldn't get UGameItemsUISubsystem from OwningPlayer, make sure it's set. Falling back to UGameItemSubsystem calls,"
+				       " but this is deprecated and will be removed. Set the OwningPlayer or use UGameItemsUISubsystem::CreateTransferViewModel."),
+			       __FUNCTION__);
+
+			UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::Get(ContainerA->GetWorld());
+			ItemSubsystem->MoveAllItems(ContainerB, ContainerA, bAllowPartial);
 		}
 	}
 	else
@@ -86,7 +100,13 @@ void UVM_GameItemContainerTransfer::MoveAllItemsToB(bool bAllowPartial)
 		}
 		else
 		{
-			UE_CLOG(!OwningPlayer, LogGameItems, Warning, TEXT("[%hs] OwningPlayer is not set"), __FUNCTION__);
+			UE_LOG(LogGameItems, Warning,
+			       TEXT("[%hs] Couldn't get UGameItemsUISubsystem from OwningPlayer, make sure it's set. Falling back to UGameItemSubsystem calls,"
+				       " but this is deprecated and will be removed. Set the OwningPlayer or use UGameItemsUISubsystem::CreateTransferViewModel."),
+			       __FUNCTION__);
+
+			UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::Get(ContainerA->GetWorld());
+			ItemSubsystem->MoveAllItems(ContainerA, ContainerB, bAllowPartial);
 		}
 	}
 	else
