@@ -45,10 +45,6 @@ struct GAMEITEMS_API FGameItemCountLimit
 {
 	GENERATED_BODY()
 
-	FGameItemCountLimit()
-	{
-	}
-
 	/** Limit the count of this item. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (InlineEditConditionToggle), Category = "GameItem")
 	bool bLimitCount = false;
@@ -59,6 +55,30 @@ struct GAMEITEMS_API FGameItemCountLimit
 
 	/** Return the max count, or default value if not limited. */
 	int32 GetMaxCount(int32 Default = MAX_int32) const;
+};
+
+
+/**
+ * Defines limitations for the quantity of an item, based on matching an items tags.
+ */
+USTRUCT(BlueprintType)
+struct FGameItemTagCountLimit : public FGameItemCountLimit
+{
+	GENERATED_BODY()
+
+	FGameItemTagCountLimit()
+	{
+	}
+
+	FGameItemTagCountLimit(FGameplayTag InItemTag, bool bInLimitCount, int32 InMaxCount)
+		: FGameItemCountLimit(bInLimitCount, InMaxCount)
+		, ItemTag(InItemTag)
+	{
+	}
+
+	/** The tag the item must match to apply this limit. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (DisplayPriority = -1), Category = "GameItem")
+	FGameplayTag ItemTag;
 };
 
 
