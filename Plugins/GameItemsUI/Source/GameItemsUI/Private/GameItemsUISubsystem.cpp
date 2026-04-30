@@ -80,7 +80,7 @@ void UGameItemsUISubsystem::MoveItem(UVM_GameItemSlot* FromSlot, UGameItemContai
 
 void UGameItemsUISubsystem::MoveSwapOrStackItem(UVM_GameItemSlot* FromSlot, UVM_GameItemSlot* ToSlot, bool bAllowPartial) const
 {
-	if (!FromSlot || !ToSlot)
+	if (!FromSlot || !ToSlot || FromSlot->IsSameSlot(ToSlot))
 	{
 		return;
 	}

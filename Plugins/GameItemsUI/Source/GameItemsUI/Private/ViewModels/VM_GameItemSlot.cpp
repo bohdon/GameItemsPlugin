@@ -23,6 +23,11 @@ UWorld* UVM_GameItemSlot::GetWorld() const
 	return Outer ? Outer->GetWorld() : nullptr;
 }
 
+bool UVM_GameItemSlot::IsSameSlot(UVM_GameItemSlot* Other) const
+{
+	return Other && Other->GetContainer() == GetContainer() && Other->GetSlot() == GetSlot();
+}
+
 void UVM_GameItemSlot::SetContainerAndSlot(UGameItemContainer* NewContainer, int32 NewSlot)
 {
 	if (Container != NewContainer || Slot != NewSlot)

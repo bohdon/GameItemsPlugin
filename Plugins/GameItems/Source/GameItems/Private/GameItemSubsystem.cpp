@@ -183,6 +183,12 @@ void UGameItemSubsystem::MoveItem(UGameItemContainer* FromContainer, UGameItemCo
 	{
 		return;
 	}
+	if (FromContainer == ToContainer)
+	{
+		UE_LOG(LogGameItems, Verbose, TEXT("[%hs] Nothing to do, From and To container are the same: %s"),
+			__FUNCTION__, *FromContainer->GetReadableName());
+		return;
+	}
 
 	const FGameItemContainerAddPlan Plan = ToContainer->CheckAddItem(Item, TargetSlot, FromContainer);
 	if (Plan.DeltaCount == 0)
@@ -241,18 +247,20 @@ void UGameItemSubsystem::MoveAllItems(UGameItemContainer* FromContainer, UGameIt
 	MoveItems(FromContainer, ToContainer, Items, bAllowPartial);
 }
 
-void UGameItemSubsystem::MoveSwapOrStackItem(UGameItemContainer* From, UGameItem* Item, UGameItemContainer* To, int32 ToSlot, bool bAllowPartial)
+bool UGameItemSubsystem::MoveSwapOrStackItem(UGameItemContainer* From, UGameItem* Item, UGameItemContainer* To, int32 ToSlot, bool bAllowPartial)
 {
 	if (!From || !To)
 	{
-		return;
+		UE_LOG(LogGameItems, Warning, TEXT("[%hs] Invalid container. From: %s, To: %s"),
+			__FUNCTION__, *GetNameSafe(From), *GetNameSafe(To));
+		return false;
 	}
 
 	if (!To->IsValidSlot(ToSlot))
 	{
 		UE_LOG(LogGameItems, Warning, TEXT("%s[%hs] Slot %d is not valid in To container: %s"),
 			*UGameItemStatics::GetNetDebugPrefix(this), __func__, ToSlot, *To->GetReadableName());
-		return;
+		return false;
 	}
 
 	int32 FromSlot = From->GetItemSlot(Item);
@@ -260,7 +268,7 @@ void UGameItemSubsystem::MoveSwapOrStackItem(UGameItemContainer* From, UGameItem
 	{
 		UE_LOG(LogGameItems, Warning, TEXT("%s[%hs] Item %s not found in From container: %s"),
 			*UGameItemStatics::GetNetDebugPrefix(this), __func__, *Item->GetDebugString(), *From->GetReadableName());
-		return;
+		return false;
 	}
 
 	const UGameItem* ToItem = To->GetItemAt(ToSlot);
@@ -272,7 +280,9 @@ void UGameItemSubsystem::MoveSwapOrStackItem(UGameItemContainer* From, UGameItem
 		if (FromSlot == ToSlot)
 		{
 			// same slot
-			return;
+			UE_LOG(LogGameItems, VeryVerbose, TEXT("[%hs] Same slot, nothing to do: %s Slot: %d -> %d"),
+				__FUNCTION__, *From->GetReadableName(), FromSlot, ToSlot);
+			return false;
 		}
 
 		if (Item->IsMatching(ToItem) && !To->IsStackFull(ToSlot))
@@ -311,6 +321,7 @@ void UGameItemSubsystem::MoveSwapOrStackItem(UGameItemContainer* From, UGameItem
 		// move from another container
 		MoveItem(From, To, Item, ToSlot, bAllowPartial);
 	}
+	return true;
 }
 
 TArray<FGameItemDefStack> UGameItemSubsystem::SelectItemsFromDropTable(const FGameItemDropContext& Context, FDataTableRowHandle DropTableEntry)

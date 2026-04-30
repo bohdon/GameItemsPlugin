@@ -47,6 +47,9 @@ public:
 
 	virtual UWorld* GetWorld() const override;
 
+	/** Return true if this slot is the same as another. */
+	virtual bool IsSameSlot(UVM_GameItemSlot* Other) const;
+
 protected:
 	/** The owning container. */
 	UPROPERTY(BlueprintReadOnly, Getter, FieldNotify, Meta = (AllowPrivateAccess))

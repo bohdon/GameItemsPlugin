@@ -28,6 +28,12 @@ FString UGameItemControllerComponent::GetDebugPrefix() const
 
 void UGameItemControllerComponent::MoveSwapOrStackItem(UGameItemContainer* From, UGameItem* Item, UGameItemContainer* To, int32 ToSlot, bool bAllowPartial)
 {
+	// early out if moving to same slot
+	if (From && To && From->GetItemSlot(Item) == ToSlot)
+	{
+		return;
+	}
+
 	// check if the move requires network handling
 	if (GetWorld()->GetNetMode() == NM_Client)
 	{
@@ -50,6 +56,11 @@ void UGameItemControllerComponent::MoveItem(UGameItemContainer* From, UGameItemC
 
 void UGameItemControllerComponent::MoveItems(UGameItemContainer* From, UGameItemContainer* To, TArray<UGameItem*> Items, bool bAllowPartial)
 {
+	if (From == To)
+	{
+		return;
+	}
+
 	// check if the move requires network handling
 	if (GetWorld()->GetNetMode() == NM_Client)
 	{
@@ -138,7 +149,7 @@ bool UGameItemControllerComponent::HandleNetMove(const FGameItemMoveSpec& MoveSp
 		}
 
 		// handle client moving items around on server-owned containers
-		if (bFromItemsOnServer && bToItemsOnServer && (!From->IsLocallyControlled() || !To->IsLocallyControlled()))
+		if (bFromItemsOnServer && bToItemsOnServer && (!bFromOwned || !bToOwned))
 		{
 			MoveServerItems(MoveSpec);
 			return true;
@@ -471,86 +482,6 @@ void UGameItemControllerComponent::ServerMoveItems_Implementation(
 
 	bool bSuccess = true;
 
-	// TODO: share this same logic from UGameItemsUISubsystem
-	auto MoveSwapOrStack = [this](UGameItem* Item, UGameItemContainer* From, UGameItemContainer* To, int32 TargetSlot)
-		{
-			const int32 FromSlot = From->GetItemSlot(Item);
-			check(FromSlot != INDEX_NONE);
-			const UGameItem* ToItem = To->GetItemAt(TargetSlot);
-
-			if (From == To)
-			{
-				if (Item->IsMatching(ToItem) && !To->IsStackFull(TargetSlot))
-				{
-					// stack items
-					To->StackItems(FromSlot, TargetSlot, false);
-				}
-				else
-				{
-					// swap items in the container
-					To->SwapItems(FromSlot, TargetSlot);
-				}
-			}
-			else if (To->IsChild())
-			{
-				// assign / replace item to a child container
-				if (ToItem)
-				{
-					To->RemoveItemAt(TargetSlot);
-				}
-				const int32 ExistingItemSlot = To->GetItemSlot(Item);
-				if (ExistingItemSlot != INDEX_NONE)
-				{
-					// re-assigning an item from parent container, just move the item to the new location
-					To->SwapItems(ExistingItemSlot, TargetSlot);
-				}
-				else
-				{
-					// assign new item
-					To->AddItem(Item, TargetSlot);
-				}
-			}
-			else
-			{
-				// TODO: reuse logic from item subsystem
-				// move from another container
-				// UGameItemSubsystem* ItemsSubsystem = UGameItemSubsystem::GetGameItemSubsystem(this);
-				// ItemsSubsystem->MoveItem(From, To, Item, TargetSlot, false);
-
-				const FGameItemContainerAddPlan Plan = To->CheckAddItem(Item, TargetSlot, From);
-				if (Plan.DeltaCount == 0)
-				{
-					// nothing to move
-					return false;
-				}
-
-				// don't allow partial move
-				if (!Plan.bWillAddFullAmount)
-				{
-					return false;
-				}
-
-				// split the item if needed
-				UGameItem* ItemToAdd = Item;
-				if (Plan.RemainderCount > 0)
-				{
-					UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::Get(this);
-					check(Item->GetCount() > Plan.DeltaCount);
-					ItemToAdd = ItemSubsystem->SplitItem(To->GetItemOuter(), Item, Plan.DeltaCount);
-					check(ItemToAdd);
-				}
-				else
-				{
-					// remove the whole item
-					From->RemoveItem(Item);
-				}
-
-				// add the item
-				To->AddItem(ItemToAdd, TargetSlot);
-			}
-			return true;
-		};
-
 	for (const FGameItemMove& Move : Moves)
 	{
 		UGameItem* Item = Move.Item;
@@ -561,7 +492,8 @@ void UGameItemControllerComponent::ServerMoveItems_Implementation(
 		}
 
 		// perform the full move, client will just receive replicated results
-		if (!MoveSwapOrStack(Item, Containers.From, Containers.To, Move.TargetSlot))
+		UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::Get(this);
+		if (!ItemSubsystem->MoveSwapOrStackItem(Containers.From, Item, Containers.To, Move.TargetSlot))
 		{
 			bSuccess = false;
 			break;

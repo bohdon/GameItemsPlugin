@@ -102,9 +102,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void MoveAllItems(UGameItemContainer* FromContainer, UGameItemContainer* ToContainer, bool bAllowPartial = true);
 
-	/** Move an item from one slot to another, in the same container or different one, swapping or stacking as needed. */
+	/**
+	 * Move an item from one slot to another, in the same container or different one, swapping or stacking as needed.
+	 * @return True if an operation was attempted, false if failed early or nothing to do.
+	 */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
-	virtual void MoveSwapOrStackItem(UGameItemContainer* From, UGameItem* Item, UGameItemContainer* To, int32 ToSlot, bool bAllowPartial = true);
+	virtual bool MoveSwapOrStackItem(UGameItemContainer* From, UGameItem* Item, UGameItemContainer* To, int32 ToSlot, bool bAllowPartial = true);
 
 	/**
 	 * Select items from a drop table.
