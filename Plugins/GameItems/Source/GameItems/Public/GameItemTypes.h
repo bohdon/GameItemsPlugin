@@ -446,6 +446,20 @@ struct GAMEITEMS_API FGameItemSaveData
  * Save data for a single game item container.
  */
 USTRUCT()
+struct GAMEITEMS_API FGameItemContainerRuleSaveData
+{
+	GENERATED_BODY()
+
+	/** The rule's serialized SaveGame properties. */
+	UPROPERTY(SaveGame)
+	TArray<uint8> ByteData;
+};
+
+
+/**
+ * Save data for a single game item container.
+ */
+USTRUCT()
 struct GAMEITEMS_API FGameItemContainerSaveData
 {
 	GENERATED_BODY()
@@ -453,6 +467,10 @@ struct GAMEITEMS_API FGameItemContainerSaveData
 	/** All items in the container by slot */
 	UPROPERTY(SaveGame)
 	TMap<int32, FGameItemSaveData> ItemList;
+
+	/** The save data for Rules in the container. */
+	UPROPERTY(SaveGame)
+	TMap<FName, FGameItemContainerRuleSaveData> Rules;
 
 	/** The container's serialized SaveGame properties. */
 	UPROPERTY(SaveGame)

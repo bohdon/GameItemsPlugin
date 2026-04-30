@@ -1436,6 +1436,20 @@ void UGameItemContainer::CommitSaveData(FGameItemContainerSaveData& ContainerDat
 	UE_CLOG(ItemList.GetEntries().IsEmpty(), LogGameItems, VeryVerbose, TEXT("%s [%hs] No items to save"),
 		*GetDebugPrefix(), __func__);
 
+	// serialize rules that can save
+	ContainerData.Rules.Reset();
+	for (UGameItemContainerRule* Rule : Rules)
+	{
+		if (Rule && Rule->ShouldSaveData())
+		{
+			FGameItemContainerRuleSaveData& RulesSaveData = ContainerData.Rules.FindOrAdd(Rule->SaveName);
+			FMemoryWriter MemWriter(RulesSaveData.ByteData);
+			FObjectAndNameAsStringProxyArchive Ar(MemWriter, true);
+			Ar.ArIsSaveGame = true;
+			Rule->Serialize(Ar);
+		}
+	}
+
 	// serialize additional container data
 	FMemoryWriter MemWriter(ContainerData.ByteData);
 	FObjectAndNameAsStringProxyArchive Ar(MemWriter, true);
@@ -1516,7 +1530,22 @@ void UGameItemContainer::LoadSaveData(
 		}
 	}
 
-	// load serialized properties
+	// load rules that can save
+	for (UGameItemContainerRule* Rule : Rules)
+	{
+		if (Rule && Rule->ShouldSaveData())
+		{
+			if (const FGameItemContainerRuleSaveData* RulesSaveData = ContainerData.Rules.Find(Rule->SaveName))
+			{
+				FMemoryReader MemReader(RulesSaveData->ByteData);
+				FObjectAndNameAsStringProxyArchive Ar(MemReader, true);
+				Ar.ArIsSaveGame = true;
+				Rule->Serialize(Ar);
+			}
+		}
+	}
+
+	// load SaveGame properties of this container
 	FMemoryReader MemReader(ContainerData.ByteData);
 	FObjectAndNameAsStringProxyArchive Ar(MemReader, true);
 	Ar.ArIsSaveGame = true;

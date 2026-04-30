@@ -22,6 +22,9 @@ class GAMEITEMS_API UGameItemContainerLink : public UGameItemContainerRule
 	GENERATED_BODY()
 
 public:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual FString GetDebugString() const override;
+
 	/** The id of the other container to link to. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Link", meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
 	FGameplayTag LinkedContainerId;
@@ -36,18 +39,15 @@ public:
 	/** Set the linked container (if not already) by searching for a container with LinkedContainerId. */
 	void ResolveLinkedContainer(const IGameItemContainerInterface* ContainerProvider, bool bForce = false);
 
+protected:
 	/** Called when the linked container has changed on both server and client. */
 	virtual void OnLinkedContainerChanged(UGameItemContainer* NewContainer, UGameItemContainer* OldContainer);
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	virtual FString GetDebugString() const override;
 
 protected:
 	/** The other container that is linked. */
 	UPROPERTY(Transient, BlueprintReadOnly, ReplicatedUsing = OnRep_LinkedContainer, Meta = (AllowPrivateAccess = true))
 	TObjectPtr<UGameItemContainer> LinkedContainer;
-	
+
 	UFUNCTION()
 	virtual void OnRep_LinkedContainer(UGameItemContainer* OldLinkedContainer);
 };

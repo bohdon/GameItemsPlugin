@@ -20,6 +20,10 @@ class GAMEITEMS_API UGameItemContainerLink_Selection : public UGameItemContainer
 public:
 	UGameItemContainerLink_Selection();
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual bool HasSaveData() const override { return true; }
+	virtual FString GetDebugString() const override;
+
 	/** The slot in this container where the selected item should be added. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Selection")
 	int32 TargetSlot;
@@ -62,20 +66,8 @@ public:
 	UFUNCTION(BlueprintPure)
 	int32 ClampSlot(int32 Slot, bool bLoop) const;
 
-	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-
-	virtual FString GetDebugString() const override;
-
 protected:
 	virtual void OnLinkedContainerChanged(UGameItemContainer* NewContainer, UGameItemContainer* OldContainer) override;
-
-protected:
-	/** The currently selected slot in the linked container. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_SelectedSlot, Category = "Selection")
-	int32 SelectedSlot;
-
-	UFUNCTION()
-	void OnRep_SelectedSlot();
 
 	/** Find the next or previous slot in the linked container with a valid item. */
 	int32 FindValidItemSlot(int32 SearchDirection, bool bLoop) const;
@@ -85,4 +77,12 @@ protected:
 
 	/** Update this container to contain the item from the selected slot in the linked container. */
 	virtual void UpdateContainerForSelection();
+
+protected:
+	/** The currently selected slot in the linked container. */
+	UPROPERTY(SaveGame, EditAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_SelectedSlot, Category = "Selection")
+	int32 SelectedSlot;
+
+	UFUNCTION()
+	void OnRep_SelectedSlot();
 };

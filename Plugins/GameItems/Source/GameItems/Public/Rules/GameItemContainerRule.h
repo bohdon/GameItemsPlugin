@@ -28,6 +28,10 @@ public:
 	virtual int32 GetFunctionCallspace(UFunction* Function, FFrame* Stack) override;
 	virtual bool CallRemoteFunction(UFunction* Function, void* Parms, struct FOutParmRec* OutParms, FFrame* Stack) override;
 
+	/** If set, save this rule's SaveGame data with the container, using this save name. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SaveGame", meta = (EditCondition = "HasSaveData()", EditConditionHides))
+	FName SaveName;
+
 	/** Return the net role of the owning actor. */
 	ENetRole GetNetRole() const;
 
@@ -54,6 +58,12 @@ public:
 	/** Return the maximum allowed count for a single stack of an item, or -1 if unlimited. */
 	UFUNCTION(BlueprintNativeEvent)
 	int32 GetItemStackMaxCount(const UGameItem* Item) const;
+
+	/** Return true if this Rule contains any SaveGame properties that should be saved with the container. */
+	UFUNCTION()
+	virtual bool HasSaveData() const { return false; }
+
+	virtual bool ShouldSaveData() const { return HasSaveData() && !SaveName.IsNone(); }
 
 	virtual UWorld* GetWorld() const override;
 

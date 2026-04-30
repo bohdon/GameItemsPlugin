@@ -17,9 +17,10 @@ class UGameItemContainerLink_Parent : public UGameItemContainerLink
 
 public:
 	virtual bool IsChild_Implementation() const override;
-	virtual void OnLinkedContainerChanged(UGameItemContainer* NewContainer, UGameItemContainer* OldContainer) override;
 	virtual bool CanContainItem_Implementation(const UGameItem* Item) const override;
 
 protected:
+	virtual void OnLinkedContainerChanged(UGameItemContainer* NewContainer, UGameItemContainer* OldContainer) override;
+
 	void OnLinkedItemRemoved(UGameItem* Item);
 };
