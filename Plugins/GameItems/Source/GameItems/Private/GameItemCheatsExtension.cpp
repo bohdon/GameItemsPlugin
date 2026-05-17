@@ -5,14 +5,34 @@
 
 #include "GameItemContainer.h"
 #include "GameItemDef.h"
+#include "GameItemSettings.h"
 #include "GameItemSubsystem.h"
 #include "AssetRegistry/AssetData.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Engine/Blueprint.h"
+#include "Engine/Console.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "GeometryCollection/Facades/CollectionPositionTargetFacade.h"
 
+
+void UGameItemCheatsExtension::AddedToCheatManager_Implementation()
+{
+	Super::AddedToCheatManager_Implementation();
+
+#if ALLOW_CONSOLE
+	UConsole::RegisterConsoleAutoCompleteEntries.AddUObject(this, &ThisClass::PopulateAutoCompleteEntries);
+#endif
+}
+
+void UGameItemCheatsExtension::RemovedFromCheatManager_Implementation()
+{
+	Super::RemovedFromCheatManager_Implementation();
+
+#if ALLOW_CONSOLE
+	UConsole::RegisterConsoleAutoCompleteEntries.RemoveAll(this);
+#endif
+}
 
 void UGameItemCheatsExtension::ItemList()
 {
@@ -194,3 +214,32 @@ TSubclassOf<UGameItemDef> UGameItemCheatsExtension::FindBlueprintItemDef(const F
 
 	return FoundClass;
 }
+
+#if ALLOW_CONSOLE
+void UGameItemCheatsExtension::PopulateAutoCompleteEntries(TArray<FAutoCompleteCommand>& AutoCompleteList)
+{
+	const UConsoleSettings* ConsoleSettings = GetDefault<UConsoleSettings>();
+	const UGameItemSettings* ItemSettings = GetDefault<UGameItemSettings>();
+
+	TArray<TSubclassOf<UGameItemDef>> AllItemDefs;
+	GetAllLoadedItemDefs(AllItemDefs);
+
+	TArray<FString> AllItemDefNames;
+	Algo::Transform(AllItemDefs, AllItemDefNames, [&](const TSubclassOf<UGameItemDef>& ItemDef)
+		{
+			return ItemSettings->GetItemDefShortName(ItemDef);
+		});
+	AllItemDefNames.Sort();
+
+	for (const FString& ItemDefName : AllItemDefNames)
+	{
+		FAutoCompleteCommand& AddCmd = AutoCompleteList.AddDefaulted_GetRef();
+		AddCmd.Command = FString::Printf(TEXT("ItemAdd %s"), *ItemDefName);
+		AddCmd.Color = ConsoleSettings->AutoCompleteCommandColor;
+
+		FAutoCompleteCommand& RemoveCmd = AutoCompleteList.AddDefaulted_GetRef();
+		RemoveCmd.Command = FString::Printf(TEXT("ItemRemove %s"), *ItemDefName);
+		RemoveCmd.Color = ConsoleSettings->AutoCompleteCommandColor;
+	}
+}
+#endif

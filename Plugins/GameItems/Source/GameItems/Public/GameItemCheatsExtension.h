@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ConsoleSettings.h"
 #include "GameFramework/CheatManager.h"
 #include "GameItemCheatsExtension.generated.h"
 
@@ -16,6 +17,9 @@ class UGameItemCheatsExtension : public UCheatManagerExtension
 	GENERATED_BODY()
 
 public:
+	virtual void AddedToCheatManager_Implementation() override;
+	virtual void RemovedFromCheatManager_Implementation() override;
+
 	/** List all loaded game item definition classes. */
 	UFUNCTION(Exec)
 	void ItemList();
@@ -42,4 +46,8 @@ protected:
 	virtual TSubclassOf<UGameItemDef> FindBlueprintItemDef(const FString& ItemDefName) const;
 
 	virtual void GetAllLoadedItemDefs(TArray<TSubclassOf<UGameItemDef>>& OutItemDefs) const;
+
+#if ALLOW_CONSOLE
+	virtual void PopulateAutoCompleteEntries(TArray<FAutoCompleteCommand>& AutoCompleteList);
+#endif
 };

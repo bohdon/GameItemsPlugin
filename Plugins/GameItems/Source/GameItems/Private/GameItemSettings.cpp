@@ -4,6 +4,7 @@
 #include "GameItemSettings.h"
 
 #include "GameItemCheatsExtension.h"
+#include "GameItemDef.h"
 #include "GameItemsModule.h"
 
 
@@ -28,6 +29,21 @@ UGameItemSettings::UGameItemSettings()
 				}));
 	}
 #endif
+}
+
+FString UGameItemSettings::GetItemDefShortName(const TSubclassOf<UGameItemDef>& ItemDef) const
+{
+	if (ItemDef)
+	{
+		FString Name = ItemDef->GetName();
+		Name.RemoveFromEnd(TEXT("_C"));
+		if (!ItemAssetPrefix.IsEmpty())
+		{
+			Name.RemoveFromStart(ItemAssetPrefix);
+		}
+		return Name;
+	}
+	return FString();
 }
 
 FName UGameItemSettings::GetCategoryName() const

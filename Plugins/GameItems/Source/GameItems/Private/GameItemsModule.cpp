@@ -49,9 +49,7 @@ void FGameItemsModule::PopulateAutoCompleteEntries(TArray<FAutoCompleteCommand>&
 {
 	const UConsoleSettings* ConsoleSettings = GetDefault<UConsoleSettings>();
 
-	AutoCompleteList.AddDefaulted();
-
-	FAutoCompleteCommand& AutoCompleteCommand = AutoCompleteList.Last();
+	FAutoCompleteCommand& AutoCompleteCommand = AutoCompleteList.AddDefaulted_GetRef();
 	AutoCompleteCommand.Command = FString::Printf(TEXT("ShowDebug %s"), *ShowDebugNames::GameItems.ToString());
 	AutoCompleteCommand.Desc = TEXT("Toggles display of game item debug info");
 	AutoCompleteCommand.Color = ConsoleSettings->AutoCompleteCommandColor;
