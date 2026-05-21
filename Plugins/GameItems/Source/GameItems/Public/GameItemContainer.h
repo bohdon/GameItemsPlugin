@@ -221,7 +221,7 @@ public:
 	 * Set the item in a slot by removing any existing item first, then adding.
 	 * Doesn't verify first if the item can be added before removing.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameItemContainer")
+	UFUNCTION(BlueprintCallable, Category = "GameItemContainer")
 	void SetItemAt(UGameItem* Item, int32 Slot);
 
 	/** Return true if an item exists in the container. */
