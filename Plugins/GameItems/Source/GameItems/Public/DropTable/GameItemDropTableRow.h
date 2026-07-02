@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameItemDropContent.h"
-#include "InstancedStruct.h"
+#include "StructUtils/InstancedStruct.h"
 #include "Engine/DataTable.h"
 #include "GameItemDropTableRow.generated.h"
 
