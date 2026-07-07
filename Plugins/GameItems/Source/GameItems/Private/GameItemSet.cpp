@@ -32,6 +32,7 @@ void UGameItemSetAutoFill::FillSet_Implementation(UGameItemSet* ItemSet) const
 	const IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(FName("AssetRegistry")).Get();
 
 	FARFilter Filter;
+	Filter.bIncludeOnlyOnDiskAssets = true;
 	Filter.bRecursivePaths = true;
 	for (const FDirectoryPath& Directory : SearchDirectories)
 	{
