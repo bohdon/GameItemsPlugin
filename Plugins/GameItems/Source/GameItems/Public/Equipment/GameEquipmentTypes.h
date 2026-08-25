@@ -35,11 +35,11 @@ struct FGameEquipmentSpec
 	void PostSerialize(const FArchive& Ar);
 
 	/** The equipment definition, defining the equipment class and other info. */
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")
 	TSubclassOf<UGameEquipmentDef> EquipmentDef;
 
 	/** Additional tags to contain contextual information. Commonly includes which slot an item is equipped to or other traits. */
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")
 	FGameplayTagContainer ContextTags;
 
 protected:
