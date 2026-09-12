@@ -27,19 +27,19 @@ public:
 	virtual FString GetDebugPrefix() const;
 
 	/** Move an item from one slot to another, swapping or stacking as needed. */
-	UFUNCTION(BlueprintCallable, Category = "Items")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	virtual void MoveSwapOrStackItem(UGameItemContainer* From, UGameItem* Item, UGameItemContainer* To, int32 ToSlot, bool bAllowPartial = true);
 
 	/** Move an item from one container to another. */
-	UFUNCTION(BlueprintCallable, Category = "Items")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	virtual void MoveItem(UGameItemContainer* From, UGameItemContainer* To, UGameItem* Item, bool bAllowPartial = true);
 
 	/** Move a set of items from one container to another. */
-	UFUNCTION(BlueprintCallable, Category = "Items")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	virtual void MoveItems(UGameItemContainer* From, UGameItemContainer* To, TArray<UGameItem*> Items, bool bAllowPartial = true);
 
 	/** Move all items from one container to another. */
-	UFUNCTION(BlueprintCallable, Category = "Items")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	virtual void MoveAllItems(UGameItemContainer* From, UGameItemContainer* To, bool bAllowPartial = true);
 
 	/**
@@ -61,13 +61,13 @@ public:
 
 public:
 	/** Return true if no items should be consumed as part of the cost for some transaction. */
-	UFUNCTION(BlueprintCallable, Category = "Items")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	virtual bool ShouldIgnoreItemCosts(const TArray<FGameItemDefStack>& ItemsToConsume, FGameplayTagContainer Context) const;
 
 	/**
 	 * Return true if this player has, and can consume (destroy), a set of items, usually as the cost of some transaction.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Items")
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	virtual bool CanConsumeItemCost(const TArray<FGameItemDefStack>& Cost, FGameplayTagContainer Context);
 
 	/**
@@ -86,6 +86,7 @@ public:
 	 * Return the set if item containers that should be used to consume some item cost.
 	 * This can include both local and server-owned containers.
 	 */
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	virtual TSet<UGameItemContainer*> GetContainersForItemCost(const TArray<FGameItemDefStack>& Cost, FGameplayTagContainer Context);
 
 	/** Try consuming some items, potentially via RPCs. */

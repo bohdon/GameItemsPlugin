@@ -117,6 +117,19 @@ void UGameItemSubsystem::CreateItemInContainer(UGameItemContainer* Container, TS
 	Container->AddItem(NewItem, -1, bWarn);
 }
 
+int32 UGameItemSubsystem::GetTotalItemCountByDefInContainers(TSet<UGameItemContainer*> Containers, const TSubclassOf<UGameItemDef> ItemDef)
+{
+	int32 Total = 0;
+	for (const UGameItemContainer* Container : Containers)
+	{
+		if (Container)
+		{
+			Total += Container->GetTotalItemCountByDef(ItemDef);
+		}
+	}
+	return Total;
+}
+
 bool UGameItemSubsystem::HasItemStacks(UGameItemContainer* Container, TArray<FGameItemDefStack> ItemStacks) const
 {
 	for (const FGameItemDefStack& ItemStack : ItemStacks)

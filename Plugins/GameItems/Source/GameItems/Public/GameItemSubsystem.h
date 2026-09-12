@@ -57,6 +57,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	void CreateItemInContainer(UGameItemContainer* Container, TSubclassOf<UGameItemDef> ItemDef, int32 Count = 1, bool bWarn = true);
 
+	/** Return the total item count by definition across multiple containers. */
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
+	int32 GetTotalItemCountByDefInContainers(TSet<UGameItemContainer*> Containers, TSubclassOf<UGameItemDef> ItemDef);
+
 	/** Return true if a container has all items at all indicated quantities. Useful for calculating costs. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	bool HasItemStacks(UGameItemContainer* Container, TArray<FGameItemDefStack> ItemStacks) const;
