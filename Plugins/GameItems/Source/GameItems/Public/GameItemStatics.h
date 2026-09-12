@@ -40,6 +40,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameItems", meta = (GameplayTagFilter="GameItemContainerIdTagsCategory"))
 	static UGameItemContainer* GetItemContainerForActor(AActor* Actor, FGameplayTag ContainerId);
 
+	/** Combine two arrays of item def stacks, merging any duplicate items. */
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
+	static TArray<FGameItemDefStack> CombineItemDefStacks(const TArray<FGameItemDefStack>& A, const TArray<FGameItemDefStack>& B);
+
 	/** Find and return an item fragment by class. */
 	UFUNCTION(BlueprintCallable, Category = "GameItems", Meta = (DeterminesOutputType = "FragmentClass"))
 	static const UGameItemFragment* FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass);

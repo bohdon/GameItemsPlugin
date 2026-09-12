@@ -36,6 +36,34 @@ UGameItemContainer* UGameItemStatics::GetItemContainerForActor(AActor* Actor, FG
 	return ItemSubsystem ? ItemSubsystem->GetContainerForActor(Actor, ContainerId) : nullptr;
 }
 
+TArray<FGameItemDefStack> UGameItemStatics::CombineItemDefStacks(const TArray<FGameItemDefStack>& A, const TArray<FGameItemDefStack>& B)
+{
+	TMap<TSubclassOf<UGameItemDef>, int32> ItemDefCounts;
+
+	// iterate both arrays with the same logic, to collapse any duplicates (even within one of the sets)
+	auto AppendStacks = [&](const TArray<FGameItemDefStack>& Stacks)
+		{
+			for (const FGameItemDefStack& Stack : Stacks)
+			{
+				if (Stack.ItemDef)
+				{
+					ItemDefCounts.FindOrAdd(Stack.ItemDef) += Stack.Count;
+				}
+			}
+		};
+
+	AppendStacks(A);
+	AppendStacks(B);
+
+	TArray<FGameItemDefStack> Result;
+	Result.Reserve(ItemDefCounts.Num());
+	for (const TTuple<TSubclassOf<UGameItemDef>, int32>& Elem : ItemDefCounts)
+	{
+		Result.Emplace(Elem.Key, Elem.Value);
+	}
+	return Result;
+}
+
 const UGameItemFragment* UGameItemStatics::FindFragment(TSubclassOf<UGameItemDef> ItemDef, TSubclassOf<UGameItemFragment> FragmentClass)
 {
 	if (!ItemDef || !FragmentClass)
