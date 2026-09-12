@@ -4,6 +4,9 @@
 #include "GameItemControllerComponent.h"
 
 #include "GameItemContainer.h"
+#include "GameItemContainerInterface.h"
+#include "GameItemDef.h"
+#include "GameItemGameplayTags.h"
 #include "GameItemsModule.h"
 #include "GameItemStatics.h"
 #include "GameItemSubsystem.h"
@@ -506,6 +509,285 @@ void UGameItemControllerComponent::ServerMoveItems_Implementation(
 	ClientConfirmPredictionKey(PredictionKey, bSuccess);
 }
 
+bool UGameItemControllerComponent::ShouldIgnoreItemCosts(const TArray<FGameItemDefStack>& ItemsToConsume, FGameplayTagContainer Context) const
+{
+	// implement in subclasses, check context to determine the type of cost
+	return false;
+}
+
+bool UGameItemControllerComponent::CanConsumeItemCost(const TArray<FGameItemDefStack>& Cost, FGameplayTagContainer Context)
+{
+	if (ShouldIgnoreItemCosts(Cost, Context))
+	{
+		return true;
+	}
+
+	const TSet<UGameItemContainer*> Containers = GetContainersForItemCost(Cost, Context);
+	if (Containers.IsEmpty())
+	{
+		// no containers to source for this cost
+		return false;
+	}
+
+	// check if the cost exists across all containers
+	const UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::Get(this);
+	return ItemSubsystem->HasItemStacksAcrossContainers(Containers.Array(), Cost);
+}
+
+void UGameItemControllerComponent::HandleNetConsume(const TArray<FGameItemDefStack>& Cost, FGameplayTagContainer Context)
+{
+	if (ShouldIgnoreItemCosts(Cost, Context))
+	{
+		// skip costs and accept
+		OnConsumeItemCostComplete.Broadcast(true, FGameplayTagContainer());
+		return;
+	}
+
+	// the order of the containers retrieved here is the order of priority for removal.
+	TSet<UGameItemContainer*> Containers = GetContainersForItemCost(Cost, Context);
+	if (Containers.IsEmpty())
+	{
+		// no containers to source
+		FGameplayTagContainer RelevantTags;
+		RelevantTags.AddTag(GameItems::GameplayTags::Item_Fail_MissingItems);
+		OnConsumeItemCostComplete.Broadcast(false, RelevantTags);
+		return;
+	}
+
+	const UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::Get(this);
+
+	// split into local vs server-owned containers, and divvy up the costs across each container. 
+	TArray<UGameItemContainer*> LocalContainers;
+	TArray<UGameItemContainer*> ServerContainers;
+	TMap<UGameItemContainer*, TArray<FGameItemDefStack>> CostsPerContainer;
+
+	// aggregate the required cost, summing counts for any duplicate defs.
+	TArray<FGameItemDefStack> Required;
+	for (const FGameItemDefStack& Stack : Cost)
+	{
+		if (!Stack.ItemDef)
+		{
+			continue;
+		}
+
+		bool bFound = false;
+		for (FGameItemDefStack& Existing : Required)
+		{
+			if (Existing.ItemDef == Stack.ItemDef)
+			{
+				Existing.Count += Stack.Count;
+				bFound = true;
+				break;
+			}
+		}
+		if (!bFound)
+		{
+			Required.Emplace(Stack.ItemDef, Stack.Count);
+		}
+	}
+
+	// track how much of each required def still needs to be satisfied.
+	TArray<int32> RemainingNeeded;
+	RemainingNeeded.AddUninitialized(Required.Num());
+	for (int32 i = 0; i < Required.Num(); ++i)
+	{
+		RemainingNeeded[i] = Required[i].Count;
+	}
+
+	for (UGameItemContainer* Container : Containers)
+	{
+		if (!Container)
+		{
+			continue;
+		}
+
+		// fill this container's portion of the cost, in priority order
+		TArray<FGameItemDefStack>& CostForThisContainer = CostsPerContainer.Add(Container);
+		for (int32 i = 0; i < Required.Num(); ++i)
+		{
+			if (RemainingNeeded[i] <= 0)
+			{
+				continue;
+			}
+
+			const int32 Available = Container->GetTotalItemCountByDef(Required[i].ItemDef);
+			const int32 Take = FMath::Min(RemainingNeeded[i], Available);
+			if (Take > 0)
+			{
+				CostForThisContainer.Emplace(Required[i].ItemDef, Take);
+				RemainingNeeded[i] -= Take;
+			}
+		}
+
+		if (Container->IsLocallyControlled())
+		{
+			LocalContainers.Add(Container);
+		}
+		else if (ensure(Container->ItemsExistOnServer()))
+		{
+			ServerContainers.Add(Container);
+		}
+		else
+		{
+			// container is neither locally controlled nor server-owned, nothing to source from it
+			UE_LOG(LogGameItems, Warning, TEXT("%s [%hs] Container %s is not usable for consume"),
+				*GetDebugPrefix(), __func__, *Container->GetReadableName());
+			return;
+		}
+	}
+
+	// make sure the full cost is covered before attempting any removal
+	for (int32 i = 0; i < RemainingNeeded.Num(); ++i)
+	{
+		if (RemainingNeeded[i] > 0)
+		{
+			FGameplayTagContainer RelevantTags;
+			RelevantTags.AddTag(GameItems::GameplayTags::Item_Fail_MissingItems);
+			OnConsumeItemCostComplete.Broadcast(false, RelevantTags);
+			return;
+		}
+	}
+
+	// consume local items
+	for (UGameItemContainer* Container : LocalContainers)
+	{
+		const TArray<FGameItemDefStack>& CostForThisContainer = CostsPerContainer.FindRef(Container);
+		ItemSubsystem->RemoveItemStacks(Container, CostForThisContainer);
+	}
+
+	if (ServerContainers.IsEmpty())
+	{
+		// nothing else to do
+		OnConsumeItemCostComplete.Broadcast(true, FGameplayTagContainer());
+		return;
+	}
+
+	// consume server items: mark the concrete items pending so we can roll back if rejected
+	const FGameItemsPredictionKey PredictionKey = FGameItemsPredictionKey::CreateNewClientPredictionKey(GetOwner());
+	for (UGameItemContainer* Container : ServerContainers)
+	{
+		if (const TArray<FGameItemDefStack>* Stacks = CostsPerContainer.Find(Container))
+		{
+			for (const FGameItemDefStack& Stack : *Stacks)
+			{
+				const TArray<UGameItem*> Items = Container->FindItemsByDef(Stack.ItemDef);
+				int32 Remaining = Stack.Count;
+				for (UGameItem* Item : Items)
+				{
+					if (!Remaining || !Item)
+					{
+						break;
+					}
+
+					if (Item->HasPendingNetChange())
+					{
+						continue; // already part of another pending op, leave it alone
+					}
+
+					const int32 ItemCount = Item->GetCount();
+					const int32 Take = FMath::Min(Remaining, ItemCount);
+					if (Take < ItemCount)
+					{
+						// partial stack, predict reducing the count
+						Item->SetPendingCount(ItemCount - Take, PredictionKey);
+					}
+					else
+					{
+						// remove the whole item
+						Item->MarkPendingRemove(Container, PredictionKey);
+					}
+					Remaining -= Take;
+				}
+			}
+		}
+	}
+
+	// aggregate the server-attributable cost to send (not the full Cost)
+	TArray<FGameItemDefStack> ServerCost;
+	for (const UGameItemContainer* Container : ServerContainers)
+	{
+		if (const TArray<FGameItemDefStack>* Stacks = CostsPerContainer.Find(Container))
+		{
+			ServerCost.Append(*Stacks);
+		}
+	}
+
+	// remember the containers to confirm against, and send the consume request
+	ConsumeContainersByKey.Add(PredictionKey, ServerContainers);
+	ServerConsumeItemCost(ServerCost, ServerContainers, PredictionKey);
+}
+
+void UGameItemControllerComponent::ConsumeItemCost(
+	const TArray<FGameItemDefStack>& Cost,
+	FGameplayTagContainer Context)
+{
+	HandleNetConsume(Cost, Context);
+}
+
+TSet<UGameItemContainer*> UGameItemControllerComponent::GetContainersForItemCost(const TArray<FGameItemDefStack>& Cost, FGameplayTagContainer Context)
+{
+	// Simple default implementation, consumes costs from any available container.
+	// Override in subclasses to retrieve the relevant container based on context or the specific items, etc.
+	TArray<UGameItemContainer*> Containers = UGameItemStatics::GetAllItemContainersForActor(GetOwner());
+
+	// use only parents (containers that actually own items)
+	Containers.RemoveAll([](const UGameItemContainer* Container)
+		{
+			return !Container || Container->IsChild();
+		});
+	return TSet<UGameItemContainer*>(Containers);
+}
+
+void UGameItemControllerComponent::ServerConsumeItemCost_Implementation(
+	const TArray<FGameItemDefStack>& Cost,
+	const TArray<UGameItemContainer*>& Containers,
+	FGameItemsPredictionKey PredictionKey)
+{
+	// validate containers
+	for (const UGameItemContainer* Container : Containers)
+	{
+		if (!ensure(Container))
+		{
+			ClientConfirmPredictionKey(PredictionKey, false);
+			return;
+		}
+	}
+
+	const UGameItemSubsystem* ItemSubsystem = UGameItemSubsystem::Get(this);
+
+	// make sure the full cost is covered across the given containers before removing anything
+	if (!ItemSubsystem->HasItemStacksAcrossContainers(Containers, Cost))
+	{
+		UE_LOG(LogGameItems, Warning, TEXT("%s [ServerConsumeItemCost] Cannot cover cost (Key: %s)"),
+			*GetDebugPrefix(), *PredictionKey.ToString());
+		ClientConfirmPredictionKey(PredictionKey, false);
+		return;
+	}
+
+	// remove the cost greedily across the containers in priority order
+	for (const FGameItemDefStack& Stack : Cost)
+	{
+		int32 Remaining = Stack.Count;
+		for (UGameItemContainer* Container : Containers)
+		{
+			if (!Remaining)
+			{
+				break;
+			}
+
+			const int32 Available = Container->GetTotalItemCountByDef(Stack.ItemDef);
+			const int32 Take = FMath::Min(Remaining, Available);
+			if (Take > 0)
+			{
+				Container->RemoveItemsByDef(Stack.ItemDef, Take);
+			}
+			Remaining -= Take;
+		}
+	}
+
+	ClientConfirmPredictionKey(PredictionKey, true);
+}
+
 void UGameItemControllerComponent::ClientConfirmPredictionKey_Implementation(
 	const FGameItemsPredictionKey& PredictionKey,
 	bool bAccepted)
@@ -517,6 +799,27 @@ void UGameItemControllerComponent::ClientConfirmPredictionKey_Implementation(
 
 	UE_LOG(LogGameItems, VeryVerbose, TEXT("%s [ClientConfirmPredictionKey]: %s (Key: %s)"),
 		*GetDebugPrefix(), bAccepted ? TEXT("Accepted") : TEXT("Rejected"), *PredictionKey.ToString());
+
+	// handle consumes
+	if (const TArray<UGameItemContainer*>* ConsumeContainers = ConsumeContainersByKey.Find(PredictionKey))
+	{
+		for (UGameItemContainer* Container : *ConsumeContainers)
+		{
+			if (Container)
+			{
+				Container->ConfirmPredictionKey(PredictionKey, bAccepted);
+			}
+		}
+		ConsumeContainersByKey.Remove(PredictionKey);
+
+		FGameplayTagContainer RelevantTags;
+		if (!bAccepted)
+		{
+			RelevantTags.AddTag(GameItems::GameplayTags::Item_Fail_MissingItems);
+		}
+		OnConsumeItemCostComplete.Broadcast(bAccepted, RelevantTags);
+		return;
+	}
 
 	const FGameItemContainerPair* AffectedPair = PredictionContainerMap.Find(PredictionKey);
 	if (!ensure(AffectedPair))

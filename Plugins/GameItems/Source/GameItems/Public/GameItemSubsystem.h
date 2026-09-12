@@ -61,6 +61,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameItems")
 	bool HasItemStacks(UGameItemContainer* Container, TArray<FGameItemDefStack> ItemStacks) const;
 
+	/** Return true if a combined set of containers has all items at all indicated quantities. Useful for calculating costs. */
+	UFUNCTION(BlueprintCallable, Category = "GameItems")
+	bool HasItemStacksAcrossContainers(const TArray<UGameItemContainer*>& Containers, TArray<FGameItemDefStack> ItemStacks) const;
+
 	/** Remove items from a container by item defs and counts. Useful for subtracting item costs. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameItems")
 	bool RemoveItemStacks(UGameItemContainer* Container, TArray<FGameItemDefStack> ItemStacks, bool bAllowPartial = false) const;

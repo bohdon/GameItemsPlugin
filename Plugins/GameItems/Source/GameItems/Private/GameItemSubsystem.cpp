@@ -129,6 +129,33 @@ bool UGameItemSubsystem::HasItemStacks(UGameItemContainer* Container, TArray<FGa
 	return true;
 }
 
+bool UGameItemSubsystem::HasItemStacksAcrossContainers(const TArray<UGameItemContainer*>& Containers, TArray<FGameItemDefStack> ItemStacks) const
+{
+	for (const FGameItemDefStack& ItemStack : ItemStacks)
+	{
+		int32 TotalCount = 0;
+		for (const UGameItemContainer* Container : Containers)
+		{
+			if (!Container)
+			{
+				continue;
+			}
+			TotalCount += Container->GetTotalItemCountByDef(ItemStack.ItemDef);
+			if (TotalCount >= ItemStack.Count)
+			{
+				// found enough already
+				break;
+			}
+		}
+
+		if (TotalCount < ItemStack.Count)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 bool UGameItemSubsystem::RemoveItemStacks(UGameItemContainer* Container, TArray<FGameItemDefStack> ItemStacks, bool bAllowPartial) const
 {
 	if (!bAllowPartial)

@@ -27,24 +27,25 @@ public:
 	virtual FString GetDebugPrefix() const;
 
 	/** Move an item from one slot to another, swapping or stacking as needed. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Items")
 	virtual void MoveSwapOrStackItem(UGameItemContainer* From, UGameItem* Item, UGameItemContainer* To, int32 ToSlot, bool bAllowPartial = true);
 
 	/** Move an item from one container to another. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Items")
 	virtual void MoveItem(UGameItemContainer* From, UGameItemContainer* To, UGameItem* Item, bool bAllowPartial = true);
 
 	/** Move a set of items from one container to another. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Items")
 	virtual void MoveItems(UGameItemContainer* From, UGameItemContainer* To, TArray<UGameItem*> Items, bool bAllowPartial = true);
 
 	/** Move all items from one container to another. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Items")
 	virtual void MoveAllItems(UGameItemContainer* From, UGameItemContainer* To, bool bAllowPartial = true);
 
 	/**
 	 * Try handling the move of some items, potentially via RPCs.
-	 * @return True if network calls are required and this component will handle them, False to perform the moves via containers as usual. 
+	 * @return True if network calls were required and this component has started handling them,
+	 *			False if the moves should be performed via containers as usual, by the caller. 
 	 */
 	virtual bool HandleNetMove(const FGameItemMoveSpec& MoveSpec);
 
@@ -59,6 +60,38 @@ public:
 	void MoveServerItems(const FGameItemMoveSpec& MoveSpec);
 
 public:
+	/** Return true if no items should be consumed as part of the cost for some transaction. */
+	UFUNCTION(BlueprintCallable, Category = "Items")
+	virtual bool ShouldIgnoreItemCosts(const TArray<FGameItemDefStack>& ItemsToConsume, FGameplayTagContainer Context) const;
+
+	/**
+	 * Return true if this player has, and can consume (destroy), a set of items, usually as the cost of some transaction.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Items")
+	virtual bool CanConsumeItemCost(const TArray<FGameItemDefStack>& Cost, FGameplayTagContainer Context);
+
+	/**
+	 * Consume (destroy) a set of items, usually as the cost of some transaction. Supports both local and server-owned containers.
+	 * This may fail even if CanConsumeItemCost returns true, since claim over server-owned items may race.
+	 * On completion, OnConsumeItemCostComplete is broadcast with success and any relevant failure tags.
+	 */
+	virtual void ConsumeItemCost(const TArray<FGameItemDefStack>& Cost, FGameplayTagContainer Context);
+
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FConsumeItemCostCompleteDelegate, bool /*bSuccess*/, const FGameplayTagContainer& /*RelevantTags*/);
+
+	/** Broadcast when a consume completes, with success and any relevant failure tags. */
+	FConsumeItemCostCompleteDelegate OnConsumeItemCostComplete;
+
+	/**
+	 * Return the set if item containers that should be used to consume some item cost.
+	 * This can include both local and server-owned containers.
+	 */
+	virtual TSet<UGameItemContainer*> GetContainersForItemCost(const TArray<FGameItemDefStack>& Cost, FGameplayTagContainer Context);
+
+	/** Try consuming some items, potentially via RPCs. */
+	virtual void HandleNetConsume(const TArray<FGameItemDefStack>& Cost, FGameplayTagContainer Context);
+
+public:
 	/** Receive items being sent from a client-only container and move them into ToContainer. */
 	UFUNCTION(Server, Reliable)
 	void ServerReceiveItems(const TArray<FGameItemSerializedMove>& Moves, const FGameItemContainerPair& Containers, FGameItemsPredictionKey PredictionKey);
@@ -71,6 +104,10 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerMoveItems(const TArray<FGameItemMove>& Moves, const FGameItemContainerPair& Containers, FGameItemsPredictionKey PredictionKey);
 
+	/** Consume some items on server-owned containers. */
+	UFUNCTION(Server, Reliable)
+	void ServerConsumeItemCost(const TArray<FGameItemDefStack>& Cost, const TArray<UGameItemContainer*>& Containers, FGameItemsPredictionKey PredictionKey);
+
 	/** Called from server to accept or reject some predicted changes to this container or its items. */
 	UFUNCTION(Client, Reliable)
 	void ClientConfirmPredictionKey(const FGameItemsPredictionKey& PredictionKey, bool bAccepted = false);
@@ -79,4 +116,7 @@ protected:
 	/** Map of containers involved in any actions for each prediction key. */
 	UPROPERTY(Transient)
 	TMap<FGameItemsPredictionKey, FGameItemContainerPair> PredictionContainerMap;
+
+	/** Map of server containers with pending consumes for each prediction key. */
+	TMap<FGameItemsPredictionKey, TArray<UGameItemContainer*>> ConsumeContainersByKey;
 };
