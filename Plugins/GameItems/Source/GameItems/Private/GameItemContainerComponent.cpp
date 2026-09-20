@@ -293,6 +293,8 @@ void UGameItemContainerComponent::CommitSaveData(FGameItemContainerCollectionSav
 		FGameItemContainerSaveData& ContainerData = CollectionData.Containers.FindOrAdd(Container->GetContainerId());
 		Container->CommitSaveData(ContainerData, SavedItems);
 	}
+
+	OnSaveDataCommittedEvent.Broadcast(SavedItems);
 }
 
 void UGameItemContainerComponent::LoadSaveData(const FGameItemContainerCollectionSaveData& CollectionData, bool bPreserveExistingItems)
@@ -342,7 +344,7 @@ void UGameItemContainerComponent::LoadSaveData(const FGameItemContainerCollectio
 
 	bIsLoadingSaveGame = false;
 
-	OnSaveDataLoadedEvent.Broadcast();
+	OnSaveDataLoadedEvent.Broadcast(LoadedItems);
 }
 
 void UGameItemContainerComponent::AddDefaultContainers()

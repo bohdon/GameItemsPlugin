@@ -199,9 +199,16 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
+	/** A map of items to their saved guids. */
+	typedef TMap<UGameItem*, FGuid> FSavedItems;
+
+	/** A map of saved guids to loaded items. */
+	typedef TMap<FGuid, UGameItem*> FLoadedItems;
+
 	DECLARE_MULTICAST_DELEGATE_OneParam(FContainerAddOrRemoveDelegate, UGameItemContainer* /*Container*/);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FItemAddOrRemoveDelegate, UGameItem* /*Item*/);
-	DECLARE_MULTICAST_DELEGATE(FSaveDataLoadedDelegate);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FSaveDataCommittedDelegate, const FSavedItems& /*SavedItems*/);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FSaveDataLoadedDelegate, const FLoadedItems& /*LoadedItems*/);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FSaveGameLoadedDelegate, USaveGame* /*SaveGame*/);
 
 	/** Called when a new item container is added. */
@@ -221,6 +228,9 @@ public:
 	 * Use the delegates in UGameItemContainer for container-specific events.
 	 */
 	FItemAddOrRemoveDelegate OnItemRemovedEvent;
+
+	/** Called after committing save data, with the map of items to their saved guids. */
+	FSaveDataCommittedDelegate OnSaveDataCommittedEvent;
 
 	/** Called after loading save data (from both Serialize or a save game). */
 	FSaveDataLoadedDelegate OnSaveDataLoadedEvent;
