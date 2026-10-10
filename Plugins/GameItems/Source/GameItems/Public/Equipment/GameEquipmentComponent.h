@@ -74,6 +74,14 @@ public:
 
 	FString GetDebugPrefix() const;
 
+	DECLARE_MULTICAST_DELEGATE_OneParam(FEquipmentDelegate, UGameEquipment* /*Equipment*/);
+
+	/** Called when equipment has been applied to this component. */
+	FEquipmentDelegate OnEquipmentAppliedEvent;
+
+	/** Called when equipment has been removed from this component. */
+	FEquipmentDelegate OnEquipmentRemovedEvent;
+
 protected:
 	UFUNCTION(Server, Reliable)
 	void ServerApplyEquipmentSpec(const FGameEquipmentSpec& EquipmentSpec);

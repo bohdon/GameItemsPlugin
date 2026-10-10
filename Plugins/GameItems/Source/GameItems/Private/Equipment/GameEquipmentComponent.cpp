@@ -161,6 +161,7 @@ void UGameEquipmentComponent::ApplyEquipmentSpec(const FGameEquipmentSpec& Equip
 	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, EquipmentList, this);
 
 	OnEquipmentApplied(NewEquipment);
+	OnEquipmentAppliedEvent.Broadcast(NewEquipment);
 }
 
 void UGameEquipmentComponent::ServerApplyEquipmentSpec_Implementation(const FGameEquipmentSpec& EquipmentSpec)
@@ -199,6 +200,7 @@ void UGameEquipmentComponent::RemoveEquipment(UGameEquipment* Equipment)
 	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, EquipmentList, this);
 
 	OnEquipmentRemoved(Equipment);
+	OnEquipmentRemovedEvent.Broadcast(Equipment);
 }
 
 void UGameEquipmentComponent::OnEquipmentApplied(UGameEquipment* Equipment)
@@ -323,6 +325,7 @@ void UGameEquipmentComponent::OnPreReplicatedRemove(FGameEquipmentListEntry& Ent
 	if (Entry.Equipment)
 	{
 		OnEquipmentRemoved(Entry.Equipment);
+		OnEquipmentRemovedEvent.Broadcast(Entry.Equipment);
 	}
 }
 
@@ -333,6 +336,7 @@ void UGameEquipmentComponent::OnPostReplicatedAdd(FGameEquipmentListEntry& Entry
 	if (Entry.Equipment)
 	{
 		OnEquipmentApplied(Entry.Equipment);
+		OnEquipmentAppliedEvent.Broadcast(Entry.Equipment);
 	}
 }
 
@@ -344,6 +348,7 @@ void UGameEquipmentComponent::OnPostReplicatedChange(FGameEquipmentListEntry& En
 	{
 		// this should only be called if the entry went from null -> valid, so treat it like OnPostReplicatedAdd
 		OnEquipmentApplied(Entry.Equipment);
+		OnEquipmentAppliedEvent.Broadcast(Entry.Equipment);
 	}
 }
 
